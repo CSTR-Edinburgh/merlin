@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>io_funcs.binary_io &mdash; CSTR NN-TTS 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="CSTR NN-TTS 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for io_funcs.binary_io</h1><div class="highlight"><pre>
+<span class="c1">################################################################################</span>
+<span class="c1">#           The Neural Network (NN) based Speech Synthesis System</span>
+<span class="c1">#                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/</span>
+<span class="c1">#                </span>
+<span class="c1">#                Centre for Speech Technology Research                 </span>
+<span class="c1">#                     University of Edinburgh, UK                       </span>
+<span class="c1">#                      Copyright (c) 2014-2015</span>
+<span class="c1">#                        All Rights Reserved.                           </span>
+<span class="c1">#                                                                       </span>
+<span class="c1"># The system as a whole and most of the files in it are distributed</span>
+<span class="c1"># under the following copyright and conditions</span>
+<span class="c1">#</span>
+<span class="c1">#  Permission is hereby granted, free of charge, to use and distribute  </span>
+<span class="c1">#  this software and its documentation without restriction, including   </span>
+<span class="c1">#  without limitation the rights to use, copy, modify, merge, publish,  </span>
+<span class="c1">#  distribute, sublicense, and/or sell copies of this work, and to      </span>
+<span class="c1">#  permit persons to whom this work is furnished to do so, subject to   </span>
+<span class="c1">#  the following conditions:</span>
+<span class="c1">#  </span>
+<span class="c1">#   - Redistributions of source code must retain the above copyright  </span>
+<span class="c1">#     notice, this list of conditions and the following disclaimer.   </span>
+<span class="c1">#   - Redistributions in binary form must reproduce the above         </span>
+<span class="c1">#     copyright notice, this list of conditions and the following     </span>
+<span class="c1">#     disclaimer in the documentation and/or other materials provided </span>
+<span class="c1">#     with the distribution.                                          </span>
+<span class="c1">#   - The authors&#39; names may not be used to endorse or promote products derived </span>
+<span class="c1">#     from this software without specific prior written permission.   </span>
+<span class="c1">#                                  </span>
+<span class="c1">#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        </span>
+<span class="c1">#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      </span>
+<span class="c1">#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   </span>
+<span class="c1">#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     </span>
+<span class="c1">#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    </span>
+<span class="c1">#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   </span>
+<span class="c1">#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          </span>
+<span class="c1">#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       </span>
+<span class="c1">#  THIS SOFTWARE.</span>
+<span class="c1">################################################################################</span>
+
+
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<div class="viewcode-block" id="BinaryIOCollection"><a class="viewcode-back" href="../../index.html#io_funcs.binary_io.BinaryIOCollection">[docs]</a><span class="k">class</span>   <span class="nc">BinaryIOCollection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">load_binary_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">dimension</span><span class="p">):</span>
+        <span class="n">fid_lab</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fid_lab</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">fid_lab</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">features</span><span class="o">.</span><span class="n">size</span> <span class="o">%</span> <span class="nb">float</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span><span class="s1">&#39;specified dimension </span><span class="si">%s</span><span class="s1"> not compatible with data&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="p">[:(</span><span class="n">dimension</span> <span class="o">*</span> <span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">dimension</span><span class="p">))]</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dimension</span><span class="p">))</span>
+            
+        <span class="k">return</span>  <span class="n">features</span>
+
+    <span class="k">def</span> <span class="nf">array_to_binary_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_file_name</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+               
+        <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file_name</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+        <span class="n">fid</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">load_binary_file_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">dimension</span><span class="p">):</span>
+        <span class="n">fid_lab</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fid_lab</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">fid_lab</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">features</span><span class="o">.</span><span class="n">size</span> <span class="o">%</span> <span class="nb">float</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span><span class="s1">&#39;specified dimension </span><span class="si">%s</span><span class="s1"> not compatible with data&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
+        <span class="n">frame_number</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="n">dimension</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="p">[:(</span><span class="n">dimension</span> <span class="o">*</span> <span class="n">frame_number</span><span class="p">)]</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dimension</span><span class="p">))</span>
+            
+        <span class="k">return</span>  <span class="n">features</span><span class="p">,</span> <span class="n">frame_number</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Zhizheng.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

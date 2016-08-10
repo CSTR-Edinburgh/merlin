@@ -1,0 +1,433 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>utils.providers &mdash; CSTR NN-TTS 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="CSTR NN-TTS 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for utils.providers</h1><div class="highlight"><pre>
+<span class="c1">################################################################################</span>
+<span class="c1">#           The Neural Network (NN) based Speech Synthesis System</span>
+<span class="c1">#                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/</span>
+<span class="c1">#                </span>
+<span class="c1">#                Centre for Speech Technology Research                 </span>
+<span class="c1">#                     University of Edinburgh, UK                       </span>
+<span class="c1">#                      Copyright (c) 2014-2015</span>
+<span class="c1">#                        All Rights Reserved.                           </span>
+<span class="c1">#                                                                       </span>
+<span class="c1"># The system as a whole and most of the files in it are distributed</span>
+<span class="c1"># under the following copyright and conditions</span>
+<span class="c1">#</span>
+<span class="c1">#  Permission is hereby granted, free of charge, to use and distribute  </span>
+<span class="c1">#  this software and its documentation without restriction, including   </span>
+<span class="c1">#  without limitation the rights to use, copy, modify, merge, publish,  </span>
+<span class="c1">#  distribute, sublicense, and/or sell copies of this work, and to      </span>
+<span class="c1">#  permit persons to whom this work is furnished to do so, subject to   </span>
+<span class="c1">#  the following conditions:</span>
+<span class="c1">#  </span>
+<span class="c1">#   - Redistributions of source code must retain the above copyright  </span>
+<span class="c1">#     notice, this list of conditions and the following disclaimer.   </span>
+<span class="c1">#   - Redistributions in binary form must reproduce the above         </span>
+<span class="c1">#     copyright notice, this list of conditions and the following     </span>
+<span class="c1">#     disclaimer in the documentation and/or other materials provided </span>
+<span class="c1">#     with the distribution.                                          </span>
+<span class="c1">#   - The authors&#39; names may not be used to endorse or promote products derived </span>
+<span class="c1">#     from this software without specific prior written permission.   </span>
+<span class="c1">#                                  </span>
+<span class="c1">#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        </span>
+<span class="c1">#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      </span>
+<span class="c1">#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   </span>
+<span class="c1">#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     </span>
+<span class="c1">#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    </span>
+<span class="c1">#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   </span>
+<span class="c1">#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          </span>
+<span class="c1">#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       </span>
+<span class="c1">#  THIS SOFTWARE.</span>
+<span class="c1">################################################################################</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span><span class="o">,</span> <span class="nn">theano</span><span class="o">,</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">io_funcs.binary_io</span> <span class="kn">import</span> <span class="n">BinaryIOCollection</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<div class="viewcode-block" id="ListDataProvider"><a class="viewcode-back" href="../../index.html#utils.providers.ListDataProvider">[docs]</a><span class="k">class</span> <span class="nc">ListDataProvider</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class provides an interface to load data into CPU/GPU memory utterance by utterance or block by block.</span>
+<span class="sd">    </span>
+<span class="sd">    In speech synthesis, usually we are not able to load all the training data/evaluation data into RAMs, we will do the following three steps:</span>
+<span class="sd">    </span>
+<span class="sd">    - Step 1: a data provide will load part of the data into a buffer</span>
+<span class="sd">    </span>
+<span class="sd">    - Step 2: training a DNN by using the data from the buffer</span>
+<span class="sd">    </span>
+<span class="sd">    - Step 3: Iterate step 1 and 2 until all the data are used for DNN training. Until now, one epoch of DNN training is finished.</span>
+<span class="sd">    </span>
+<span class="sd">    The utterance-by-utterance data loading will be useful when sequential training is used, while block-by-block loading will be used when the order of frames is not important.</span>
+<span class="sd">    </span>
+<span class="sd">    This provide assumes binary format with float32 precision without any header (e.g. HTK header).</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ListDataProvider.__init__"><a class="viewcode-back" href="../../index.html#utils.providers.ListDataProvider.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_file_list</span><span class="p">,</span> <span class="n">y_file_list</span><span class="p">,</span> <span class="n">n_ins</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_outs</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">500000</span><span class="p">,</span> <span class="n">sequential</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialise a data provider</span>
+<span class="sd">        </span>
+<span class="sd">        :param x_file_list: list of file names for the input files to DNN</span>
+<span class="sd">        :type x_file_list: python list</span>
+<span class="sd">        :param y_file_list: list of files for the output files to DNN</span>
+<span class="sd">        :param n_ins: the dimensionality for input feature</span>
+<span class="sd">        :param n_outs: the dimensionality for output features</span>
+<span class="sd">        :param buffer_size: the size of the buffer, indicating the number of frames in the buffer. The value depends on the memory size of RAM/GPU.</span>
+<span class="sd">        :param shuffle: True/False. To indicate whether the file list will be shuffled. When loading data block by block, the data in the buffer will be shuffle no matter this value is True or False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;ListDataProvider&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_ins</span> <span class="o">=</span> <span class="n">n_ins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_outs</span> <span class="o">=</span> <span class="n">n_outs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">=</span> <span class="n">buffer_size</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">sequential</span> <span class="o">=</span> <span class="n">sequential</span>
+            
+        <span class="c1">#remove potential empty lines and end of line signs</span>
+
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_file_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;first list is empty&#39;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_file_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;second list is empty&#39;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_file_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_file_list</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s1">&#39;two lists are of differing lengths: </span><span class="si">%d</span><span class="s1"> versus </span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">x_file_list</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">y_file_list</span><span class="p">))</span>
+            <span class="k">raise</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span> <span class="o">=</span> <span class="n">x_file_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_files_list</span> <span class="o">=</span> <span class="n">y_file_list</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;first  list of items from ...</span><span class="si">%s</span><span class="s1"> to ...</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mi">20</span><span class="p">)[</span><span class="o">-</span><span class="mi">20</span><span class="p">:],</span><span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mi">20</span><span class="p">)[</span><span class="o">-</span><span class="mi">20</span><span class="p">:])</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;second list of items from ...</span><span class="si">%s</span><span class="s1"> to ...</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_files_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mi">20</span><span class="p">)[</span><span class="o">-</span><span class="mi">20</span><span class="p">:],</span><span class="bp">self</span><span class="o">.</span><span class="n">y_files_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mi">20</span><span class="p">)[</span><span class="o">-</span><span class="mi">20</span><span class="p">:])</span> <span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span> 
+            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">271638</span><span class="p">)</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span><span class="p">)</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">271638</span><span class="p">)</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_files_list</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">remain_data_x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_ins</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remain_data_y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_outs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_reading</span> <span class="o">=</span> <span class="bp">False</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;initialised&#39;</span><span class="p">)</span></div>
+    
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span> 
+    
+<div class="viewcode-block" id="ListDataProvider.reset"><a class="viewcode-back" href="../../index.html#utils.providers.ListDataProvider.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When all the files in the file list have been used for DNN training, reset the data provider to start a new epoch.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_reading</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;reset&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ListDataProvider.make_shared"><a class="viewcode-back" href="../../index.html#utils.providers.ListDataProvider.make_shared">[docs]</a>    <span class="k">def</span> <span class="nf">make_shared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_set</span><span class="p">,</span> <span class="n">data_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;To make data shared for theano implementation. If you want to know why we make it shared, please refer the theano documentation: http://deeplearning.net/software/theano/library/compile/shared.html</span>
+<span class="sd">        </span>
+<span class="sd">        :param data_set: normal data in CPU memory</span>
+<span class="sd">        :param data_name: indicate the name of the data (e.g., &#39;x&#39;, &#39;y&#39;, etc)</span>
+<span class="sd">        :returns: shared dataset -- data_set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_set</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data_set</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theano</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">data_name</span><span class="p">,</span> <span class="n">borrow</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="k">return</span>  <span class="n">data_set</span></div>
+
+    <span class="k">def</span> <span class="nf">load_one_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequential</span><span class="p">:</span>
+            <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">temp_set_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_next_utterance</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">temp_set_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_next_partition</span><span class="p">()</span>
+            
+        <span class="k">return</span>  <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">temp_set_y</span>
+
+<div class="viewcode-block" id="ListDataProvider.load_next_utterance"><a class="viewcode-back" href="../../index.html#utils.providers.ListDataProvider.load_next_utterance">[docs]</a>    <span class="k">def</span> <span class="nf">load_next_utterance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load the data for one utterance. This function will be called when utterance-by-utterance loading is required (e.g., sequential training).</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">temp_set_x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_ins</span><span class="p">))</span>
+        <span class="n">temp_set_y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_outs</span><span class="p">))</span>
+
+        <span class="n">io_fun</span> <span class="o">=</span> <span class="n">BinaryIOCollection</span><span class="p">()</span>
+
+        <span class="n">in_features</span><span class="p">,</span> <span class="n">lab_frame_number</span> <span class="o">=</span> <span class="n">io_fun</span><span class="o">.</span><span class="n">load_binary_file_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">file_index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_ins</span><span class="p">)</span>
+        <span class="n">out_features</span><span class="p">,</span> <span class="n">out_frame_number</span> <span class="o">=</span> <span class="n">io_fun</span><span class="o">.</span><span class="n">load_binary_file_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_files_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">file_index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_outs</span><span class="p">)</span>
+            
+        <span class="n">frame_number</span> <span class="o">=</span> <span class="n">lab_frame_number</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lab_frame_number</span> <span class="o">-</span> <span class="n">out_frame_number</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>    <span class="c1">## we allow small difference here. may not be correct, but sometimes, there is one/two frames difference</span>
+            <span class="k">if</span> <span class="n">lab_frame_number</span> <span class="o">&gt;</span> <span class="n">out_frame_number</span><span class="p">:</span>
+                <span class="n">frame_number</span> <span class="o">=</span> <span class="n">out_frame_number</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;the number of frames in label and acoustic features are different: </span><span class="si">%d</span><span class="s2"> vs </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">lab_frame_number</span><span class="p">,</span> <span class="n">out_frame_number</span><span class="p">))</span>
+            <span class="k">raise</span>
+
+        <span class="n">temp_set_y</span> <span class="o">=</span> <span class="n">out_features</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span>
+        <span class="n">temp_set_x</span> <span class="o">=</span> <span class="n">in_features</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span>  <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_reading</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">shared_set_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">shared_set_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">temp_set_y</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">)</span>
+
+        <span class="n">shared_set_xy</span> <span class="o">=</span> <span class="p">(</span><span class="n">shared_set_x</span><span class="p">,</span> <span class="n">shared_set_y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">temp_set_y</span></div>
+        
+
+<div class="viewcode-block" id="ListDataProvider.load_next_partition"><a class="viewcode-back" href="../../index.html#utils.providers.ListDataProvider.load_next_partition">[docs]</a>    <span class="k">def</span> <span class="nf">load_next_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load one block data. The number of frames will be the buffer size set during intialisation.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;loading next partition&#39;</span><span class="p">)</span>
+        
+        <span class="n">temp_set_x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_ins</span><span class="p">))</span>
+        <span class="n">temp_set_y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_outs</span><span class="p">))</span>
+        <span class="n">current_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1">### first check whether there are remaining data from previous utterance</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">temp_set_x</span><span class="p">[</span><span class="n">current_index</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span><span class="p">,</span> <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remain_data_x</span>
+            <span class="n">temp_set_y</span><span class="p">[</span><span class="n">current_index</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span><span class="p">,</span> <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remain_data_y</span>
+            <span class="n">current_index</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">io_fun</span> <span class="o">=</span> <span class="n">BinaryIOCollection</span><span class="p">()</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">current_index</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span>  <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_size</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">end_reading</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">break</span>
+
+            <span class="n">in_features</span><span class="p">,</span> <span class="n">lab_frame_number</span> <span class="o">=</span> <span class="n">io_fun</span><span class="o">.</span><span class="n">load_binary_file_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_files_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">file_index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_ins</span><span class="p">)</span>
+            <span class="n">out_features</span><span class="p">,</span> <span class="n">out_frame_number</span> <span class="o">=</span> <span class="n">io_fun</span><span class="o">.</span><span class="n">load_binary_file_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_files_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">file_index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_outs</span><span class="p">)</span>
+            
+            <span class="n">frame_number</span> <span class="o">=</span> <span class="n">lab_frame_number</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lab_frame_number</span> <span class="o">-</span> <span class="n">out_frame_number</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>    <span class="c1">## we allow small difference here. may not be correct, but sometimes, there is one/two frames difference</span>
+                <span class="k">if</span> <span class="n">lab_frame_number</span> <span class="o">&gt;</span> <span class="n">out_frame_number</span><span class="p">:</span>
+                    <span class="n">frame_number</span> <span class="o">=</span> <span class="n">out_frame_number</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;the number of frames in label and acoustic features are different: </span><span class="si">%d</span><span class="s2"> vs </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">lab_frame_number</span><span class="p">,</span> <span class="n">out_frame_number</span><span class="p">))</span>
+                <span class="k">print</span> <span class="n">lab_frame_number</span>
+                <span class="k">print</span> <span class="n">out_frame_number</span>
+                <span class="k">raise</span>
+
+            <span class="n">out_features</span> <span class="o">=</span> <span class="n">out_features</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span>
+            <span class="n">in_features</span> <span class="o">=</span> <span class="n">in_features</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">current_index</span> <span class="o">+</span> <span class="n">frame_number</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">:</span>   
+                <span class="n">temp_set_x</span><span class="p">[</span><span class="n">current_index</span><span class="p">:</span><span class="n">current_index</span><span class="o">+</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span> <span class="o">=</span> <span class="n">in_features</span>
+                <span class="n">temp_set_y</span><span class="p">[</span><span class="n">current_index</span><span class="p">:</span><span class="n">current_index</span><span class="o">+</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span> <span class="o">=</span> <span class="n">out_features</span>
+                    
+                <span class="n">current_index</span> <span class="o">=</span> <span class="n">current_index</span> <span class="o">+</span> <span class="n">frame_number</span>
+            <span class="k">else</span><span class="p">:</span>   <span class="c1">## if current utterance cannot be stored in the block, then leave the remaining part for the next block</span>
+                <span class="n">used_frame_number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span> <span class="o">-</span> <span class="n">current_index</span>
+                <span class="n">temp_set_x</span><span class="p">[</span><span class="n">current_index</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="p">]</span> <span class="o">=</span> <span class="n">in_features</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">used_frame_number</span><span class="p">,</span> <span class="p">]</span>
+                <span class="n">temp_set_y</span><span class="p">[</span><span class="n">current_index</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span><span class="p">,</span> <span class="p">]</span> <span class="o">=</span> <span class="n">out_features</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">used_frame_number</span><span class="p">,</span> <span class="p">]</span>
+                <span class="n">current_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_size</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">remain_data_x</span> <span class="o">=</span> <span class="n">in_features</span><span class="p">[</span><span class="n">used_frame_number</span><span class="p">:</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">remain_data_y</span> <span class="o">=</span> <span class="n">out_features</span><span class="p">[</span><span class="n">used_frame_number</span><span class="p">:</span><span class="n">frame_number</span><span class="p">,</span> <span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">remain_frame_number</span> <span class="o">=</span> <span class="n">frame_number</span> <span class="o">-</span> <span class="n">used_frame_number</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">file_index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">temp_set_x</span> <span class="o">=</span> <span class="n">temp_set_x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">current_index</span><span class="p">,</span> <span class="p">]</span>
+        <span class="n">temp_set_y</span> <span class="o">=</span> <span class="n">temp_set_y</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">current_index</span><span class="p">,</span> <span class="p">]</span>
+
+        <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">271639</span><span class="p">)</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">)</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">271639</span><span class="p">)</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">temp_set_y</span><span class="p">)</span>
+
+        <span class="n">shared_set_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">shared_set_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">temp_set_y</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">)</span>
+
+        <span class="n">shared_set_xy</span> <span class="o">=</span> <span class="p">(</span><span class="n">shared_set_x</span><span class="p">,</span> <span class="n">shared_set_y</span><span class="p">)</span>
+<span class="c1">#        temp_set_x = self.make_shared(temp_set_x, &#39;x&#39;)</span>
+<span class="c1">#        temp_set_y = self.make_shared(temp_set_y, &#39;y&#39;)</span>
+
+        <span class="k">return</span> <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">temp_set_y</span></div>
+        
+    <span class="k">def</span> <span class="nf">is_finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_reading</span></div>
+
+
+<span class="k">class</span> <span class="nc">ListDataProviderWithProjectionIndex</span><span class="p">(</span><span class="n">ListDataProvider</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Added kwarg index_to_project to __init__</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_file_list</span><span class="p">,</span> <span class="n">y_file_list</span><span class="p">,</span> <span class="n">n_ins</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_outs</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> \
+            <span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">500000</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">index_to_project</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">projection_insize</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">indexes_only</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c1">##ListDataProvider.__init__(x_file_list, \</span>
+        <span class="c1">##         y_file_list, n_ins=0, n_outs=0, buffer_size = 500000, shuffle=False) </span>
+        <span class="nb">super</span><span class="p">(</span> <span class="n">ListDataProviderWithProjectionIndex</span><span class="p">,</span> <span class="bp">self</span> <span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">x_file_list</span><span class="p">,</span> \
+                 <span class="n">y_file_list</span><span class="p">,</span> <span class="n">n_ins</span><span class="o">=</span><span class="n">n_ins</span><span class="p">,</span> <span class="n">n_outs</span><span class="o">=</span><span class="n">n_outs</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">)</span>                               
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_to_project</span> <span class="o">=</span> <span class="n">index_to_project</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">projection_insize</span> <span class="o">=</span> <span class="n">projection_insize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexes_only</span> <span class="o">=</span> <span class="n">indexes_only</span>
+
+    <span class="k">def</span> <span class="nf">load_next_partition_with_projection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    
+        <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">temp_set_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_next_partition</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexes_only</span><span class="p">:</span>
+            <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">p_indexes</span> <span class="o">=</span> <span class="n">get_unexpanded_projection_inputs</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_to_project</span><span class="p">,</span> \
+                                                            <span class="bp">self</span><span class="o">.</span><span class="n">projection_insize</span><span class="p">)</span>
+            <span class="n">shared_set_x_proj</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">p_indexes</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;x_proj&#39;</span><span class="p">,</span> <span class="n">borrow</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>                                            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">one_hot</span> <span class="o">=</span> <span class="n">expand_projection_inputs</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_to_project</span><span class="p">,</span> \
+                                                            <span class="bp">self</span><span class="o">.</span><span class="n">projection_insize</span><span class="p">)</span>                                                                        
+            <span class="n">shared_set_x_proj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">one_hot</span><span class="p">,</span> <span class="s1">&#39;x_proj&#39;</span><span class="p">)</span>
+            
+        <span class="n">shared_set_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">shared_set_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_shared</span><span class="p">(</span><span class="n">temp_set_y</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">)</span>
+
+        <span class="n">shared_set_xy</span> <span class="o">=</span> <span class="p">(</span><span class="n">shared_set_x</span><span class="p">,</span> <span class="n">shared_set_x_proj</span><span class="p">,</span> <span class="n">shared_set_y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexes_only</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">p_indexes</span><span class="p">,</span> <span class="n">temp_set_y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">shared_set_xy</span><span class="p">,</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">one_hot</span><span class="p">,</span> <span class="n">temp_set_y</span>
+            
+<span class="c1">## Put this function at global level so it can be imported for use in dnn_generation</span>
+<span class="k">def</span> <span class="nf">expand_projection_inputs</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="n">index_to_project</span><span class="p">,</span> <span class="n">projection_insize</span><span class="p">):</span>
+    <span class="c1">## Turn indexes to words, syllables etc. to one-hot data:</span>
+    <span class="n">m</span><span class="p">,</span><span class="n">n</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">)</span>
+    <span class="n">projection_indices</span> <span class="o">=</span> <span class="n">temp_set_x</span><span class="p">[:,</span> <span class="n">index_to_project</span><span class="p">]</span>
+    <span class="c1">#print projection_indices.tolist()</span>
+    <span class="k">assert</span> <span class="n">projection_indices</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">projection_insize</span><span class="p">,</span><span class="s1">&#39;projection_insize is </span><span class="si">%s</span><span class="s1"> but there is an index </span><span class="si">%s</span><span class="s1"> in the data&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">projection_insize</span><span class="p">,</span> <span class="n">projection_indices</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">one_hot</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">projection_insize</span><span class="p">))</span>
+    
+    <span class="c1">## Used advanced indexing to turn the relevant features on:</span>
+    <span class="n">projection_indices</span> <span class="o">=</span> <span class="n">projection_indices</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="c1">## check conversion???!?!?!</span>
+    <span class="c1">#     print projection_indices.tolist()</span>
+    <span class="c1">#     print &#39;            ^--- proj indices&#39;</span>
+    <span class="c1">#     print </span>
+    <span class="n">one_hot</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">),</span><span class="n">projection_indices</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="c1">## Effectively remove the index from the original data by setting to 0:</span>
+    <span class="n">temp_set_x</span><span class="p">[:,</span> <span class="n">index_to_project</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">one_hot</span>
+    
+<span class="k">def</span> <span class="nf">get_unexpanded_projection_inputs</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">,</span> <span class="n">index_to_project</span><span class="p">,</span> <span class="n">projection_insize</span><span class="p">):</span>
+    <span class="c1">## Turn indexes to words, syllables etc. to one-hot data:</span>
+    <span class="n">m</span><span class="p">,</span><span class="n">n</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">temp_set_x</span><span class="p">)</span>
+    <span class="n">projection_indices</span> <span class="o">=</span> <span class="n">temp_set_x</span><span class="p">[:,</span> <span class="n">index_to_project</span><span class="p">]</span>
+    <span class="c1">#print projection_indices.tolist()</span>
+    <span class="k">assert</span> <span class="n">projection_indices</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">projection_insize</span><span class="p">,</span><span class="s1">&#39;projection_insize is </span><span class="si">%s</span><span class="s1"> but there is an index </span><span class="si">%s</span><span class="s1"> in the data&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">projection_insize</span><span class="p">,</span> <span class="n">projection_indices</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    
+    <span class="n">projection_indices</span> <span class="o">=</span> <span class="n">projection_indices</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span> <span class="c1">## check conversion???!?!?!</span>
+    
+    <span class="n">temp_set_x</span><span class="p">[:,</span> <span class="n">index_to_project</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">temp_set_x</span><span class="p">,</span> <span class="n">projection_indices</span>
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Zhizheng.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

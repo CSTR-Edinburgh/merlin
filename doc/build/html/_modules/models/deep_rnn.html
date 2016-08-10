@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>models.deep_rnn &mdash; CSTR NN-TTS 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="CSTR NN-TTS 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for models.deep_rnn</h1><div class="highlight"><pre>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">theano</span>
+<span class="kn">import</span> <span class="nn">theano.tensor</span> <span class="kn">as</span> <span class="nn">T</span>
+<span class="kn">from</span> <span class="nn">theano.tensor.shared_randomstreams</span> <span class="kn">import</span> <span class="n">RandomStreams</span>
+
+<span class="kn">from</span> <span class="nn">layers.gating</span> <span class="kn">import</span> <span class="n">SimplifiedLstm</span><span class="p">,</span> <span class="n">BidirectionSLstm</span><span class="p">,</span> <span class="n">VanillaLstm</span><span class="p">,</span> <span class="n">BidirectionLstm</span><span class="p">,</span> <span class="n">VanillaRNN</span>
+<span class="kn">from</span> <span class="nn">layers.layers</span> <span class="kn">import</span> <span class="n">LinearLayer</span><span class="p">,</span> <span class="n">SigmoidLayer</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<div class="viewcode-block" id="DeepRecurrentNetwork"><a class="viewcode-back" href="../../index.html#models.deep_rnn.DeepRecurrentNetwork">[docs]</a><span class="k">class</span> <span class="nc">DeepRecurrentNetwork</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span> 
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class is to assemble various neural network architectures. From basic feedforward neural network to bidirectional gated recurrent neural networks and hybrid architecture. **Hybrid** means a combination of feedforward and recurrent architecture.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="DeepRecurrentNetwork.__init__"><a class="viewcode-back" href="../../index.html#models.deep_rnn.DeepRecurrentNetwork.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">,</span> <span class="n">n_out</span><span class="p">,</span> <span class="n">L1_reg</span><span class="p">,</span> <span class="n">L2_reg</span><span class="p">,</span> <span class="n">hidden_layer_type</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;LINEAR&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function initialises a neural network</span>
+<span class="sd">        </span>
+<span class="sd">        :param n_in: Dimensionality of input features</span>
+<span class="sd">        :type in: Integer</span>
+<span class="sd">        :param hidden_layer_size: The layer size for each hidden layer</span>
+<span class="sd">        :type hidden_layer_size: A list of integers</span>
+<span class="sd">        :param n_out: Dimensionality of output features</span>
+<span class="sd">        :type n_out: Integrer</span>
+<span class="sd">        :param hidden_layer_type: the activation types of each hidden layers, e.g., TANH, LSTM, GRU, BLSTM</span>
+<span class="sd">        :param L1_reg: the L1 regulasation weight</span>
+<span class="sd">        :param L2_reg: the L2 regulasation weight</span>
+<span class="sd">        :param output_type: the activation type of the output layer, by default is &#39;LINEAR&#39;, linear regression.</span>
+<span class="sd">        :param p_dropout: the dropout rate, a float number between 0 and 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;DNN initialization&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_in</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_in</span><span class="p">)</span>
+<span class="c1">#        self.n_h = int(n_h)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_out</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_out</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_layer_size</span><span class="p">)</span>
+        
+<span class="c1">#        print   len(hidden_layer_size), len(hidden_layer_type)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_layer_size</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_layer_type</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">L1_reg</span> <span class="o">=</span> <span class="n">L1_reg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L2_reg</span> <span class="o">=</span> <span class="n">L2_reg</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">rnn_layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_params</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">123</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">input_size</span> <span class="o">=</span> <span class="n">n_in</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">input_size</span> <span class="o">=</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">layer_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">layer_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rnn_layers</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">output</span>
+                <span class="k">if</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="o">==</span> <span class="s1">&#39;BSLSTM&#39;</span> <span class="ow">or</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="o">==</span> <span class="s1">&#39;BLSTM&#39;</span><span class="p">:</span>
+                    <span class="n">input_size</span> <span class="o">=</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span>
+                    
+            <span class="k">if</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;SLSTM&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">SimplifiedLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;LSTM&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">VanillaLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;BSLSTM&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">BidirectionSLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;BLSTM&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">BidirectionLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;RNN&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">VanillaRNN</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;TANH&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">SigmoidLayer</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">activation</span><span class="o">=</span><span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;SIGMOID&#39;</span><span class="p">:</span>
+                <span class="n">hidden_layer</span> <span class="o">=</span> <span class="n">SigmoidLayer</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">layer_input</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">activation</span><span class="o">=</span><span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;This hidden layer type: </span><span class="si">%s</span><span class="s2"> is not supported right now! </span><span class="se">\n</span><span class="s2"> Please use one of the following: SLSTM, BSLSTM, TANH, SIGMOID</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">hidden_layer_type</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">rnn_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hidden_layer</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">hidden_layer</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+
+        <span class="n">input_size</span> <span class="o">=</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="o">==</span> <span class="s1">&#39;BSLSTM&#39;</span> <span class="ow">or</span> <span class="n">hidden_layer_type</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="o">==</span> <span class="s1">&#39;BLSTM&#39;</span><span class="p">:</span>
+            <span class="n">input_size</span> <span class="o">=</span> <span class="n">hidden_layer_size</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span>
+        
+        <span class="k">if</span> <span class="n">output_type</span> <span class="o">==</span> <span class="s1">&#39;LINEAR&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">final_layer</span> <span class="o">=</span> <span class="n">LinearLayer</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rnn_layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_out</span><span class="p">)</span>
+<span class="c1">#        elif output_type == &#39;BSLSTM&#39;:</span>
+<span class="c1">#            self.final_layer = BidirectionLSTM(rng, self.rnn_layers[-1].output, input_size, hidden_layer_size[-1], self.n_out)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;This output layer type: </span><span class="si">%s</span><span class="s2"> is not supported right now! </span><span class="se">\n</span><span class="s2"> Please use one of the following: LINEAR, BSLSTM</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">output_type</span><span class="p">))</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_layer</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+   
+        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">borrow</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                                <span class="n">dtype</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;updates&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">finetune_cost</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">final_layer</span><span class="o">.</span><span class="n">output</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">final_layer</span><span class="o">.</span><span class="n">output</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span></div>
+
+<span class="c1">#        self.L2_sqr = (self.W_hy ** 2).sum() </span>
+
+<div class="viewcode-block" id="DeepRecurrentNetwork.build_finetune_functions"><a class="viewcode-back" href="../../index.html#models.deep_rnn.DeepRecurrentNetwork.build_finetune_functions">[docs]</a>    <span class="k">def</span> <span class="nf">build_finetune_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_shared_xy</span><span class="p">,</span> <span class="n">valid_shared_xy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function is to build finetune functions and to update gradients</span>
+<span class="sd">        </span>
+<span class="sd">        :param train_shared_xy: theano shared variable for input and output training data </span>
+<span class="sd">        :type train_shared_xy: tuple of shared variable</span>
+<span class="sd">        :param valid_shared_xy: theano shared variable for input and output development data</span>
+<span class="sd">        :type valid_shared_xy: tuple of shared variable</span>
+<span class="sd">        :returns: finetune functions for training and development</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="p">(</span><span class="n">train_set_x</span><span class="p">,</span> <span class="n">train_set_y</span><span class="p">)</span> <span class="o">=</span> <span class="n">train_shared_xy</span>
+        <span class="p">(</span><span class="n">valid_set_x</span><span class="p">,</span> <span class="n">valid_set_y</span><span class="p">)</span> <span class="o">=</span> <span class="n">valid_shared_xy</span>
+            
+        <span class="n">lr</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;lr&#39;</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">mom</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="s1">&#39;mom&#39;</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>  <span class="c1"># momentum</span>
+
+        <span class="n">cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">finetune_cost</span> <span class="c1">#+ self.L2_reg * self.L2_sqr</span>
+
+        <span class="n">gparams</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">cost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        
+        
+        <span class="c1"># zip just concatenate two lists</span>
+        <span class="n">updates</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">compat</span><span class="o">.</span><span class="n">python2x</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+<span class="c1">#        for dparam, gparam in zip(self.delta_params, gparams):</span>
+<span class="c1">#            updates[dparam] = mom * dparam - gparam * lr</span>
+
+<span class="c1">#        for dparam, param in zip(self.delta_params, self.params):</span>
+<span class="c1">#            updates[param] = param + updates[dparam]</span>
+
+        
+        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">gparam</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">gparams</span><span class="p">):</span>
+            <span class="n">weight_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
+            <span class="n">upd</span> <span class="o">=</span> <span class="n">mom</span> <span class="o">*</span> <span class="n">weight_update</span> <span class="o">-</span> <span class="n">lr</span> <span class="o">*</span> <span class="n">gparam</span>
+            <span class="n">updates</span><span class="p">[</span><span class="n">weight_update</span><span class="p">]</span> <span class="o">=</span> <span class="n">upd</span>
+            <span class="n">updates</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span> <span class="o">+</span> <span class="n">upd</span>
+
+        <span class="n">train_model</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">lr</span><span class="p">,</span> <span class="n">mom</span><span class="p">],</span>
+                                      <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+                                      <span class="n">updates</span> <span class="o">=</span> <span class="n">updates</span><span class="p">,</span>
+                                      <span class="n">givens</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">:</span> <span class="n">train_set_x</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">:</span> <span class="n">train_set_y</span><span class="p">})</span>
+
+
+        <span class="n">valid_model</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">[],</span>
+                                      <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+                                      <span class="n">givens</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">:</span> <span class="n">valid_set_x</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">:</span> <span class="n">valid_set_y</span><span class="p">})</span>
+
+        <span class="k">return</span>  <span class="n">train_model</span><span class="p">,</span> <span class="n">valid_model</span></div>
+
+<div class="viewcode-block" id="DeepRecurrentNetwork.parameter_prediction"><a class="viewcode-back" href="../../index.html#models.deep_rnn.DeepRecurrentNetwork.parameter_prediction">[docs]</a>    <span class="k">def</span> <span class="nf">parameter_prediction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_set_x</span><span class="p">):</span>  <span class="c1">#, batch_size</span>
+        <span class="sd">&quot;&quot;&quot; This function is to predict </span>
+<span class="sd">        </span>
+<span class="sd">        :param test_set_x: input features for a testing sentence</span>
+<span class="sd">        :type test_set_x: python array variable</span>
+<span class="sd">        :returns: predicted features</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+
+        <span class="n">n_test_set_x</span> <span class="o">=</span> <span class="n">test_set_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">test_out</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">function</span><span class="p">([],</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_layer</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
+              <span class="n">givens</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">:</span> <span class="n">test_set_x</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n_test_set_x</span><span class="p">]})</span>
+
+        <span class="n">predict_parameter</span> <span class="o">=</span> <span class="n">test_out</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">predict_parameter</span>    </div></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Zhizheng.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

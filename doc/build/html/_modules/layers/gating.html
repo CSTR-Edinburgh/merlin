@@ -1,0 +1,623 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>layers.gating &mdash; CSTR NN-TTS 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="CSTR NN-TTS 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for layers.gating</h1><div class="highlight"><pre>
+
+<span class="c1">### refer Zhizheng and Simon&#39;s ICASSP&#39;16 paper for more details</span>
+<span class="c1">### http://www.zhizheng.org/papers/icassp2016_lstm.pdf</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">theano</span>
+<span class="kn">import</span> <span class="nn">theano.tensor</span> <span class="kn">as</span> <span class="nn">T</span>
+<span class="kn">from</span> <span class="nn">theano</span> <span class="kn">import</span> <span class="n">config</span>
+
+<div class="viewcode-block" id="VanillaRNN"><a class="viewcode-back" href="../../index.html#layers.gating.VanillaRNN">[docs]</a><span class="k">class</span> <span class="nc">VanillaRNN</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a standard recurrent neural network: h_{t} = f(W^{hx}x_{t} + W^{hh}h_{t-1}+b_{h})</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="VanillaRNN.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.VanillaRNN.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This is to initialise a standard RNN hidden unit</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input data to current layer</span>
+<span class="sd">        :param n_in: dimension of input data</span>
+<span class="sd">        :param n_h: number of hidden units/blocks</span>
+<span class="sd">        &quot;&quot;&quot;</span>    
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">x</span>
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_in</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_h</span><span class="p">)</span>
+        
+        <span class="c1"># random initialisation </span>
+        <span class="n">Wx_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wh_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+
+        <span class="c1"># Input gate weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wx_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_xi&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wh_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_hi&#39;</span><span class="p">)</span>
+
+        <span class="c1"># bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b_i&#39;</span><span class="p">)</span>
+        
+        
+        <span class="c1"># initial value of hidden and cell state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h0</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;h0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c0</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;c0&#39;</span><span class="p">)</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wix</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">)</span>
+        
+        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recurrent_as_activation_function</span><span class="p">,</span> <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Wix</span><span class="p">],</span>
+                                                                      <span class="n">outputs_info</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h0</span><span class="p">])</span> 
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">L2_cost</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="VanillaRNN.recurrent_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.VanillaRNN.recurrent_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">recurrent_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Implement the recurrent unit as an activation function. This function is called by self.__init__().</span>
+<span class="sd">        </span>
+<span class="sd">        :param Wix: it equals to W^{hx}x_{t}, as it does not relate with recurrent, pre-calculate the value for fast computation</span>
+<span class="sd">        :type Wix: matrix</span>
+<span class="sd">        :param h_tm1: contains the hidden activation from previous time step</span>
+<span class="sd">        :type h_tm1: matrix, each row means a hidden activation vector of a time step</span>
+<span class="sd">        :returns: h_t is the hidden activation of current time step</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wix</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">)</span>  <span class="c1">#</span>
+
+        <span class="k">return</span> <span class="n">h_t</span></div></div>
+
+
+
+<div class="viewcode-block" id="LstmBase"><a class="viewcode-back" href="../../index.html#layers.gating.LstmBase">[docs]</a><span class="k">class</span> <span class="nc">LstmBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class provides as a base for all long short-term memory (LSTM) related classes. </span>
+<span class="sd">    Several variants of LSTM were investigated in (Wu &amp; King, ICASSP 2016): Zhizheng Wu, Simon King, &quot;Investigating gated recurrent neural networks for speech synthesis&quot;, ICASSP 2016</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LstmBase.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.LstmBase.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise all the components in a LSTM block, including input gate, output gate, forget gate, peephole connections</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">x</span>
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_in</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_h</span><span class="p">)</span>
+        
+        <span class="c1"># random initialisation </span>
+        <span class="n">Wx_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wh_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wc_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+
+        <span class="c1"># Input gate weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wx_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_xi&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wh_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_hi&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wc_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;w_ci&#39;</span><span class="p">)</span>
+
+        <span class="c1"># random initialisation </span>
+        <span class="n">Wx_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wh_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wc_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+
+        <span class="c1"># Forget gate weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wx_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_xf&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wh_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_hf&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wc_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;w_cf&#39;</span><span class="p">)</span>
+
+        <span class="c1"># random initialisation </span>
+        <span class="n">Wx_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wh_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wc_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+
+        <span class="c1"># Output gate weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xo</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wx_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_xo&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wh_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_ho&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wc_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;w_co&#39;</span><span class="p">)</span>
+
+        <span class="c1"># random initialisation </span>
+        <span class="n">Wx_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wh_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+        <span class="n">Wc_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">)</span>
+
+        <span class="c1"># Cell weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wx_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_xc&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Wh_value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_hc&#39;</span><span class="p">)</span>
+
+        <span class="c1"># bias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b_i&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b_f&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b_o&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b_c&#39;</span><span class="p">)</span>
+        
+        <span class="c1">### make a layer</span>
+        
+        <span class="c1"># initial value of hidden and cell state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h0</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;h0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c0</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;c0&#39;</span><span class="p">)</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wix</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wfx</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wcx</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wox</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xo</span><span class="p">)</span>
+        
+        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recurrent_fn</span><span class="p">,</span> <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Wix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wfx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wcx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wox</span><span class="p">],</span>
+                                                             <span class="n">outputs_info</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c0</span><span class="p">])</span> 
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span></div>
+        
+        
+<div class="viewcode-block" id="LstmBase.recurrent_fn"><a class="viewcode-back" href="../../index.html#layers.gating.LstmBase.recurrent_fn">[docs]</a>    <span class="k">def</span> <span class="nf">recurrent_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This implements a genetic recurrent function, called by self.__init__().</span>
+<span class="sd">        </span>
+<span class="sd">        :param Wix: pre-computed matrix applying the weight matrix W on  the input units, for input gate</span>
+<span class="sd">        :param Wfx: Similar to Wix, but for forget gate</span>
+<span class="sd">        :param Wcx: Similar to Wix, but for cell memory</span>
+<span class="sd">        :param Wox: Similar to Wox, but for output gate</span>
+<span class="sd">        :param h_tm1: hidden activation from previous time step</span>
+<span class="sd">        :param c_tm1: activation from cell memory from previous time step</span>
+<span class="sd">        :returns: h_t is the hidden activation of current time step, and c_t is the activation for cell memory of current time step</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lstm_as_activation_function</span><span class="p">(</span><span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div>
+
+<div class="viewcode-block" id="LstmBase.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.LstmBase.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A genetic recurrent activation function for variants of LSTM architectures.</span>
+<span class="sd">        The function is called by self.recurrent_fn().</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+<div class="viewcode-block" id="VanillaLstm"><a class="viewcode-back" href="../../index.html#layers.gating.VanillaLstm">[docs]</a><span class="k">class</span> <span class="nc">VanillaLstm</span><span class="p">(</span><span class="n">LstmBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements the standard LSTM block, inheriting the genetic class :class:`layers.gating.LstmBase`.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="VanillaLstm.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.VanillaLstm.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a vanilla LSTM block</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+            
+        <span class="n">LstmBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span><span class="p">,</span> 
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">]</span></div>
+                       
+<div class="viewcode-block" id="VanillaLstm.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.VanillaLstm.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the LSTM block as an activation function, and implements the standard LSTM activation function.</span>
+<span class="sd">            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">i_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wix</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">)</span>  <span class="c1">#</span>
+        <span class="n">f_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wfx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">)</span>  <span class="c1"># </span>
+    
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wcx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">)</span>
+
+        <span class="n">o_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wox</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span> <span class="o">*</span> <span class="n">c_t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">)</span>
+                            
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">o_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span><span class="c1">#, i_t, f_t, o_t</span></div></div>
+
+<div class="viewcode-block" id="LstmNFG"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNFG">[docs]</a><span class="k">class</span> <span class="nc">LstmNFG</span><span class="p">(</span><span class="n">LstmBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a LSTM block without the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="LstmNFG.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNFG.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a LSTM with the forget gate</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">LstmBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span><span class="p">,</span> 
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">]</span></div>
+                       
+<div class="viewcode-block" id="LstmNFG.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNFG.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the LSTM block as an activation function, and implements the LSTM (without the forget gate) activation function.</span>
+<span class="sd">            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">i_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wix</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">)</span>  <span class="c1">#</span>
+    
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wcx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">)</span>  <span class="c1">#f_t * </span>
+
+        <span class="n">o_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wox</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span> <span class="o">*</span> <span class="n">c_t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">)</span>
+                            
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">o_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
+
+<div class="viewcode-block" id="LstmNIG"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNIG">[docs]</a><span class="k">class</span> <span class="nc">LstmNIG</span><span class="p">(</span><span class="n">LstmBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a LSTM block without the input gate, inheriting the genetic class :class:`layers.gating.LstmBase`.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LstmNIG.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNIG.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a LSTM with the input gate</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">LstmBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span><span class="p">,</span> 
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">]</span></div>
+                       
+<div class="viewcode-block" id="LstmNIG.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNIG.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the LSTM block as an activation function, and implements the LSTM (without the input gate) activation function.</span>
+<span class="sd">            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">f_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wfx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">)</span>  <span class="c1"># </span>
+    
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wcx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">)</span>  <span class="c1">#i_t * </span>
+
+        <span class="n">o_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wox</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_co</span> <span class="o">*</span> <span class="n">c_t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">)</span>
+                            
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">o_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
+
+
+<div class="viewcode-block" id="LstmNOG"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNOG">[docs]</a><span class="k">class</span> <span class="nc">LstmNOG</span><span class="p">(</span><span class="n">LstmBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a LSTM block without the output gate, inheriting the genetic class :class:`layers.gating.LstmBase`.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LstmNOG.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNOG.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a LSTM with the output gate</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">LstmBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">,</span> 
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">]</span></div>
+                       
+<div class="viewcode-block" id="LstmNOG.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNOG.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the LSTM block as an activation function, and implements the LSTM (without the output gate) activation function.</span>
+<span class="sd">            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">i_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wix</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_ci</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">)</span>  <span class="c1">#</span>
+        <span class="n">f_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wfx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_cf</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">)</span>  <span class="c1"># </span>
+    
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wcx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">)</span>  <span class="c1">#i_t * </span>
+
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
+
+
+<div class="viewcode-block" id="LstmNoPeepholes"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNoPeepholes">[docs]</a><span class="k">class</span> <span class="nc">LstmNoPeepholes</span><span class="p">(</span><span class="n">LstmBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a LSTM block without the peephole connections, inheriting the genetic class :class:`layers.gating.LstmBase`.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LstmNoPeepholes.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNoPeepholes.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a LSTM with the peephole connections</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">LstmBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">,</span> <span class="c1">#self.W_ci,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">,</span> <span class="c1">#self.W_cf,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">,</span> <span class="c1">#self.W_co, </span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">,</span> 
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">]</span></div>
+                       
+<div class="viewcode-block" id="LstmNoPeepholes.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.LstmNoPeepholes.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the LSTM block as an activation function, and implements the LSTM (without the output gate) activation function.</span>
+<span class="sd">            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">i_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wix</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hi</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_i</span><span class="p">)</span>
+        <span class="n">f_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wfx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">)</span>
+    
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="n">i_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wcx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">)</span>
+
+        <span class="n">o_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wox</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_ho</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_o</span><span class="p">)</span>
+                            
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">o_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
+        
+
+<div class="viewcode-block" id="SimplifiedLstm"><a class="viewcode-back" href="../../index.html#layers.gating.SimplifiedLstm">[docs]</a><span class="k">class</span> <span class="nc">SimplifiedLstm</span><span class="p">(</span><span class="n">LstmBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a simplified LSTM block which only keeps the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SimplifiedLstm.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.SimplifiedLstm.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a LSTM with the peephole connections</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">LstmBase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">]</span>
+                       
+        <span class="bp">self</span><span class="o">.</span><span class="n">L2_cost</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xf</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xc</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+        
+<div class="viewcode-block" id="SimplifiedLstm.lstm_as_activation_function"><a class="viewcode-back" href="../../index.html#layers.gating.SimplifiedLstm.lstm_as_activation_function">[docs]</a>    <span class="k">def</span> <span class="nf">lstm_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wix</span><span class="p">,</span> <span class="n">Wfx</span><span class="p">,</span> <span class="n">Wcx</span><span class="p">,</span> <span class="n">Wox</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the LSTM block as an activation function, and implements the LSTM (simplified LSTM) activation function.</span>
+<span class="sd">            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">f_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wfx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hf</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_f</span><span class="p">)</span>  <span class="c1">#self.w_cf * c_tm1 </span>
+    
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">f_t</span> <span class="o">*</span> <span class="n">c_tm1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">f_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Wcx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hc</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_c</span><span class="p">)</span> 
+
+        <span class="n">h_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">c_t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">BidirectionSLstm</span><span class="p">(</span><span class="n">SimplifiedLstm</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">,</span> <span class="n">n_out</span><span class="p">):</span>
+        
+        <span class="n">fwd</span> <span class="o">=</span> <span class="n">SimplifiedLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+        <span class="n">bwd</span> <span class="o">=</span> <span class="n">SimplifiedLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">.</span><span class="n">params</span> <span class="o">+</span> <span class="n">bwd</span><span class="o">.</span><span class="n">params</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">fwd</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">bwd</span><span class="o">.</span><span class="n">output</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">BidirectionLstm</span><span class="p">(</span><span class="n">VanillaLstm</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">,</span> <span class="n">n_out</span><span class="p">):</span>
+        
+        <span class="n">fwd</span> <span class="o">=</span> <span class="n">VanillaLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+        <span class="n">bwd</span> <span class="o">=</span> <span class="n">VanillaLstm</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">.</span><span class="n">params</span> <span class="o">+</span> <span class="n">bwd</span><span class="o">.</span><span class="n">params</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">fwd</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">bwd</span><span class="o">.</span><span class="n">output</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">RecurrentOutput</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_out</span><span class="p">):</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_h</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_out</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_out</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_h&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_y</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_out</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_out</span><span class="p">,</span> <span class="n">n_out</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W_y&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_y</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_out</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;b_y&#39;</span><span class="p">)</span>
+        
+        
+
+
+<span class="c1"># Gated Recurrent Unit</span>
+<div class="viewcode-block" id="GatedRecurrentUnit"><a class="viewcode-back" href="../../index.html#layers.gating.GatedRecurrentUnit">[docs]</a><span class="k">class</span> <span class="nc">GatedRecurrentUnit</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements a gated recurrent unit (GRU), as proposed in Cho et al 2014 (http://arxiv.org/pdf/1406.1078.pdf).</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="GatedRecurrentUnit.__init__"><a class="viewcode-back" href="../../index.html#layers.gating.GatedRecurrentUnit.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialise a gated recurrent unit</span>
+<span class="sd">        </span>
+<span class="sd">        :param rng: random state, fixed value for randome state for reproducible objective results</span>
+<span class="sd">        :param x: input to a network</span>
+<span class="sd">        :param n_in: number of input features</span>
+<span class="sd">        :type n_in: integer</span>
+<span class="sd">        :param n_h: number of hidden units</span>
+<span class="sd">        :type n_h: integer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_in</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_h</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">x</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xz</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span>
+                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;W_xz&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hz</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span>
+                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;W_hz&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xr</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span>
+                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;W_xr&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hr</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span>
+                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;W_hr&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_xh</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_in</span><span class="p">),</span>
+                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_in</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;W_xh&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_hh</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_h</span><span class="p">),</span>
+                     <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_h</span><span class="p">,</span> <span class="n">n_h</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;W_hh&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_z</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;b_z&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_r</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;b_r&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_h</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;b_h&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">h0</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;h0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c0</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">shared</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_h</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">floatX</span><span class="p">),</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;c0&#39;</span><span class="p">)</span>
+
+        
+        <span class="c1">## pre-compute these for fast computation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wzx</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Wrx</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Whx</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xh</span><span class="p">)</span>
+
+        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">theano</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gru_as_activation_function</span><span class="p">,</span>
+                                               <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Wzx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Wrx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Whx</span><span class="p">],</span>
+                                               <span class="n">outputs_info</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">h0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c0</span><span class="p">])</span>  <span class="c1">#</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_xh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hh</span><span class="p">,</span> 
+                       <span class="bp">self</span><span class="o">.</span><span class="n">b_z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_h</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">L2_cost</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xz</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hz</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xr</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hr</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_xh</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_hh</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
+        
+    <span class="k">def</span> <span class="nf">gru_as_activation_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Wzx</span><span class="p">,</span> <span class="n">Wrx</span><span class="p">,</span> <span class="n">Whx</span><span class="p">,</span> <span class="n">h_tm1</span><span class="p">,</span> <span class="n">c_tm1</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; This function treats the GRU block as an activation function, and implements the GRU activation function.</span>
+<span class="sd">            This function is called by :func:`layers.gating.GatedRecurrentUnit.__init__`.</span>
+<span class="sd">            Wzx, Wrx, Whx have been pre-computed before passing to this function.   </span>
+<span class="sd">            </span>
+<span class="sd">            To make the same interface as LSTM, we keep a c_tm1 (means the cell state of previous time step, but GRU does not maintain a cell state).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">z_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wzx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hz</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_z</span><span class="p">)</span>
+        <span class="n">r_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">nnet</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">Wrx</span> <span class="o">+</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hr</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_r</span><span class="p">)</span>
+        <span class="n">can_h_t</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">Whx</span> <span class="o">+</span> <span class="n">r_t</span> <span class="o">*</span> <span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h_tm1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W_hh</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_h</span><span class="p">)</span>
+        
+        <span class="n">h_t</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">z_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">h_tm1</span> <span class="o">+</span> <span class="n">z_t</span> <span class="o">*</span> <span class="n">can_h_t</span>
+
+        <span class="n">c_t</span> <span class="o">=</span> <span class="n">h_t</span>   <span class="c1">## in order to have the same interface as LSTM</span>
+
+        <span class="k">return</span> <span class="n">h_t</span><span class="p">,</span> <span class="n">c_t</span></div>
+
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Zhizheng.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
