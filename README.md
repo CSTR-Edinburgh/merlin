@@ -6,7 +6,7 @@ developed at the Centre for Speech Technology Research (CSTR), University of
 Edinburgh. 
 
 
-Step 0: download data from http://homepages.inf.ed.ac.uk/zwu2/dnn_baseline/dnn_baseline_practice.tar.gz and put it in your working directory
+Step 0: download data from http://exampleurl.com/dnn_baseline_practice.tar.gz (will replace soon) and put it in your working directory
 
 Step 1: Install Theano version 0.6 and above (http://deeplearning.net/software/theano/). You may need other third-party python libraries such as matplotlib.
 
