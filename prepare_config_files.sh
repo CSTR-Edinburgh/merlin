@@ -306,7 +306,7 @@ echo "" >> $acoustic_config_file
 echo "TRAINDNN : True" >> $acoustic_config_file
 echo "DNNGEN   : True" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
-echo "GENWAV   : False" >> $acoustic_config_file
+echo "GENWAV   : True" >> $acoustic_config_file
 echo "CALMCD   : True" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
 echo "" >> $acoustic_config_file

@@ -219,8 +219,9 @@ class configuration(object):
             ('log_file', '', 'Paths','log_file'),
             ('log_config_file', 'configuration/exampleloggingconfigfile.conf', 'Paths', 'log_config_file'),
 
-            ('sptk_bindir', '', 'Paths','sptk'),
-            ('straight_bindir', '', 'Paths','straight'),
+            ('sptk_bindir', 'tools/SPTK-3.7/bin', 'Paths','sptk'),
+            ('straight_bindir', 'tools/straight/bin', 'Paths','straight'),
+            ('world_bindir', 'tools/WORLD/build', 'Paths','world'),
 
 #            ('sptk_bindir', '/afs/inf.ed.ac.uk/group/project/dnn_tts/tools/dnn_tts/tools/SPTK-3.7/bin','Paths','sptk'),
 #            ('straight_bindir', '/afs/inf.ed.ac.uk/group/project/dnn_tts/tools/dnn_tts/tools/straight/bin','Paths','straight'),
@@ -484,8 +485,8 @@ class configuration(object):
             }
 
         self.WORLD = {
-            'SYNTHESIS'     : os.path.join(self.straight_bindir, 'synth'),
-            'ANALYSIS'      : os.path.join(self.straight_bindir, 'analysis'),
+            'SYNTHESIS'     : os.path.join(self.world_bindir, 'synth'),
+            'ANALYSIS'      : os.path.join(self.world_bindir, 'analysis'),
             }
         
         # STILL TO DO - test that all the above tools exist and are executable

@@ -6,36 +6,33 @@ developed at the Centre for Speech Technology Research (CSTR), University of
 Edinburgh. 
 
 
-Step 0: download data from http://exampleurl.com/dnn_baseline_practice.tar.gz (will replace soon) and put it in your working directory
+Step 0: download data from http://104.131.174.95/slt_arctic.zip (will replace soon with doi) and put it in your working directory
 
 Step 1: Install Theano version 0.6 and above (http://deeplearning.net/software/theano/). You may need other third-party python libraries such as matplotlib.
 
-Step 2: Modify the configuration file 'myconfigfile_mvn_DNN_basic.conf' to fit your working environment.
-    a) Change the following settings:
-            [Paths]
-            work: <YOUR_OWN_WORKING_DIRECTORY>
-            data: <WHERE_IS_YOUR_DATA>
+Step 2: ./setup.sh slt_arctic 
+
+Step 3: ./prepare_config__files.sh configuration/merlin_voice_settings.cfg 
             
-            log_config_file: <CODE_DIRECTORY>/configuration/myloggingconfigfile.conf
-    
-            sptk: <WHERE_ARE_SPTK_BINARY_FILES>
-            straight: <WHERE_ARE_STRAIGHT_BINARIES>
-            
+Step 4: Create logging_config.conf based on exampleloggingconfigfile.conf
+
+Step 5: Run './submit.sh ./run_lstm.py configuration/duration_configfile.conf' script. 
+
+Step 6: Run './submit.sh ./run_lstm.py configuration/acoustic_configfile.conf' script.
+ 
+    a) It will lock a GPU automatically. If you do not want to lock GPU, please modify the ./submit.sh script.
     b) By default, the program will run through the following processes if you keep them to be 'True'. You could run step by step by tuning on one process and tuning off all the other processes.
         NORMLAB  : True
+        MAKEDUR  : True
         MAKECMP  : True
         NORMCMP  : True
         TRAINDNN : True
         DNNGEN   : True
-        GENWAV   : False
+        GENWAV   : True
         CALMCD   : True
     
-    Note: current recipe required C-version STRAIGHT, which cannot be distributed. Please replace the GENWAV step by using your own vocoder.
-    
-Step 3: Create myloggingconfigfile.conf based on exampleloggingconfigfile.conf
+    Note: current recipe requires C-version STRAIGHT, which cannot be distributed. Therefore, we support WORLD vocoder by default as a replacement for STRAIGHT.
 
-Step 4: Run './submit.sh ./run_lstm.py <CONFIG FILE PATH>' script. It will lock a GPU automatically. If you do not want to lock GPU, please modify the ./run_dnn.sh script.
-
-If everything goes smoothly, after 3 to 5 hours, the program will give objective results, and synthesised voices if you have your own vocoder.
+If everything goes smoothly, after few minutes, the program will give objective results, and synthesised voices.
     
 Feel free to contact us if you have any questions.
