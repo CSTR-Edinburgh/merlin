@@ -6,7 +6,7 @@ developed at the Centre for Speech Technology Research (CSTR), University of
 Edinburgh. 
 
 
-Step 0: download data from http://104.131.174.95/slt_arctic.zip (will replace soon with doi) and put it in your working directory
+Step 0: download data from http://104.131.174.95/slt_arctic_demo.zip (will replace soon with doi) and put it in your working directory
 
 Step 1: Install Theano version 0.6 and above (http://deeplearning.net/software/theano/). You may need other third-party python libraries such as matplotlib.
 
@@ -31,7 +31,9 @@ Step 6: Run './submit.sh ./run_lstm.py configuration/acoustic_configfile.conf' s
         GENWAV   : True
         CALMCD   : True
     
-    Note: current recipe requires C-version STRAIGHT, which cannot be distributed. Therefore, we support WORLD vocoder by default as a replacement for STRAIGHT.
+    Note: 
+    - Current recipe requires C-version STRAIGHT, which cannot be distributed. 
+    - Therefore, we support WORLD vocoder by default as a replacement for STRAIGHT.
 
 If everything goes smoothly, after few minutes, the program will give objective results, and synthesised voices.
     
