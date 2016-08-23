@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test "$#" -ne 1; then
     echo "Usage: ./setup.sh <voice_directory_name>"
