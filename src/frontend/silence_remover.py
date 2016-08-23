@@ -49,7 +49,7 @@ class SilenceRemover(object):
         self.subphone_feats = subphone_feats
         self.n_cmp = n_cmp
         
-    def remove_silence(self, in_data_list, in_align_list, out_data_list):
+    def remove_silence(self, in_data_list, in_align_list, out_data_list, dur_file_list=None):
         file_number = len(in_data_list)
         align_file_number = len(in_align_list)
 
@@ -63,7 +63,11 @@ class SilenceRemover(object):
         io_funcs = BinaryIOCollection()
         for i in xrange(file_number):
 
-            nonsilence_indices = self.load_alignment(in_align_list[i])
+            if dur_file_list:
+                nonsilence_indices = self.load_phone_alignment(in_align_list[i], dur_file_list[i])
+            else:
+                nonsilence_indices = self.load_alignment(in_align_list[i])
+
             ori_cmp_data = io_funcs.load_binary_file(in_data_list[i], self.n_cmp)
             
             frame_number = ori_cmp_data.size/self.n_cmp
@@ -114,7 +118,51 @@ class SilenceRemover(object):
         return 0
         
         
-    def load_alignment(self, alignment_file_name):
+    def load_phone_alignment(self, alignment_file_name, dur_file_name=None):
+
+        if dur_file_name:
+            io_funcs = BinaryIOCollection()
+            dur_dim = 1 ## hard coded for now
+            manual_dur_data = io_funcs.load_binary_file(dur_file_name, dur_dim)
+
+        ph_count = 0
+        base_frame_index = 0
+        nonsilence_frame_index_list = []
+        fid = open(alignment_file_name)
+        for line in fid.readlines():
+            line = line.strip()
+            if len(line) < 1:
+                continue
+            temp_list = re.split('\s+', line)
+            start_time = int(temp_list[0])
+            end_time = int(temp_list[1])
+            full_label = temp_list[2]
+
+            # to do - support different frame shift - currently hardwired to 5msec
+            # currently under beta testing: supports different frame shift 
+            if dur_file_name:
+                frame_number = manual_dur_data[ph_count]
+                ph_count = ph_count+1
+            else:
+                frame_number = int((end_time - start_time)/50000)
+
+            label_binary_flag = self.check_silence_pattern(full_label)
+
+            if self.remove_frame_features:
+                if label_binary_flag == 0:
+                    for frame_index in xrange(frame_number):
+                        nonsilence_frame_index_list.append(base_frame_index + frame_index)
+                base_frame_index = base_frame_index + frame_number
+            elif self.subphone_feats == 'none':
+                if label_binary_flag == 0:
+                    nonsilence_frame_index_list.append(base_frame_index)
+                base_frame_index = base_frame_index + 1
+            
+        fid.close()
+        
+        return  nonsilence_frame_index_list
+
+    def load_alignment(self, alignment_file_name, dur_file_name=None):
 
         state_number = 5
         base_frame_index = 0

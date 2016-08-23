@@ -181,7 +181,8 @@ class configuration(object):
             ('in_LSFsource_dir'   , os.path.join(self.work_dir, 'data/LSFsource')  , 'Paths', 'in_LSFsource_dir'),
 
             ## for joint duration
-            ('in_dur_dir'   , os.path.join(self.work_dir, 'data/dur')  , 'Paths', 'in_dur_dir'),
+            ('in_seq_dur_dir' , os.path.join(self.work_dir, 'data/S2S_dur')  , 'Paths', 'in_seq_dur_dir'),
+            ('in_dur_dir'     , os.path.join(self.work_dir, 'data/dur')      , 'Paths', 'in_dur_dir'),
             
 
             ('nn_norm_temp_dir', os.path.join(self.work_dir, 'data/step_hidden9'), 'Paths', 'nn_norm_temp_dir'),
@@ -223,9 +224,7 @@ class configuration(object):
             ('straight_bindir', 'tools/straight/bin', 'Paths','straight'),
             ('world_bindir', 'tools/WORLD/build', 'Paths','world'),
 
-#            ('sptk_bindir', '/afs/inf.ed.ac.uk/group/project/dnn_tts/tools/dnn_tts/tools/SPTK-3.7/bin','Paths','sptk'),
-#            ('straight_bindir', '/afs/inf.ed.ac.uk/group/project/dnn_tts/tools/dnn_tts/tools/straight/bin','Paths','straight'),
-
+            ('network_type'           , 'RNN'                                           , 'Architecture', 'network_type'),
             ('model_type'           , 'DNN'                                             , 'Architecture', 'model_type'),
             ('hidden_layer_type'    , ['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH']  , 'Architecture', 'hidden_layer_type'),
             ('output_layer_type'    , 'LINEAR'                                          , 'Architecture', 'output_layer_type'),
@@ -297,6 +296,8 @@ class configuration(object):
             ('dLSFsource_dim',10 * 3 ,'Outputs','dLSFsource'),
 
         ## for joint dur:-
+            ('seq_dur_dim' ,1     ,'Outputs','seq_dur'),
+            ('remove_silence_from_dur'  , True  , 'Outputs', 'remove_silence_from_dur'),
             ('dur_dim' ,5     ,'Outputs','dur'),
             ('dur_feature_type' , 'numerical' , 'Outputs', 'dur_feature_type'),
 

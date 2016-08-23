@@ -53,7 +53,7 @@ class LinguisticBase(object):
     ## the ori_file_list contains the file paths of the raw linguistic data
     ## the output_file_list contains the file paths of the normalised linguistic data
     ## 
-    def perform_normalisation(self, ori_file_list, output_file_list):
+    def perform_normalisation(self, ori_file_list, output_file_list, dur_file_list=None):
         
         logger = logging.getLogger("perform_normalisation")
         logger.info('perform linguistic feature extraction')
@@ -63,10 +63,13 @@ class LinguisticBase(object):
             sys.exit(1)
 
         for i in xrange(self.utterance_num):
-            self.extract_linguistic_features(ori_file_list[i], output_file_list[i])
+            if not dur_file_list:
+                self.extract_linguistic_features(ori_file_list[i], output_file_list[i])
+            else:
+                self.extract_linguistic_features(ori_file_list[i], output_file_list[i], dur_file_list[i])
     
     ## the exact function to do the work
     ## need to be implemented in the specific class
     ## the function will write the linguistic features directly to the output file
-    def extract_linguistic_features(self, in_file_name, out_file_name):
+    def extract_linguistic_features(self, in_file_name, out_file_name, dur_file_name=None):
         pass

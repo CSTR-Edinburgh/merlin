@@ -10,6 +10,9 @@ from lxml import etree
 from lxml.etree import * 
 MODULE_PARSER = etree.XMLParser()
 
+import matplotlib.mlab as mlab
+import math
+
 import logging
 # from logplot.logging_plotting import LoggerPlotter #, MultipleTimeSeriesPlot, SingleWeightMatrixPlot
 
@@ -21,8 +24,11 @@ class LabelNormalisation(LinguisticBase):
     def __init__(self, question_file_name=None,xpath_file_name=None):
         pass
         
-    def extract_linguistic_features(self, in_file_name, out_file_name=None):
-        A = self.load_labels_with_state_alignment(in_file_name)
+    def extract_linguistic_features(self, in_file_name, out_file_name=None, dur_file_name=None):
+        if dur_file_name:
+            A = self.load_labels_with_phone_alignment(in_file_name, dur_file_name)
+        else:
+            A = self.load_labels_with_state_alignment(in_file_name)
 
         if out_file_name:
             io_funcs = BinaryIOCollection()
@@ -84,20 +90,22 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         if self.subphone_feats == 'full':
             self.frame_feature_size = 9   ## zhizheng's original 5 state features + 4 phoneme features
-        elif self.subphone_feats == 'state_only':
-            self.frame_feature_size = 1   ## this is equivalent to a state-based system
         elif self.subphone_feats == 'minimal_frame':
             self.frame_feature_size = 2   ## the minimal features necessary to go from a state-level to frame-level model 
+        elif self.subphone_feats == 'state_only':
+            self.frame_feature_size = 1   ## this is equivalent to a state-based system
         elif self.subphone_feats == 'none':
             self.frame_feature_size = 0   ## the phoneme level features only
+        elif self.subphone_feats == 'frame_only':
+            self.frame_feature_size = 1   ## this is equivalent to a frame-based system without relying on state-features
+        elif self.subphone_feats == 'uniform_state':
+            self.frame_feature_size = 2   ## this is equivalent to a frame-based system with uniform state-features
+        elif self.subphone_feats == 'coarse_coding':
+            self.frame_feature_size = 4   ## this is equivalent to a frame-based positioning system reported in Heiga Zen's work
+            self.cc_features = self.compute_coarse_coding_features(3)
         else:
             sys.exit('Unknown value for subphone_feats: %s'%(subphone_feats))
         
-        
-        
-        
-        ##self.frame_feature_size = 9 
-        ##question number + 5 state features + 4 phoneme features
         self.dimension = self.dict_size + self.frame_feature_size   
         
         ### if user wants to define their own input, simply set the question set to empty.
@@ -241,18 +249,28 @@ class HTSLabelNormalisation(LabelNormalisation):
         logger.debug('made duration matrix of %d frames x %d features' % dur_feature_matrix.shape )
         return  dur_feature_matrix
 
-    def load_label_phone_alignment(self, file_name):
+    def load_labels_with_phone_alignment(self, file_name, dur_file_name):
 
-        # this is not currently used ???
+        # this is not currently used ??? -- it works now :D
         logger = logging.getLogger("labels")
-        logger.critical('unused function ???')
-        raise Exception
+        #logger.critical('unused function ???')
+        #raise Exception
         
-        assert self.dimension == self.dict_size+self.frame_feature_size
+        if dur_file_name:
+            io_funcs = BinaryIOCollection()
+            dur_dim = 1 ## hard coded for now
+            manual_dur_data = io_funcs.load_binary_file(dur_file_name, dur_dim)
+
+        if self.add_frame_features:
+            assert self.dimension == self.dict_size+self.frame_feature_size
+        elif self.subphone_feats != 'none':
+            assert self.dimension == self.dict_size+self.frame_feature_size
+        else:
+            assert self.dimension == self.dict_size
         
-        # label_feature_matrix = numpy.empty((100000, self.dict_size+self.frame_feature_size))
         label_feature_matrix = numpy.empty((100000, self.dimension))
 
+        ph_count=0
         label_feature_index = 0
         fid = open(file_name)
         for line in fid.readlines():
@@ -265,26 +283,62 @@ class HTSLabelNormalisation(LabelNormalisation):
             full_label = temp_list[2]
 
             # to do - support different frame shift - currently hardwired to 5msec
-            frame_number = int((end_time - start_time)/50000)
+            # currently under beta testing: support different frame shift 
+            if dur_file_name:
+                frame_number = manual_dur_data[ph_count]
+                ph_count = ph_count+1
+            else:
+                frame_number = int((end_time - start_time)/50000)
 
-            label_binary_vector = self.pattern_matching(full_label)
-            current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))
+            #label_binary_vector = self.pattern_matching(full_label)
+            label_binary_vector = self.pattern_matching_binary(full_label)
 
-            for i in xrange(frame_number):
-                current_block_binary_array[i, 0:self.dict_size] = label_binary_vector
-                current_block_binary_array[i, self.dict_size] = float(i+1)/float(frame_number)
-                current_block_binary_array[i, self.dict_size+1] = float(frame_number - i)/float(frame_number)
-                current_block_binary_array[i, self.dict_size+2] = float(frame_number)
+            # if there is no CQS question, the label_continuous_vector will become to empty
+            label_continuous_vector = self.pattern_matching_continous_position(full_label) 
+            label_vector = numpy.concatenate([label_binary_vector, label_continuous_vector], axis = 1)
 
-            label_feature_matrix[label_feature_index:label_feature_index+frame_number,] = current_block_binary_array
-            label_feature_index = label_feature_index + frame_number
+            if self.subphone_feats == "coarse_coding":
+                cc_feat_matrix = self.extract_coarse_coding_features_relative(frame_number)
+
+            if self.add_frame_features:
+                current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))
+                for i in xrange(frame_number):
+                    current_block_binary_array[i, 0:self.dict_size] = label_vector
+
+                    if self.subphone_feats == 'minimal_phoneme':
+                        ## features which distinguish frame position in phoneme 
+                        current_block_binary_array[i, self.dict_size] = float(i+1)/float(frame_number) # fraction through phone forwards
+                        current_block_binary_array[i, self.dict_size+1] = float(frame_number - i)/float(frame_number) # fraction through phone backwards
+                        current_block_binary_array[i, self.dict_size+2] = float(frame_number) # phone duration
+
+                    elif self.subphone_feats == 'coarse_coding':
+                        ## features which distinguish frame position in phoneme using three continous numerical features
+                        current_block_binary_array[i, self.dict_size+0] = cc_feat_matrix[i, 0]
+                        current_block_binary_array[i, self.dict_size+1] = cc_feat_matrix[i, 1]
+                        current_block_binary_array[i, self.dict_size+2] = cc_feat_matrix[i, 2]
+                        current_block_binary_array[i, self.dict_size+3] = float(frame_number)
+
+                    elif self.subphone_feats == 'none':
+                        pass
+
+                    else:
+                        sys.exit('unknown subphone_feats type')
+            
+                label_feature_matrix[label_feature_index:label_feature_index+frame_number,] = current_block_binary_array
+                label_feature_index = label_feature_index + frame_number
+
+            elif self.subphone_feats == 'none':
+                current_block_binary_array = label_vector 
+                label_feature_matrix[label_feature_index:label_feature_index+1,] = current_block_binary_array
+                label_feature_index = label_feature_index + 1
+
 
         fid.close()
 
         label_feature_matrix = label_feature_matrix[0:label_feature_index,]
 
+        logger.debug('made label matrix of %d frames x %d labels' % label_feature_matrix.shape )
         return  label_feature_matrix
-
 
 
     def load_labels_with_state_alignment(self, file_name): 
@@ -336,6 +390,7 @@ class HTSLabelNormalisation(LabelNormalisation):
             frame_number = int((end_time - start_time)/50000)
             
             if state_index == 1:
+                current_frame_number = 0
                 phone_duration = frame_number
                 state_duration_base = 0
                 
@@ -350,6 +405,9 @@ class HTSLabelNormalisation(LabelNormalisation):
                     line = utt_labels[current_index + i + 1].strip()
                     temp_list = re.split('\s+', line)
                     phone_duration += int((int(temp_list[1]) - int(temp_list[0]))/50000)
+
+                if self.subphone_feats == "coarse_coding":
+                    cc_feat_matrix = self.extract_coarse_coding_features_relative(phone_duration)
 
             if self.add_frame_features:
                 current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))
@@ -373,6 +431,26 @@ class HTSLabelNormalisation(LabelNormalisation):
                         ## features which only distinguish state:
                         current_block_binary_array[i, self.dict_size] = float(state_index)   ## state index (counting forwards)
                     
+                    elif self.subphone_feats == 'frame_only':
+                        ## features which distinguish frame position in phoneme:
+                        current_frame_number += 1
+                        current_block_binary_array[i, self.dict_size] = float(current_frame_number) / float(phone_duration)   ## fraction through phone (counting forwards)
+
+                    elif self.subphone_feats == 'uniform_state':
+                        ## features which distinguish frame position in phoneme:
+                        current_frame_number += 1
+                        current_block_binary_array[i, self.dict_size] = float(current_frame_number) / float(phone_duration)   ## fraction through phone (counting forwards)
+                        new_state_index = max(1, round(float(current_frame_number)/float(phone_duration)*5))
+                        current_block_binary_array[i, self.dict_size+1] = float(new_state_index)   ## state index (counting forwards)
+            
+                    elif self.subphone_feats == "coarse_coding":
+                        ## features which distinguish frame position in phoneme using three continous numerical features
+                        current_block_binary_array[i, self.dict_size+0] = cc_feat_matrix[current_frame_number, 0]
+                        current_block_binary_array[i, self.dict_size+1] = cc_feat_matrix[current_frame_number, 1]
+                        current_block_binary_array[i, self.dict_size+2] = cc_feat_matrix[current_frame_number, 2]
+                        current_block_binary_array[i, self.dict_size+3] = float(phone_duration)
+                        current_frame_number += 1
+
                     elif self.subphone_feats == 'minimal_frame':
                         ## features which distinguish state and minimally frame position in state:
                         current_block_binary_array[i, self.dict_size] = float(i+1) / float(frame_number)   ## fraction through state (forwards)
@@ -403,6 +481,105 @@ class HTSLabelNormalisation(LabelNormalisation):
         label_feature_matrix = label_feature_matrix[0:label_feature_index,]
         logger.debug('made label matrix of %d frames x %d labels' % label_feature_matrix.shape )
         return  label_feature_matrix
+
+    def extract_durational_features(self, dur_file_name=None, dur_data=None):
+       
+        if dur_file_name:
+            io_funcs = BinaryIOCollection()
+            dur_dim = 1 ## hard coded for now
+            dur_data = io_funcs.load_binary_file(dur_file_name, dur_dim)
+        
+        ph_count = len(dur_data)
+        total_num_of_frames = int(sum(dur_data))
+
+        duration_feature_array = numpy.zeros((total_num_of_frames, self.frame_feature_size))
+
+        frame_index=0 
+        for i in xrange(ph_count):
+            frame_number = int(dur_data[i])
+            if self.subphone_feats == "coarse_coding":
+                cc_feat_matrix = self.extract_coarse_coding_features_relative(frame_number)
+
+                for j in xrange(frame_number):
+                    duration_feature_array[frame_index, 0] = cc_feat_matrix[j, 0]
+                    duration_feature_array[frame_index, 1] = cc_feat_matrix[j, 1]
+                    duration_feature_array[frame_index, 2] = cc_feat_matrix[j, 2]
+                    duration_feature_array[frame_index, 3] = float(frame_number)
+                    frame_index+=1
+        
+        return duration_feature_array
+
+    def compute_coarse_coding_features(self, num_states):
+        assert num_states == 3
+
+        npoints = 600
+        cc_features = numpy.zeros((num_states, npoints))
+
+        x1 = numpy.linspace(-1.5, 1.5, npoints)
+        x2 = numpy.linspace(-1.0, 2.0, npoints)
+        x3 = numpy.linspace(-0.5, 2.5, npoints)
+
+        mu1 = 0.0
+        mu2 = 0.5
+        mu3 = 1.0
+
+        sigma = 0.4
+
+        cc_features[0, :] = mlab.normpdf(x1, mu1, sigma)
+        cc_features[1, :] = mlab.normpdf(x2, mu2, sigma)
+        cc_features[2, :] = mlab.normpdf(x3, mu3, sigma)
+
+        return cc_features
+
+    def extract_coarse_coding_features_relative(self, phone_duration):
+        dur = int(phone_duration)
+        
+        cc_feat_matrix = numpy.zeros((dur, 3))
+
+        for i in xrange(dur):
+            rel_indx = int((200/float(dur))*i)
+            cc_feat_matrix[i,0] = self.cc_features[0, 300+rel_indx]
+            cc_feat_matrix[i,1] = self.cc_features[1, 200+rel_indx]
+            cc_feat_matrix[i,2] = self.cc_features[2, 100+rel_indx]
+
+        return cc_feat_matrix
+
+    ### this function is not used now
+    def extract_coarse_coding_features_absolute(self, phone_duration):
+        dur = int(phone_duration)
+        
+        cc_feat_matrix = numpy.zeros((dur, 3))
+        
+        npoints1 = (dur*2)*10+1
+        npoints2 = (dur-1)*10+1
+        npoints3 = (2*dur-1)*10+1
+        
+        x1 = numpy.linspace(-dur, dur, npoints1)
+        x2 = numpy.linspace(1, dur, npoints2)
+        x3 = numpy.linspace(1, 2*dur-1, npoints3)
+        
+        mu1 = 0
+        mu2 = (1+dur)/2
+        mu3 = dur
+        variance = 1
+        sigma = variance*((dur/10)+2)
+        sigma1 = sigma
+        sigma2 = sigma-1
+        sigma3 = sigma
+        
+        y1 = mlab.normpdf(x1, mu1, sigma1)
+        y2 = mlab.normpdf(x2, mu2, sigma2)
+        y3 = mlab.normpdf(x3, mu3, sigma3)
+
+        for i in xrange(dur):
+            cc_feat_matrix[i,0] = y1[(dur+1+i)*10]
+            cc_feat_matrix[i,1] = y2[i*10]
+            cc_feat_matrix[i,2] = y3[i*10]
+
+        for i in xrange(3):
+            cc_feat_matrix[:,i] = cc_feat_matrix[:,i]/max(cc_feat_matrix[:,i])
+
+        return cc_feat_matrix
 
 
     ### this function is not used now
