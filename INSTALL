@@ -1,0 +1,4 @@
+INSTALL
+=======
+
+Install [Theano version 0.6 and above](http://deeplearning.net/software/theano/). You may need other third-party python libraries such as numpy, scipy and matplotlib.
