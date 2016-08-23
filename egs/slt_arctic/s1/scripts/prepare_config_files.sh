@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test "$#" -ne 1; then
     echo "Usage: ./prepare_config_files.sh conf/global_settings.cfg"
