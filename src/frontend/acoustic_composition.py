@@ -107,9 +107,9 @@ class   AcousticComposition(AcousticBase):
         for i in xrange(self.file_number):
             out_file_name = out_file_list[i]
 
-            if os.path.isfile(out_file_name):
-                logger.info('processing file %4d of %4d : %s exists' % (i+1, self.file_number, out_file_name))
-		continue
+            #if os.path.isfile(out_file_name):
+            #    logger.info('processing file %4d of %4d : %s exists' % (i+1, self.file_number, out_file_name))
+		    #    continue
 
             logger.info('processing file %4d of %4d : %s' % (i+1,self.file_number,out_file_name))
 
