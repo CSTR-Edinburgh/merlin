@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test "$#" -ne 0; then
     echo "Usage: ./run.sh"
