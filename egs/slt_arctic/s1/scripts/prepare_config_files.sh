@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if test "$#" -ne 1; then
-    echo "Usage: ./prepare_config_files.sh configuration/merlin_voice_settings.cfg"
+    echo "Usage: ./prepare_config_files.sh conf/global_settings.cfg"
     exit 1
 fi
 
@@ -12,16 +12,19 @@ else
     source $1
 fi
 
-duration_config_file=configuration/duration_configfile.conf
+duration_config_file=conf/duration_configfile.conf
 
-echo "" > $duration_config_file
-echo "[DEFAULT]" >> $duration_config_file 
+echo "[DEFAULT]" > $duration_config_file 
 
 echo "" >> $duration_config_file
-echo "TOPLEVEL: $Merlin" >> $duration_config_file
-echo "" >> $duration_config_file
+echo "Merlin: $MerlinDir" >> $duration_config_file
 
+echo "" >> $duration_config_file
+echo "TOPLEVEL: $WorkDir" >> $duration_config_file
+
+echo "" >> $duration_config_file
 echo "[Paths]" >> $duration_config_file
+
 echo "" >> $duration_config_file
 echo "# where to place work files" >> $duration_config_file
 echo "work: %(TOPLEVEL)s/experiments/${Voice}/duration_model" >> $duration_config_file 
@@ -44,11 +47,11 @@ echo "log_path: %(work)s/log" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "# where to save plots" >> $duration_config_file
-echo "plot: %(work)s/log" >> $duration_config_file
+echo "plot: %(work)s/plots" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "# logging" >> $duration_config_file
-echo "log_config_file: %(TOPLEVEL)s/configuration/logging_config.conf" >> $duration_config_file
+echo "log_config_file: %(TOPLEVEL)s/conf/logging_config.conf" >> $duration_config_file
 echo "log_file: %(work)s/log/mylogfilename.log" >> $duration_config_file
 
 echo "" >> $duration_config_file
@@ -57,7 +60,7 @@ echo "[Labels]" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "silence_pattern : ['*-sil+*']" >> $duration_config_file
 echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/duration_model/data/label_${Labels}" >> $duration_config_file
-echo "question_file_name  : %(TOPLEVEL)s/questions/${QuestionFile}" >> $duration_config_file
+echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "add_frame_features    : False" >> $duration_config_file
@@ -129,13 +132,15 @@ echo "" >> $duration_config_file
 
 echo "Duration configuration settings stored in $duration_config_file"
 
-acoustic_config_file=configuration/acoustic_configfile.conf
+acoustic_config_file=conf/acoustic_configfile.conf
 
-echo "" > $acoustic_config_file
-echo "[DEFAULT]" >> $acoustic_config_file
+echo "[DEFAULT]" > $acoustic_config_file
 
 echo "" >> $acoustic_config_file
-echo "TOPLEVEL: ${Merlin}" >> $acoustic_config_file
+echo "Merlin: $MerlinDir" >> $acoustic_config_file
+
+echo "" >> $acoustic_config_file
+echo "TOPLEVEL: ${WorkDir}" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "[Paths]" >> $acoustic_config_file
@@ -168,19 +173,19 @@ echo "plot: %(work)s/plots" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "# logging" >> $acoustic_config_file
-echo "log_config_file: %(TOPLEVEL)s/configuration/logging_config.conf" >> $acoustic_config_file
+echo "log_config_file: %(TOPLEVEL)s/conf/logging_config.conf" >> $acoustic_config_file
 echo "log_file: %(work)s/log/mylogfilename.log" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "# where are my tools" >> $acoustic_config_file
-echo "sptk:  %(TOPLEVEL)s/tools/SPTK-3.7/bin" >> $acoustic_config_file
+echo "sptk:  %(Merlin)s/tools/SPTK-3.7/bin" >> $acoustic_config_file
 
 if [ "$Vocoder" == "STRAIGHT" ]
 then
-    echo "straight :%(TOPLEVEL)s/tools/straight/bin" >> $acoustic_config_file
+    echo "straight :%(Merlin)s/tools/straight/bin" >> $acoustic_config_file
 elif [ "$Vocoder" == "WORLD" ]
 then
-    echo "world: %(TOPLEVEL)s/tools/WORLD/build" >> $acoustic_config_file
+    echo "world: %(Merlin)s/tools/WORLD/build" >> $acoustic_config_file
 else
     echo "This vocoder ($Vocoder) is not supported as of now...please configure yourself!!"
 fi
@@ -190,8 +195,8 @@ echo "[Labels]" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "silence_pattern : ['*-sil+*']" >> $acoustic_config_file
-echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/duration_model/data/label_${Labels}" >> $acoustic_config_file
-echo "question_file_name  : %(TOPLEVEL)s/questions/${QuestionFile}" >> $acoustic_config_file
+echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/acoustic_model/data/label_${Labels}" >> $acoustic_config_file
+echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "add_frame_features    : True" >> $acoustic_config_file
