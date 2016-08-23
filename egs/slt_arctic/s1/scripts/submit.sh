@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## Generic script for submitting any Theano job to GPU
 # usage: submit.sh [scriptname.py script_arguments ... ]
 
