@@ -8,8 +8,8 @@ fi
 ### Step 1: setup directories and the training data files ###
 echo "Step 1: setting up experiments directory and the training data files..."
 global_config_file=conf/global_settings.cfg
-./scripts/setup.sh slt_arctic_dnn_world
-./scripts/prepare_config_files.sh $global_config_file
+# ./scripts/setup.sh slt_arctic_dnn_world
+# ./scripts/prepare_config_files.sh $global_config_file
 
 if [ ! -f  $global_config_file ]; then
     echo "Global config file doesn't exist"
