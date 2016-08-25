@@ -181,7 +181,7 @@ class GeneralLayer(object):
         self.n_in = n_in
         self.n_out = n_out
 
-        self.logger = logging.getLogger('general_layer')        
+        logger = logging.getLogger('general_layer')        
 
         # randomly initialise the activation weights based on the input size, as advised by the 'tricks of neural network book'        
         if W is None:
@@ -219,7 +219,7 @@ class GeneralLayer(object):
             self.output = numpy.log(1.0 + numpy.exp(lin_output))
 
         else:
-            self.logger.critical('the input activation function: %s is not supported right now. Please modify layers.py to support' % (activation))
+            logger.critical('the input activation function: %s is not supported right now. Please modify layers.py to support' % (activation))
             raise
 
         # parameters of the model
