@@ -46,6 +46,8 @@ own vocoder to replace this script.
 import sys, os, subprocess, glob, commands
 #from utils import GlobalCfg
 
+import numpy as np
+
 import logging
 
 #import configuration
@@ -120,6 +122,12 @@ def run_process(args,log=True):
         raise KeyboardInterrupt
         
 
+def bark_alpha(sr):
+    return 0.8517*np.sqrt(np.arctan(0.06583*sr/1000.0))-0.1916
+
+def erb_alpha(sr):
+    return 0.5941*np.sqrt(np.arctan(0.1418*sr/1000.0))+0.03237
+
 
 def generate_wav(gen_dir, file_id_list, cfg):
         
@@ -135,7 +143,15 @@ def generate_wav(gen_dir, file_id_list, cfg):
 
     ## to be moved
     pf_coef = cfg.pf_coef
-    fw_coef = cfg.fw_alpha
+    if isinstance(cfg.fw_alpha, basestring):
+        if cfg.fw_alpha=='Bark':
+            fw_coef = bark_alpha(cfg.sr)
+        elif cfg.fw_alpha=='ERB':
+            fw_coef = bark_alpha(cfg.sr)
+        else:
+            raise ValueError('cfg.fw_alpha='+cfg.fw_alpha+' not implemented, the frequency warping coefficient "fw_coef" cannot be deduced.')
+    else:
+        fw_coef = cfg.fw_alpha
     co_coef = cfg.co_coef
     fl_coef = cfg.fl
 
