@@ -23,7 +23,15 @@ mkdir -p ${duration_dir}
 if [[ ! -f slt_arctic_demo.zip ]] || [[ "`md5sum slt_arctic_demo.zip|awk '{print $1}'`" != "356741b0c8df3d74a8370df2af210796" ]]; then
     echo "downloading data....."
     rm -f slt_arctic_demo.zip
-    wget http://104.131.174.95/slt_arctic_demo.zip
+    data_url=http://104.131.174.95/slt_arctic_demo.zip
+    if hash curl 2>/dev/null; then
+        curl -O $data_url
+    elif hash wget 2>/dev/null; then
+        wget $data_url
+    else
+        echo "please download the data from $data_url"
+        exit 1
+    fi
     do_unzip=true
 fi
 if [[ ! -d slt_arctic_demo ]] || [[ -n "$do_unzip" ]]; then
