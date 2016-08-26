@@ -29,4 +29,6 @@ fi
 
 bash ./test_install.sh >> $LOGFILE 2>&1
 
+python ./test_classes.py  >> $LOGFILE 2>&1
+
 bash ./test_training.sh >> $LOGFILE 2>&1
