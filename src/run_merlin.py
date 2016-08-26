@@ -5,6 +5,9 @@ import os, sys, errno
 import time
 import math
 
+import subprocess
+import socket # only for socket.getfqdn()
+
 #  numpy & theano imports need to be done in this order (only for some numpy installations, not sure why)
 import numpy
 #import gnumpy as gnp
@@ -1092,7 +1095,6 @@ if __name__ == '__main__':
     # Check for the presence of git
     ret = os.system('git status > /dev/null')
     if ret==0:
-        import subprocess
         logger.info('  Git is available in the working directory:')
         git_describe = subprocess.check_output('git describe --tags --always', stderr=subprocess.STDOUT, shell=True).replace('\n','')
         logger.info('    Merlin version: '+git_describe)
@@ -1108,7 +1110,6 @@ if __name__ == '__main__':
         os.system('git diff > '+cfg.log_file+'.gitdiff')
 
     logger.info('Execution information:')
-    import socket
     logger.info('  HOSTNAME: '+socket.getfqdn())
     logger.info('  USER: '+os.getenv('USER'))
     logger.info('  PID: '+str(os.getpid()))
