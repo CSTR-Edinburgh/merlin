@@ -1068,6 +1068,55 @@ if __name__ == '__main__':
     config_file = os.path.abspath(config_file)
     cfg.configure(config_file)
     
+    
+    logger.info('Installation information:')
+    logger.info('  Merlin directory: '+os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
+    logger.info('  PATH:')
+    env_PATHs = os.getenv('PATH').split(':')
+    for p in env_PATHs:
+        if len(p)>0: logger.info('      '+p)
+    logger.info('  LD_LIBRARY_PATH:')
+    env_LD_LIBRARY_PATHs = os.getenv('LD_LIBRARY_PATH').split(':')
+    for p in env_LD_LIBRARY_PATHs:
+        if len(p)>0: logger.info('      '+p)
+    logger.info('  Python version: '+sys.version.replace('\n',''))
+    logger.info('    PYTHONPATH:')
+    env_PYTHONPATHs = os.getenv('PYTHONPATH').split(':')
+    for p in env_PYTHONPATHs:
+        if len(p)>0: logger.info('      '+p)
+    logger.info('  Numpy version: '+numpy.version.version)
+    logger.info('  Theano version: '+theano.version.version)
+    logger.info('    THEANO_FLAGS: '+os.getenv('THEANO_FLAGS'))
+    logger.info('    device: '+theano.config.device)
+
+    # Check for the presence of git
+    ret = os.system('git status > /dev/null')
+    if ret==0:
+        import subprocess
+        logger.info('  Git is available in the working directory:')
+        git_describe = subprocess.check_output('git describe --tags --always', stderr=subprocess.STDOUT, shell=True).replace('\n','')
+        logger.info('    Merlin version: '+git_describe)
+        git_branch = subprocess.check_output('git rev-parse --abbrev-ref HEAD', stderr=subprocess.STDOUT, shell=True).replace('\n','')
+        logger.info('    branch: '+git_branch)
+        git_diff = subprocess.check_output('git diff --name-status', stderr=subprocess.STDOUT, shell=True)
+        git_diff = git_diff.replace('\t',' ').split('\n')
+        #logger.info('    diff to Merlin version: '+git_diff+' (logged in '+cfg.log_file+'.gitdiff'+')')
+        logger.info('    diff to Merlin version:')
+        for filediff in git_diff:
+            if len(filediff)>0: logger.info('      '+filediff)
+        logger.info('      (all diffs logged in '+os.path.basename(cfg.log_file)+'.gitdiff'+')')
+        os.system('git diff > '+cfg.log_file+'.gitdiff')
+
+    logger.info('Execution information:')
+    import socket
+    logger.info('  HOSTNAME: '+socket.getfqdn())
+    logger.info('  USER: '+os.getenv('USER'))
+    logger.info('  PID: '+str(os.getpid()))
+    PBS_JOBID = os.getenv('PBS_JOBID')
+    if PBS_JOBID:
+        logger.info('  PBS_JOBID: '+PBS_JOBID)
+
+
     if cfg.profile:
         logger.info('profiling is activated')
         import cProfile, pstats
