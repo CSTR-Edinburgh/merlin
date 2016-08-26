@@ -20,13 +20,13 @@ if [[ "$GITVERSION" ]]; then
     echo 'Git is available in the working directory:' >> $LOGFILE 2>&1
     echo '  Merlin version: ' "`git describe --tags --always`" >> $LOGFILE 2>&1
     echo '  branch: ' "`git rev-parse --abbrev-ref HEAD`" >> $LOGFILE 2>&1
-    echo '  status: ' >> $LOGFILE-status 2>&1
-    git status >> $LOGFILE-status 2>&1
-    echo '  diff to Merlin version: ' >> $LOGFILE-diff 2>&1
-    git diff >> $LOGFILE-diff 2>&1
+    echo '  status: ' >> ${LOGFILE}.gitstatus 2>&1
+    git status >> ${LOGFILE}.gitstatus 2>&1
+    echo '  diff to Merlin version: ' >> ${LOGFILE}.gitdiff 2>&1
+    git diff >> ${LOGFILE}.gitdiff 2>&1
     echo ' '
 fi
 
 bash ./test_install.sh >> $LOGFILE 2>&1
 
-bash ./test_training.sh >> log_file 2>&1
+bash ./test_training.sh >> $LOGFILE 2>&1
