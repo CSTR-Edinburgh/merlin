@@ -37,7 +37,6 @@ from layers.layers import LinearLayer, SigmoidLayer
 from layers.recurrent_decoders import ContextLstm
 
 from models.seq2seq import VanillaSequenceEncoder, DistributedSequenceEncoder
-from models.attention import AttentionEncoder
 
 import logging
 
@@ -117,14 +116,6 @@ class DeepRecurrentNetwork(object):
                     seq2seq_model = DistributedSequenceEncoder(rng, layer_input, dur_input)
                     layer_input   = T.concatenate((seq2seq_model.encoded_output, frame_feat_input), axis=1)
                     input_size    = input_size+4
-
-                elif network_type == "Attention":
-                    attention_model = AttentionEncoder(rng, layer_input, dur_input)
-                    layer_input     = T.concatenate((attention_model.encoded_output, frame_feat_input), axis=1)
-                    input_size    = input_size+4
-                    self.params.extend(attention_model.params)
-                    logger.critical("This network type: %s is currently under development! \n Please use one of the following: DNN, RNN, S2S\n" %(network_type))
-                    sys.exit(1)
 
                 else:
                     logger.critical("This network type: %s is not supported right now! \n Please use one of the following: DNN, RNN, S2S\n" %(network_type))
