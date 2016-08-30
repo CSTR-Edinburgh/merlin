@@ -41,6 +41,7 @@
 import numpy, theano, random
 from io_funcs.binary_io import BinaryIOCollection
 import logging
+from frontend.label_normalisation import HTSLabelNormalisation
 
 class ListDataProvider(object):
     """ This class provides an interface to load data into CPU/GPU memory utterance by utterance or block by block.
@@ -58,7 +59,7 @@ class ListDataProvider(object):
     This provide assumes binary format with float32 precision without any header (e.g. HTK header).
     
     """
-    def __init__(self, x_file_list, y_file_list, n_ins=0, n_outs=0, buffer_size = 500000, sequential=False, shuffle=False):
+    def __init__(self, x_file_list, y_file_list, dur_file_list=None, n_ins=0, n_outs=0, buffer_size = 500000, sequential=False, network_type=None, shuffle=False):
         """Initialise a data provider
         
         :param x_file_list: list of file names for the input files to DNN
@@ -78,6 +79,7 @@ class ListDataProvider(object):
         self.buffer_size = buffer_size
         
         self.sequential = sequential
+        self.network_type = network_type
             
         #remove potential empty lines and end of line signs
 
@@ -100,9 +102,17 @@ class ListDataProvider(object):
             self.logger.critical('two lists are of differing lengths: %d versus %d',len(x_file_list),len(y_file_list))
             raise
 
+        if dur_file_list:
+            try:
+                assert len(x_file_list) == len(dur_file_list)
+            except AssertionError:
+                self.logger.critical('two lists are of differing lengths: %d versus %d',len(x_file_list),len(y_file_list))
+                raise
+        
         self.x_files_list = x_file_list
         self.y_files_list = y_file_list
-        
+        self.dur_files_list = dur_file_list
+
         self.logger.debug('first  list of items from ...%s to ...%s' % (self.x_files_list[0].rjust(20)[-20:],self.x_files_list[-1].rjust(20)[-20:]) )
         self.logger.debug('second list of items from ...%s to ...%s' % (self.y_files_list[0].rjust(20)[-20:],self.y_files_list[-1].rjust(20)[-20:]) )
         
@@ -111,6 +121,9 @@ class ListDataProvider(object):
             random.shuffle(self.x_files_list)
             random.seed(271638)
             random.shuffle(self.y_files_list)
+            if self.dur_files_list:
+                random.seed(271638)
+                random.shuffle(self.dur_files_list)
 
         self.file_index = 0
         self.list_size = len(self.x_files_list)
@@ -150,7 +163,18 @@ class ListDataProvider(object):
 
     def load_one_partition(self):
         if self.sequential == True:
-            shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance()
+            if not self.network_type:
+                shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance()
+            elif self.network_type=="RNN":
+                shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance()
+            elif self.network_type=="CTC":
+                shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance_CTC()
+            elif self.network_type=="S2S":
+                shared_set_xyd, temp_set_x, temp_set_y, temp_set_d = self.load_next_utterance_S2S()
+                return  shared_set_xyd, temp_set_x, temp_set_y, temp_set_d
+            else:
+                logger.critical("Unknown network type: %s \n Please use one of the following: DNN, RNN, S2S, CTC\n" %(self.network_type))
+                sys.exit(1)
         else:
             shared_set_xy, temp_set_x, temp_set_y = self.load_next_partition()
             
@@ -174,7 +198,8 @@ class ListDataProvider(object):
             if lab_frame_number > out_frame_number:
                 frame_number = out_frame_number
         else:
-            self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d" %(lab_frame_number, out_frame_number))
+            base_file_name = self.x_files_list[self.file_index].split('/')[-1].split('.')[0]
+            self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d (%s)" %(lab_frame_number, out_frame_number, base_file_name))
             raise
 
         temp_set_y = out_features[0:frame_number, ]
@@ -193,6 +218,76 @@ class ListDataProvider(object):
 
         return shared_set_xy, temp_set_x, temp_set_y
         
+    def load_next_utterance_S2S(self):
+        """Load the data for one utterance. This function will be called when utterance-by-utterance loading is required (e.g., sequential training).
+        
+        """
+
+        temp_set_x = numpy.empty((self.buffer_size, self.n_ins))
+        temp_set_y = numpy.empty((self.buffer_size, self.n_outs))
+
+        io_fun = BinaryIOCollection()
+
+        in_features, lab_frame_number = io_fun.load_binary_file_frame(self.x_files_list[self.file_index], self.n_ins)
+        out_features, out_frame_number = io_fun.load_binary_file_frame(self.y_files_list[self.file_index], self.n_outs)
+            
+        temp_set_x = in_features[0:lab_frame_number, ]
+        temp_set_y = out_features[0:out_frame_number, ]
+        
+        if not self.dur_files_list:
+            dur_frame_number = out_frame_number
+            dur_features = numpy.array([dur_frame_number])
+        else:
+            dur_features, dur_frame_number = io_fun.load_binary_file_frame(self.dur_files_list[self.file_index], 1)
+            assert sum(dur_features) == out_frame_number
+           
+        dur_features = numpy.reshape(dur_features, (-1, ))
+        temp_set_d = dur_features.astype(int)   
+        
+        self.file_index += 1
+
+        if  self.file_index >= self.list_size:
+            self.end_reading = True
+            self.file_index = 0
+
+        shared_set_x = self.make_shared(temp_set_x, 'x')
+        shared_set_y = self.make_shared(temp_set_y, 'y')
+        shared_set_d = theano.shared(numpy.asarray(temp_set_d, dtype='int32'), name='d', borrow=True)
+
+        shared_set_xyd = (shared_set_x, shared_set_y, shared_set_d)
+
+        return shared_set_xyd, temp_set_x, temp_set_y, temp_set_d
+
+    def load_next_utterance_CTC(self):
+
+        temp_set_x = numpy.empty((self.buffer_size, self.n_ins))
+        temp_set_y = numpy.empty(self.buffer_size)
+
+        io_fun = BinaryIOCollection()
+
+        in_features, lab_frame_number = io_fun.load_binary_file_frame(self.x_files_list[self.file_index], self.n_ins)
+        out_features, out_frame_number = io_fun.load_binary_file_frame(self.y_files_list[self.file_index], self.n_outs)
+            
+        frame_number = lab_frame_number
+        temp_set_x = in_features[0:frame_number, ]
+
+        temp_set_y = numpy.array([self.n_outs])
+        for il in numpy.argmax(out_features, axis=1):
+            temp_set_y = numpy.concatenate((temp_set_y, [il, self.n_outs]), axis=0)
+
+        self.file_index += 1
+
+        if  self.file_index >= self.list_size:
+            self.end_reading = True
+            self.file_index = 0
+
+        shared_set_x = self.make_shared(temp_set_x, 'x')
+        shared_set_y = theano.shared(numpy.asarray(temp_set_y, dtype='int32'), name='y', borrow=True)
+
+        shared_set_xy = (shared_set_x, shared_set_y)
+
+        return shared_set_xy, temp_set_x, temp_set_y
+
 
     def load_next_partition(self):
         """Load one block data. The number of frames will be the buffer size set during intialisation.
@@ -230,9 +325,8 @@ class ListDataProvider(object):
                 if lab_frame_number > out_frame_number:
                     frame_number = out_frame_number
             else:
-                self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d" %(lab_frame_number, out_frame_number))
-                print lab_frame_number
-                print out_frame_number
+                base_file_name = self.x_files_list[self.file_index].split('/')[-1].split('.')[0]
+                self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d (%s)" %(lab_frame_number, out_frame_number, base_file_name))
                 raise
 
             out_features = out_features[0:frame_number, ]

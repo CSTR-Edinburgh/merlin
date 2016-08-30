@@ -458,24 +458,22 @@ class TokenProjectionLayer(object):
         
 
 class dA(object):
-    def __init__(self, numpy_rng, theano_rng = None, input = None, 
+    def __init__(self, theano_rng = None, input = None, 
                  n_visible= None, n_hidden= None, W = None, bhid = None,
-                 bvis = None, firstlayer = 0, variance   = None ):
+                 bvis = None, activation=None, firstlayer = 1, variance   = None ):
 
         self.n_visible = n_visible
         self.n_hidden  = n_hidden
 
-        # create a Theano random generator that gives symbolic random values
-        if not theano_rng : 
-            theano_rng = RandomStreams(numpy_rng.randint(2**30))
-
         if not W:
-            initial_W = numpy.asarray( numpy_rng.uniform( 
-                      low  = -4*numpy.sqrt(6./(n_hidden+n_visible)), 
-                      high =  4*numpy.sqrt(6./(n_hidden+n_visible)), 
-                      size = (n_visible, n_hidden)),
-                                       dtype = theano.config.floatX)
+            initial_W = numpy.asarray(theano_rng.normal(0.0, 1.0/numpy.sqrt(n_in),
+                    size=(n_visible, n_hidden)), dtype=theano.config.floatX)
             W = theano.shared(value = initial_W, name ='W')
+            #initial_W = numpy.asarray( numpy_rng.uniform( 
+            #          low  = -4*numpy.sqrt(6./(n_hidden+n_visible)), 
+            #          high =  4*numpy.sqrt(6./(n_hidden+n_visible)), 
+            #          size = (n_visible, n_hidden)),
+            #                           dtype = theano.config.floatX)
 
         if not bvis:
             bvis = theano.shared(value = numpy.zeros(n_visible, 
@@ -491,6 +489,7 @@ class dA(object):
         self.b_prime = bvis
         self.W_prime = self.W.T 
         self.theano_rng = theano_rng
+        self.activation = activation
 
         if input == None : 
             self.x = T.dmatrix(name = 'input') 
@@ -510,6 +509,28 @@ class dA(object):
         else :
             self.var = None
 
+    def apply_activation(self, lin_output, activation):
+        if activation == 'SIGMOID':
+            final_output = T.nnet.sigmoid(lin_output)
+
+        elif activation == 'TANH':
+            final_output = T.tanh(lin_output)
+
+        elif activation == 'LINEAR':
+            final_output = lin_output
+
+        elif activation == 'ReLU':  ## rectifier linear unit
+            final_output = T.maximum(0.0, lin_output)
+
+        elif activation == 'ReSU':  ## rectifier smooth unit
+            final_output = numpy.log(1.0 + numpy.exp(lin_output))
+
+        else:
+            self.logger.critical('the input activation function: %s is not supported right now. Please modify layers.py to support' % (activation))
+            raise
+
+        return final_output
+
     def get_corrupted_input(self, input, corruption_level):
         if self.firstlayer == 0 :
             return  self.theano_rng.binomial(
@@ -524,18 +545,23 @@ class dA(object):
             return input+denoises
     
     def get_hidden_values(self, input):
-        return T.nnet.sigmoid(T.dot(input, self.W) + self.b)
+        return self.apply_activation((T.dot(input, self.W) + self.b), self.activation)
 
-    def get_reconstructed_input(self, hidden ):
+    def get_reconstructed_input(self, hidden):
         if self.firstlayer == 1 :
             return T.dot(hidden, self.W_prime) + self.b_prime
         else :
-            return T.nnet.sigmoid(T.dot(hidden, self.W_prime) + self.b_prime)
+            return self.apply_activation((T.dot(hidden, self.W_prime) + self.b_prime), self.activation)
     
     def get_cost_updates(self, corruption_level, learning_rate):
-        tilde_x = self.get_corrupted_input(self.x, corruption_level)
-        y       = self.get_hidden_values( tilde_x )
-        z       = self.get_reconstructed_input(y)
+        #if corruption_level == 0:
+        #    tilde_x = self.x
+        #else:
+        #    tilde_x = self.get_corrupted_input(self.x, corruption_level)
+        tilde_x = self.x
+        
+        y = self.get_hidden_values(tilde_x)
+        z = self.get_reconstructed_input(y)
 
         L = T.sum ( (self.x-z) * (self.x-z), axis=1 ) 
         cost = T.mean(L) / 2

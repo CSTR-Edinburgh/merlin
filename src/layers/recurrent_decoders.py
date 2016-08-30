@@ -1,7 +1,3 @@
-
-### refer Zhizheng and Simon's ICASSP'16 paper for more details
-### http://www.zhizheng.org/papers/icassp2016_lstm.pdf
-
 import numpy as np
 import theano
 import theano.tensor as T
@@ -256,7 +252,9 @@ class LstmBase(object):
         ### make a layer
         
         # initial value of hidden and cell state
-        self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+        #self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+        self.h0 = T.matrix('h0')
+        self.h0 = self.input[-1, 0:-4]
         self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
 
 
@@ -295,10 +293,6 @@ class LstmBase(object):
         pass
 
 class LstmDecoderBase(object):
-    """ This class provides as a base for all long short-term memory (LSTM) related classes. 
-    Several variants of LSTM were investigated in (Wu & King, ICASSP 2016): Zhizheng Wu, Simon King, "Investigating gated recurrent neural networks for speech synthesis", ICASSP 2016
-    
-    """
 
     def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0):
         """ Initialise all the components in a LSTM block, including input gate, output gate, forget gate, peephole connections
@@ -421,7 +415,7 @@ class LstmDecoderBase(object):
         """
         pass
 
-class VanillaLstm(LstmBase):
+class ContextLstm(LstmBase):
     """ This class implements the standard LSTM block, inheriting the genetic class :class:`layers.gating.LstmBase`.
     
     """
@@ -509,167 +503,6 @@ class VanillaLstmDecoder(LstmDecoderBase):
         y_t = T.dot(h_t, self.U_ho) + self.b
 
         return h_t, c_t, y_t     #, i_t, f_t, o_t
-
-class LstmNFG(LstmBase):
-    """ This class implements a LSTM block without the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
-    
-    """
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
-        """ Initialise a LSTM with the forget gate
-        
-        :param rng: random state, fixed value for randome state for reproducible objective results
-        :param x: input to a network
-        :param n_in: number of input features
-        :type n_in: integer
-        :param n_h: number of hidden units
-        :type n_h: integer
-        """
-
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
-
-        self.params = [self.W_xi, self.W_hi, self.w_ci,
-                       self.W_xo, self.W_ho, self.w_co, 
-                       self.W_xc, self.W_hc,
-                       self.b_i, self.b_o, self.b_c]
-                       
-    def lstm_as_activation_function(self, Wix, Wfx, Wcx, Wox, h_tm1, c_tm1):
-        """ This function treats the LSTM block as an activation function, and implements the LSTM (without the forget gate) activation function.
-            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`
-        
-        """
-    
-        i_t = T.nnet.sigmoid(Wix + T.dot(h_tm1, self.W_hi) + self.w_ci * c_tm1 + self.b_i)  #
-    
-        c_t = c_tm1 + i_t * T.tanh(Wcx + T.dot(h_tm1, self.W_hc) + self.b_c)  #f_t * 
-
-        o_t = T.nnet.sigmoid(Wox + T.dot(h_tm1, self.W_ho) + self.w_co * c_t + self.b_o)
-                            
-        h_t = o_t * T.tanh(c_t)
-
-        return h_t, c_t
-
-class LstmNIG(LstmBase):
-    """ This class implements a LSTM block without the input gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
-    
-    """
-
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
-        """ Initialise a LSTM with the input gate
-        
-        :param rng: random state, fixed value for randome state for reproducible objective results
-        :param x: input to a network
-        :param n_in: number of input features
-        :type n_in: integer
-        :param n_h: number of hidden units
-        :type n_h: integer
-        """
-
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
-
-        self.params = [self.W_xf, self.W_hf, self.w_cf,
-                       self.W_xo, self.W_ho, self.w_co, 
-                       self.W_xc, self.W_hc,
-                       self.b_f, self.b_o, self.b_c]
-                       
-    def lstm_as_activation_function(self, Wix, Wfx, Wcx, Wox, h_tm1, c_tm1):
-        """ This function treats the LSTM block as an activation function, and implements the LSTM (without the input gate) activation function.
-            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`
-        
-        """
-        
-        f_t = T.nnet.sigmoid(Wfx + T.dot(h_tm1, self.W_hf) + self.w_cf * c_tm1 + self.b_f)  # 
-    
-        c_t = f_t * c_tm1 + T.tanh(Wcx + T.dot(h_tm1, self.W_hc) + self.b_c)  #i_t * 
-
-        o_t = T.nnet.sigmoid(Wox + T.dot(h_tm1, self.W_ho) + self.w_co * c_t + self.b_o)
-                            
-        h_t = o_t * T.tanh(c_t)
-
-        return h_t, c_t
-
-
-class LstmNOG(LstmBase):
-    """ This class implements a LSTM block without the output gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
-    
-    """
-
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
-        """ Initialise a LSTM with the output gate
-        
-        :param rng: random state, fixed value for randome state for reproducible objective results
-        :param x: input to a network
-        :param n_in: number of input features
-        :type n_in: integer
-        :param n_h: number of hidden units
-        :type n_h: integer
-        """
-
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
-
-        self.params = [self.W_xi, self.W_hi, self.w_ci,
-                       self.W_xf, self.W_hf, self.w_cf,
-                       self.W_xc, self.W_hc,
-                       self.b_i, self.b_f, 
-                       self.b_c]
-                       
-    def lstm_as_activation_function(self, Wix, Wfx, Wcx, Wox, h_tm1, c_tm1):
-        """ This function treats the LSTM block as an activation function, and implements the LSTM (without the output gate) activation function.
-            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`
-        
-        """
-    
-        i_t = T.nnet.sigmoid(Wix + T.dot(h_tm1, self.W_hi) + self.w_ci * c_tm1 + self.b_i)  #
-        f_t = T.nnet.sigmoid(Wfx + T.dot(h_tm1, self.W_hf) + self.w_cf * c_tm1 + self.b_f)  # 
-    
-        c_t = f_t * c_tm1 + i_t * T.tanh(Wcx + T.dot(h_tm1, self.W_hc) + self.b_c)  #i_t * 
-
-        h_t = T.tanh(c_t)
-
-        return h_t, c_t
-
-
-class LstmNoPeepholes(LstmBase):
-    """ This class implements a LSTM block without the peephole connections, inheriting the genetic class :class:`layers.gating.LstmBase`.
-    
-    """
-
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
-        """ Initialise a LSTM with the peephole connections
-        
-        :param rng: random state, fixed value for randome state for reproducible objective results
-        :param x: input to a network
-        :param n_in: number of input features
-        :type n_in: integer
-        :param n_h: number of hidden units
-        :type n_h: integer
-        """
-
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
-
-        self.params = [self.W_xi, self.W_hi, #self.W_ci,
-                       self.W_xf, self.W_hf, #self.W_cf,
-                       self.W_xo, self.W_ho, #self.W_co, 
-                       self.W_xc, self.W_hc,
-                       self.b_i, self.b_f, 
-                       self.b_o, self.b_c]
-                       
-    def lstm_as_activation_function(self, Wix, Wfx, Wcx, Wox, h_tm1, c_tm1):
-        """ This function treats the LSTM block as an activation function, and implements the LSTM (without the output gate) activation function.
-            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`
-        
-        """
-    
-        i_t = T.nnet.sigmoid(Wix + T.dot(h_tm1, self.W_hi) + self.b_i)
-        f_t = T.nnet.sigmoid(Wfx + T.dot(h_tm1, self.W_hf) + self.b_f)
-    
-        c_t = f_t * c_tm1 + i_t * T.tanh(Wcx + T.dot(h_tm1, self.W_hc) + self.b_c)
-
-        o_t = T.nnet.sigmoid(Wox + T.dot(h_tm1, self.W_ho) + self.b_o)
-                            
-        h_t = o_t * T.tanh(c_t)
-
-        return h_t, c_t
-        
 
 class SimplifiedLstm(LstmBase):
     """ This class implements a simplified LSTM block which only keeps the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
@@ -764,12 +597,12 @@ class BidirectionSLstm(SimplifiedLstm):
 
         self.output = T.concatenate([fwd.output, bwd.output[::-1]], axis=1)
 
-class BidirectionLstm(VanillaLstm):
+class BidirectionLstm(ContextLstm):
 
     def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0):
         
-        fwd = VanillaLstm(rng, x, n_in, n_h, p, training)
-        bwd = VanillaLstm(rng, x[::-1], n_in, n_h, p, training)
+        fwd = ContextLstm(rng, x, n_in, n_h, p, training)
+        bwd = ContextLstm(rng, x[::-1], n_in, n_h, p, training)
 
         self.params = fwd.params + bwd.params
 
