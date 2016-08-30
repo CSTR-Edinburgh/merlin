@@ -27,8 +27,9 @@ Contact Us
 
 Post your questions, suggestions, and discussions to [GitHub Issues](https://github.com/CSTR-Edinburgh/merlin/issues).
 
-Reference
----------
+Citation
+--------
 
-Zhizheng Wu, Oliver Watts, Simon King (2016). Merlin: An Open Source Neural Network Speech Synthesis System. Accepted for presentation at 9th ISCA Speech Synthesis Workshop. Sunnyvale, USA.     
+If you publish work based on Merlin, please cite: 
 
+Zhizheng Wu, Oliver Watts, Simon King, "Merlin: An Open Source Neural Network Speech Synthesis System" in Proc. 9th ISCA Speech Synthesis Workshop (SSW9), September 2016, Sunnyvale, CA, USA
