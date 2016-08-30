@@ -116,10 +116,11 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         logger.debug('HTS-derived input feature dimension is %d + %d = %d' % (self.dict_size, self.frame_feature_size, self.dimension) )
         
-    def prepare_dur_data(self, ori_file_list, output_file_list, label_type='state_align', feature_type=None, unit_size=None, feat_size=None):
+    def prepare_dur_data(self, ori_file_list, output_file_list, label_type="state_align", feature_type=None, unit_size=None, feat_size=None):
         '''
         extracting duration binary features or numerical features.
         '''
+        logger = logging.getLogger("dur")
         utt_number = len(ori_file_list)
         if utt_number != len(output_file_list):
             print   "the number of input and output files should be the same!\n";
@@ -149,13 +150,15 @@ class HTSLabelNormalisation(LabelNormalisation):
         for i in xrange(utt_number):
             self.extract_dur_features(ori_file_list[i], output_file_list[i], label_type, feature_type, unit_size, feat_size)
     
-    def extract_dur_features(self, in_file_name, out_file_name=None, label_type='state_align', feature_type=None, unit_size=None, feat_size=None):
+    def extract_dur_features(self, in_file_name, out_file_name=None, label_type="state_align", feature_type=None, unit_size=None, feat_size=None):
+        logger = logging.getLogger("dur")
         if label_type=="phone_align":
             A = self.extract_dur_from_phone_alignment_labels(in_file_name, feature_type, unit_size, feat_size)
         elif label_type=="state_align":
             A = self.extract_dur_from_state_alignment_labels(in_file_name, feature_type, unit_size, feat_size)
         else:
             logger.critical("we don't support %s labels as of now!!" % (label_type))
+            sys.exit(1)
 
         if out_file_name:
             io_funcs = BinaryIOCollection()

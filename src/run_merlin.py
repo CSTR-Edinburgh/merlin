@@ -650,8 +650,9 @@ def main_function(cfg):
     ### make output duration data
     if cfg.MAKEDUR:
     	logger.info('creating duration (output) features')
+        label_type = cfg.label_type
         feature_type = cfg.dur_feature_type
-        label_normaliser.prepare_dur_data(in_label_align_file_list, dur_file_list, feature_type)
+        label_normaliser.prepare_dur_data(in_label_align_file_list, dur_file_list, label_type, feature_type)
 
 
     ### make output acoustic data

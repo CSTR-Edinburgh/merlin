@@ -26,41 +26,15 @@ class HTSLabelModification(object):
 
     """
     
-    def __init__(self, silence_pattern=['*-#+*']):
+    def __init__(self, silence_pattern=['*-#+*'], label_type="state_align"):
 
         logger = logging.getLogger("labels")
 
         self.silence_pattern = silence_pattern
         self.silence_pattern_size = len(silence_pattern)
+        self.label_type = label_type
         self.state_number = 5
 
-    """
-    def check_silence_pattern(self, label):
-        label_size = len(label)
-        binary_flag = 0
-        for si in xrange(self.silence_pattern_size):
-            current_pattern = self.silence_pattern[si]
-            current_size = len(current_pattern)
-            if current_pattern[0] == '*' and current_pattern[current_size - 1] == '*':
-                temp_pattern = current_pattern[1:current_size - 1]
-                for il in xrange(1, label_size - current_size + 2):
-                    if temp_pattern == label[il:il + current_size - 2]:
-                        binary_flag = 1
-            elif current_pattern[current_size-1] != '*':
-                temp_pattern = current_pattern[1:current_size]
-                if temp_pattern == label[label_size - current_size + 1:label_size]:
-                    binary_flag = 1
-            elif current_pattern[0] != '*':
-                temp_pattern = current_pattern[0:current_size - 1]
-                if temp_pattern == label[0:current_size - 1]:
-                    binary_flag = 1
-            if binary_flag == 1:
-                break
-        
-        return  binary_flag # one means yes, zero means no
-    """
-
-    ## OSW: rewrote above more succintly
     def check_silence_pattern(self, label): 
         for current_pattern in self.silence_pattern:
             current_pattern = current_pattern.strip('*')
@@ -79,7 +53,13 @@ class HTSLabelModification(object):
             sys.exit(1)
                
         for i in xrange(utt_number):
-            self.modify_dur_from_state_alignment_labels(in_gen_label_align_file_list[i], gen_dur_list[i], gen_label_list[i])
+            if (self.label_type=="state_align"):
+                self.modify_dur_from_state_alignment_labels(in_gen_label_align_file_list[i], gen_dur_list[i], gen_label_list[i])
+            elif (self.label_type=="phone_align"):
+                self.modify_dur_from_phone_alignment_labels(in_gen_label_align_file_list[i], gen_dur_list[i], gen_label_list[i])
+            else:
+                logger.critical("we don't support %s labels as of now!!" % (self.label_type))
+                sys.exit(1)
     
     def modify_dur_from_state_alignment_labels(self, label_file_name, gen_dur_file_name, gen_lab_file_name): 
         logger = logging.getLogger("dur")
@@ -115,8 +95,6 @@ class HTSLabelModification(object):
             state_index = full_label[full_label_length + 1]
             state_index = int(state_index) - 1
 
-            frame_number = int((end_time - start_time)/50000)
-            
             label_binary_flag = self.check_silence_pattern(full_label)
           
             if label_binary_flag == 1:
@@ -132,6 +110,53 @@ class HTSLabelModification(object):
         
             if state_index == state_number:
                 current_index += 1
+     
+        logger.debug('modifed label with predicted duration of %d frames x %d features' % dur_features.shape )
+    
+    def modify_dur_from_phone_alignment_labels(self, label_file_name, gen_dur_file_name, gen_lab_file_name): 
+        logger = logging.getLogger("dur")
+
+        dur_dim = 1
+        
+        io_funcs = BinaryIOCollection()
+        dur_features, frame_number = io_funcs.load_binary_file_frame(gen_dur_file_name, dur_dim)
+
+        fid = open(label_file_name)
+        utt_labels = fid.readlines()
+        fid.close()
+        
+        label_number = len(utt_labels)
+        logger.info('loaded %s, %3d labels' % (label_file_name, label_number) )
+		
+        out_fid = open(gen_lab_file_name, 'w')
+
+        current_index = 0
+        prev_end_time = 0
+        for line in utt_labels:
+            line = line.strip()
+            
+            if len(line) < 1:
+                continue
+            temp_list = re.split('\s+', line)
+            start_time = int(temp_list[0])
+            end_time = int(temp_list[1])
+            
+            full_label = temp_list[2]
+
+            label_binary_flag = self.check_silence_pattern(full_label)
+          
+            if label_binary_flag == 1:
+                current_phone_dur = end_time - start_time
+                out_fid.write(str(prev_end_time)+' '+str(prev_end_time+current_phone_dur)+' '+full_label+'\n')
+                prev_end_time = prev_end_time+current_phone_dur
+                continue;
+            else:
+                phone_dur = dur_features[current_index]
+                phone_dur = int(phone_dur)*5*10000
+                out_fid.write(str(prev_end_time)+' '+str(prev_end_time+phone_dur)+' '+full_label+'\n')
+                prev_end_time = prev_end_time+phone_dur
+        
+            current_index += 1
      
         logger.debug('modifed label with predicted duration of %d frames x %d features' % dur_features.shape )
     
