@@ -1084,33 +1084,33 @@ if __name__ == '__main__':
     for p in env_LD_LIBRARY_PATHs:
         if len(p)>0: logger.info('      '+p)
     logger.info('  Python version: '+sys.version.replace('\n',''))
-    #logger.info('    PYTHONPATH:')
-    #env_PYTHONPATHs = os.getenv('PYTHONPATH').split(':')
-    #for p in env_PYTHONPATHs:
-    #    if len(p)>0: logger.info('      '+p)
+    logger.info('    PYTHONPATH:')
+    env_PYTHONPATHs = os.getenv('PYTHONPATH')
+    if env_PYTHONPATHs:
+        env_PYTHONPATHs = env_PYTHONPATHs.split(':')
+        for p in env_PYTHONPATHs:
+            if len(p)>0:
+                logger.info('      '+p)
     logger.info('  Numpy version: '+numpy.version.version)
     logger.info('  Theano version: '+theano.version.version)
     logger.info('    THEANO_FLAGS: '+os.getenv('THEANO_FLAGS'))
     logger.info('    device: '+theano.config.device)
 
     # Check for the presence of git
-    """
     ret = os.system('git status > /dev/null')
     if ret==0:
         logger.info('  Git is available in the working directory:')
-        git_describe = subprocess.check_output('git describe --tags --always', stderr=subprocess.STDOUT, shell=True).replace('\n','')
+        git_describe = subprocess.Popen(['git', 'describe', '--tags', '--always'], stdout=subprocess.PIPE).communicate()[0][:-1]
         logger.info('    Merlin version: '+git_describe)
-        git_branch = subprocess.check_output('git rev-parse --abbrev-ref HEAD', stderr=subprocess.STDOUT, shell=True).replace('\n','')
+        git_branch = subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE).communicate()[0][:-1]
         logger.info('    branch: '+git_branch)
-        git_diff = subprocess.check_output('git diff --name-status', stderr=subprocess.STDOUT, shell=True)
+        git_diff = subprocess.Popen(['git', 'diff', '--name-status'], stdout=subprocess.PIPE).communicate()[0]
         git_diff = git_diff.replace('\t',' ').split('\n')
-        #logger.info('    diff to Merlin version: '+git_diff+' (logged in '+cfg.log_file+'.gitdiff'+')')
         logger.info('    diff to Merlin version:')
         for filediff in git_diff:
             if len(filediff)>0: logger.info('      '+filediff)
         logger.info('      (all diffs logged in '+os.path.basename(cfg.log_file)+'.gitdiff'+')')
         os.system('git diff > '+cfg.log_file+'.gitdiff')
-    """
 
     logger.info('Execution information:')
     logger.info('  HOSTNAME: '+socket.getfqdn())
