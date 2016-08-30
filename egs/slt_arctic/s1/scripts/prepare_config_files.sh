@@ -12,7 +12,11 @@ else
     source $1
 fi
 
-duration_config_file=conf/duration_configfile.conf
+#########################################
+######## duration config file ###########
+#########################################
+
+duration_config_file=conf/duration_${Voice}.conf
 
 echo "[DEFAULT]" > $duration_config_file 
 
@@ -59,6 +63,7 @@ echo "[Labels]" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "silence_pattern : ['*-sil+*']" >> $duration_config_file
+echo "label_type : ${Labels}" >> $duration_config_file
 echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/duration_model/data/label_${Labels}" >> $duration_config_file
 echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $duration_config_file
 
@@ -66,13 +71,21 @@ echo "" >> $duration_config_file
 echo "add_frame_features    : False" >> $duration_config_file
 
 echo "" >> $duration_config_file
-echo "# options: full, minimal_frame, state_only, none" >> $duration_config_file
+echo "# options: state_only, none" >> $duration_config_file
 echo "subphone_feats        : none" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "[Outputs]" >> $duration_config_file
+if [ "$Labels" == "state_align" ]
+then
 echo "dur    : 5" >> $duration_config_file
+elif [ "$Labels" == "phone_align" ]
+then
+echo "dur    : 1" >> $duration_config_file
+else
+    echo "These labels ($Lables) are not supported as of now...please use state_align or phone_align!!"
+fi
 
 echo "" >> $duration_config_file
 echo "[Architecture]" >> $duration_config_file
@@ -132,7 +145,11 @@ echo "" >> $duration_config_file
 
 echo "Duration configuration settings stored in $duration_config_file"
 
-acoustic_config_file=conf/acoustic_configfile.conf
+#########################################
+######## acoustic config file ###########
+#########################################
+
+acoustic_config_file=conf/acoustic_${Voice}.conf
 
 echo "[DEFAULT]" > $acoustic_config_file
 
@@ -195,6 +212,7 @@ echo "[Labels]" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "silence_pattern : ['*-sil+*']" >> $acoustic_config_file
+echo "label_type : ${Labels}" >> $acoustic_config_file
 echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/acoustic_model/data/label_${Labels}" >> $acoustic_config_file
 echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $acoustic_config_file
 
@@ -202,8 +220,17 @@ echo "" >> $acoustic_config_file
 echo "add_frame_features    : True" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
-echo "# options: full, minimal_frame, state_only, none" >> $acoustic_config_file
+if [ "$Labels" == "state_align" ]
+then
+echo "# options: full, coarse_coding, minimal_frame, state_only, frame_only, none" >> $acoustic_config_file
 echo "subphone_feats        : full" >> $acoustic_config_file
+elif [ "$Labels" == "phone_align" ]
+then
+echo "# options: coarse_coding, minimal_phoneme, none" >> $acoustic_config_file
+echo "subphone_feats        : coarse_coding" >> $acoustic_config_file
+else
+    echo "These labels ($Lables) are not supported as of now...please use state_align or phone_align!!"
+fi
 
 echo "" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
