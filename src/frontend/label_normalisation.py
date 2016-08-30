@@ -102,6 +102,8 @@ class HTSLabelNormalisation(LabelNormalisation):
             self.frame_feature_size = 1   ## this is equivalent to a frame-based system without relying on state-features
         elif self.subphone_feats == 'uniform_state':
             self.frame_feature_size = 2   ## this is equivalent to a frame-based system with uniform state-features
+        elif self.subphone_feats == 'minimal_phoneme':
+            self.frame_feature_size = 3   ## this is equivalent to a frame-based system with minimal features
         elif self.subphone_feats == 'coarse_coding':
             self.frame_feature_size = 4   ## this is equivalent to a frame-based positioning system reported in Heiga Zen's work
             self.cc_features = self.compute_coarse_coding_features(3)

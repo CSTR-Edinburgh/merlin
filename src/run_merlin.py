@@ -922,7 +922,7 @@ def main_function(cfg):
             generator = ParameterGeneration(gen_wav_features = cfg.gen_wav_features)
             generator.duration_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict)
            
-            label_modifier = HTSLabelModification(silence_pattern = cfg.silence_pattern)
+            label_modifier = HTSLabelModification(silence_pattern = cfg.silence_pattern, label_type = cfg.label_type)
             label_modifier.modify_duration_labels(in_gen_label_align_file_list, gen_dur_list, gen_label_list)
             
 
