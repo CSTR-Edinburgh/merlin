@@ -42,9 +42,10 @@ import  sys, numpy, re, math
 from io_funcs.binary_io import BinaryIOCollection
 
 class SilenceRemover(object):
-    def __init__(self, n_cmp, silence_pattern=['*-#+*'], remove_frame_features=True, subphone_feats="none"):
+    def __init__(self, n_cmp, silence_pattern=['*-#+*'], label_type="state_align", remove_frame_features=True, subphone_feats="none"):
         self.silence_pattern = silence_pattern
         self.silence_pattern_size = len(silence_pattern)
+        self.label_type = label_type
         self.remove_frame_features = remove_frame_features
         self.subphone_feats = subphone_feats
         self.n_cmp = n_cmp
@@ -63,8 +64,12 @@ class SilenceRemover(object):
         io_funcs = BinaryIOCollection()
         for i in xrange(file_number):
 
-            if dur_file_list:
-                nonsilence_indices = self.load_phone_alignment(in_align_list[i], dur_file_list[i])
+            if self.label_type=="phone_align":
+                if dur_file_list:
+                    dur_file_name = dur_file_list[i]
+                else:
+                    dur_file_name = None
+                nonsilence_indices = self.load_phone_alignment(in_align_list[i], dur_file_name)
             else:
                 nonsilence_indices = self.load_alignment(in_align_list[i])
 

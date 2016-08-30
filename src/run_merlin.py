@@ -543,9 +543,9 @@ def main_function(cfg):
     if cfg.NORMLAB and (cfg.label_style == 'HTS'):
         # simple HTS labels 
     	logger.info('preparing label data (input) using standard HTS style labels')
-        label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list)
+        label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list, label_type=cfg.label_type)
 
-        remover = SilenceRemover(n_cmp = lab_dim, silence_pattern = cfg.silence_pattern, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
+        remover = SilenceRemover(n_cmp = lab_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
         remover.remove_silence(binary_label_file_list, in_label_align_file_list, nn_label_file_list)
 
         min_max_normaliser = MinMaxNormalisation(feature_dimension = lab_dim, min_value = 0.01, max_value = 0.99)
@@ -679,7 +679,7 @@ def main_function(cfg):
                                 binary_label_file_list, lab_dim, silence_feature)
                                 
         else: ## back off to previous method using HTS labels:
-            remover = SilenceRemover(n_cmp = cfg.cmp_dim, silence_pattern = cfg.silence_pattern, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
+            remover = SilenceRemover(n_cmp = cfg.cmp_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
             remover.remove_silence(nn_cmp_file_list[0:cfg.train_file_number+cfg.valid_file_number], 
                                    in_label_align_file_list[0:cfg.train_file_number+cfg.valid_file_number], 
                                    nn_cmp_file_list[0:cfg.train_file_number+cfg.valid_file_number]) # save to itself
@@ -957,7 +957,7 @@ def main_function(cfg):
             trim_silence(untrimmed_reference_data, ref_dur_list, cfg.dur_dim, \
                                 untrimmed_test_labels, lab_dim, silence_feature)
         else:
-            remover = SilenceRemover(n_cmp = cfg.dur_dim, silence_pattern = cfg.silence_pattern, remove_frame_features = cfg.add_frame_features)
+            remover = SilenceRemover(n_cmp = cfg.dur_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type, remove_frame_features = cfg.add_frame_features)
             remover.remove_silence(in_file_list_dict['dur'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_dur_list)
             
         valid_dur_rmse, valid_dur_corr = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.dur_ext, cfg.dur_dim)
@@ -1008,7 +1008,7 @@ def main_function(cfg):
                 trim_silence(untrimmed_reference_data, ref_mgc_list, cfg.mgc_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
             else:
-                remover = SilenceRemover(n_cmp = cfg.mgc_dim, silence_pattern = cfg.silence_pattern)
+                remover = SilenceRemover(n_cmp = cfg.mgc_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_mgc_list)
             valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.mgc_ext, cfg.mgc_dim)
             test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.mgc_ext, cfg.mgc_dim)
@@ -1022,7 +1022,7 @@ def main_function(cfg):
                 trim_silence(untrimmed_reference_data, ref_bap_list, cfg.bap_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
             else:
-                remover = SilenceRemover(n_cmp = cfg.bap_dim, silence_pattern = cfg.silence_pattern)
+                remover = SilenceRemover(n_cmp = cfg.bap_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_bap_list)
             valid_bap_mse        = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
             test_bap_mse         = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
@@ -1035,7 +1035,7 @@ def main_function(cfg):
                 trim_silence(untrimmed_reference_data, ref_lf0_list, cfg.lf0_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
             else:
-                remover = SilenceRemover(n_cmp = cfg.lf0_dim, silence_pattern = cfg.silence_pattern)
+                remover = SilenceRemover(n_cmp = cfg.lf0_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_lf0_list)
             valid_f0_mse, valid_f0_corr, valid_vuv_error   = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.lf0_ext, cfg.lf0_dim)
             test_f0_mse , test_f0_corr, test_vuv_error    = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.lf0_ext, cfg.lf0_dim)

@@ -192,6 +192,7 @@ class configuration(object):
 
 
             ('label_style', 'HTS'   , 'Labels', 'label_style'),
+            ('label_type', 'state_align'   , 'Labels', 'label_type'),
             ('in_label_align_dir', os.path.join(self.work_dir, 'data/label_state_align')  ,    'Labels', 'label_align'),
             ('question_file_name', os.path.join(self.work_dir, 'data/questions.hed')      ,    'Labels', 'question_file_name'),
             ('silence_pattern'   , ['*-#+*']                                              ,    'Labels', 'silence_pattern'),

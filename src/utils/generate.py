@@ -138,9 +138,6 @@ def generate_wav(gen_dir, file_id_list, cfg):
     STRAIGHT = cfg.STRAIGHT
     WORLD    = cfg.WORLD
 
-    counter=1
-    max_counter=len(file_id_list)
-
     ## to be moved
     pf_coef = cfg.pf_coef
     if isinstance(cfg.fw_alpha, basestring):
@@ -156,27 +153,26 @@ def generate_wav(gen_dir, file_id_list, cfg):
     fl_coef = cfg.fl
 
     counter=1
-    #mgc_list = glob.glob(gen_dir + '/*' + cfg.mgc_ext)
-    mgc_list = file_id_list
-    max_counter = len(mgc_list)
+    max_counter = len(file_id_list)
 
-    print   len(mgc_list)
-    for mgc in mgc_list:
+    for filename in file_id_list:
 
-        logger.info('creating waveform for %4d of %4d: %s' % (counter,max_counter,mgc) )
+        logger.info('creating waveform for %4d of %4d: %s' % (counter,max_counter,filename) )
         counter=counter+1
-        mgc.strip()
-        base   = os.path.basename(os.path.splitext(mgc)[0])
-        files = {'sp'  : gen_dir + '/' + base + cfg.sp_ext,
-                 'mgc' : gen_dir + '/' + base + cfg.mgc_ext,
-                 'f0'  : gen_dir + '/' + base + '.f0',
-                 'lf0' : gen_dir + '/' + base + cfg.lf0_ext,
-                 'ap'  : gen_dir + '/' + base + '.ap',
-                 'bap' : gen_dir + '/' + base + cfg.bap_ext,
-                 'wav' : gen_dir + '/' + base + '.wav'}
+        base   = filename
+        files = {'sp'  : base + cfg.sp_ext,
+                 'mgc' : base + cfg.mgc_ext,
+                 'f0'  : base + '.f0',
+                 'lf0' : base + cfg.lf0_ext,
+                 'ap'  : base + '.ap',
+                 'bap' : base + cfg.bap_ext,
+                 'wav' : base + '.wav'}
 
         mgc_file_name = files['mgc']
         
+        cur_dir = os.getcwd()
+        os.chdir(gen_dir)
+
         ### post-filtering
         if cfg.do_post_filtering:
             line = "echo 1 1 "
@@ -249,4 +245,5 @@ def generate_wav(gen_dir, file_id_list, cfg):
         
             logger.critical('The vocoder %s is not supported yet!\n' % cfg.vocoder_type )
         
+        os.chdir(cur_dir)
 

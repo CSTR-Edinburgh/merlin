@@ -24,11 +24,13 @@ class LabelNormalisation(LinguisticBase):
     def __init__(self, question_file_name=None,xpath_file_name=None):
         pass
         
-    def extract_linguistic_features(self, in_file_name, out_file_name=None, dur_file_name=None):
-        if dur_file_name:
+    def extract_linguistic_features(self, in_file_name, out_file_name=None, label_type="state_align", dur_file_name=None):
+        if label_type=="phone_align":
             A = self.load_labels_with_phone_alignment(in_file_name, dur_file_name)
-        else:
+        elif label_type=="state_align":
             A = self.load_labels_with_state_alignment(in_file_name)
+        else:
+            logger.critical("we don't support %s labels as of now!!" % (label_type))
 
         if out_file_name:
             io_funcs = BinaryIOCollection()
@@ -114,20 +116,7 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         logger.debug('HTS-derived input feature dimension is %d + %d = %d' % (self.dict_size, self.frame_feature_size, self.dimension) )
         
-
-#    def perform_normalisation(self, ori_file_list, output_file_list):
-#        '''
-#        converting discrete full context label to binary features and numerical features.
-#        '''
-#        utt_number = len(ori_file_list)
-#        if utt_number != len(output_file_list):
-#            print   "the number of input and output files should be the same!\n";
-#            sys.exit(1)
-                
-#        for i in xrange(utt_number):
-#            self.extract_linguistic_features(ori_file_list[i], output_file_list[i])
-            
-    def prepare_dur_data(self, ori_file_list, output_file_list, feature_type=None, unit_size=None, feat_size=None):
+    def prepare_dur_data(self, ori_file_list, output_file_list, label_type='state_align', feature_type=None, unit_size=None, feat_size=None):
         '''
         extracting duration binary features or numerical features.
         '''
@@ -143,6 +132,8 @@ class HTSLabelNormalisation(LabelNormalisation):
         ### set default unit size to state, if not assigned ###
         if not unit_size:
             unit_size = "state"
+        if label_type=="phone_align":
+            unit_size = "phoneme"
 
         ### set default feat size to frame or phoneme, if not assigned ###
         if feature_type=="binary":
@@ -156,10 +147,15 @@ class HTSLabelNormalisation(LabelNormalisation):
             sys.exit(1)
 
         for i in xrange(utt_number):
-            self.extract_dur_features(ori_file_list[i], output_file_list[i], feature_type, unit_size, feat_size)
+            self.extract_dur_features(ori_file_list[i], output_file_list[i], label_type, feature_type, unit_size, feat_size)
     
-    def extract_dur_features(self, in_file_name, out_file_name=None, feature_type=None, unit_size=None, feat_size=None):
-        A = self.extract_dur_from_state_alignment_labels(in_file_name, feature_type, unit_size, feat_size)
+    def extract_dur_features(self, in_file_name, out_file_name=None, label_type='state_align', feature_type=None, unit_size=None, feat_size=None):
+        if label_type=="phone_align":
+            A = self.extract_dur_from_phone_alignment_labels(in_file_name, feature_type, unit_size, feat_size)
+        elif label_type=="state_align":
+            A = self.extract_dur_from_state_alignment_labels(in_file_name, feature_type, unit_size, feat_size)
+        else:
+            logger.critical("we don't support %s labels as of now!!" % (label_type))
 
         if out_file_name:
             io_funcs = BinaryIOCollection()
@@ -249,6 +245,66 @@ class HTSLabelNormalisation(LabelNormalisation):
         logger.debug('made duration matrix of %d frames x %d features' % dur_feature_matrix.shape )
         return  dur_feature_matrix
 
+    def extract_dur_from_phone_alignment_labels(self, file_name, feature_type, unit_size, feat_size): 
+        logger = logging.getLogger("dur")
+
+        dur_dim = 1 
+        
+        if feature_type=="binary":
+            dur_feature_matrix = numpy.empty((100000, 1))
+        elif feature_type=="numerical":
+            if unit_size=="phoneme":
+                dur_feature_matrix = numpy.empty((100000, 1))
+
+        fid = open(file_name)
+        utt_labels = fid.readlines()
+        fid.close()
+        
+        label_number = len(utt_labels)
+        logger.info('loaded %s, %3d labels' % (file_name, label_number) )
+		
+        current_index = 0
+        dur_feature_index = 0
+        for line in utt_labels:
+            line = line.strip()
+            
+            if len(line) < 1:
+                continue
+            temp_list = re.split('\s+', line)
+            start_time = int(temp_list[0])
+            end_time = int(temp_list[1])
+            
+            full_label = temp_list[2]
+
+            frame_number = int((end_time - start_time)/50000)
+            
+            phone_duration = frame_number
+                
+            if feature_type == "binary":
+                current_block_array = numpy.zeros((frame_number, 1))
+                if unit_size == "phoneme":
+                    current_block_array[-1] = 1
+                else:
+                    logger.critical("Unknown unit size: %s \n Please use one of the following: phoneme\n" %(unit_size))
+                    sys.exit(1)
+            elif feature_type == "numerical":
+                if unit_size == "phoneme":
+                    current_block_array = numpy.array([phone_duration])
+            
+            ### writing into dur_feature_matrix ### 
+            if feat_size == "frame":
+                dur_feature_matrix[dur_feature_index:dur_feature_index+frame_number,] = current_block_array
+                dur_feature_index = dur_feature_index + frame_number
+            elif feat_size == "phoneme": 
+                dur_feature_matrix[dur_feature_index:dur_feature_index+1,] = current_block_array
+                dur_feature_index = dur_feature_index + 1
+
+            current_index += 1
+
+        dur_feature_matrix = dur_feature_matrix[0:dur_feature_index,]
+        logger.debug('made duration matrix of %d frames x %d features' % dur_feature_matrix.shape )
+        return  dur_feature_matrix
+
     def load_labels_with_phone_alignment(self, file_name, dur_file_name):
 
         # this is not currently used ??? -- it works now :D
@@ -286,10 +342,10 @@ class HTSLabelNormalisation(LabelNormalisation):
             # currently under beta testing: support different frame shift 
             if dur_file_name:
                 frame_number = manual_dur_data[ph_count]
-                ph_count = ph_count+1
             else:
                 frame_number = int((end_time - start_time)/50000)
 
+            ph_count = ph_count+1
             #label_binary_vector = self.pattern_matching(full_label)
             label_binary_vector = self.pattern_matching_binary(full_label)
 
@@ -337,6 +393,7 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         label_feature_matrix = label_feature_matrix[0:label_feature_index,]
 
+        logger.info('loaded %s, %3d labels' % (file_name, ph_count) )
         logger.debug('made label matrix of %d frames x %d labels' % label_feature_matrix.shape )
         return  label_feature_matrix
 
