@@ -357,6 +357,7 @@ class configuration(object):
             ('fl'               ,4096                  ,'Waveform'  , 'framelength'),
             ('shift'            ,1000 * 240 / 48000    ,'Waveform'  , 'frameshift'),
             ('sp_dim'           ,(4096 / 2) + 1        ,'Waveform'  , 'sp_dim'),
+            # fw_alpha: 'Bark' or 'ERB' allowing deduction of alpha, or explicity float value (e.g. 0.77)
             ('fw_alpha'         ,0.77                  ,'Waveform'  , 'fw_alpha'),
             ('pf_coef'          ,1.4                   ,'Waveform'  , 'postfilter_coef'),
             ('co_coef'          ,2047                  ,'Waveform'  , 'minimum_phase_order'),
