@@ -43,7 +43,7 @@ FAST_MLPG = True
 #io_funcs.
 
 from io_funcs.binary_io import  BinaryIOCollection
-import os, numpy
+import os, re, numpy
 import logging
 
 if FAST_MLPG:
@@ -54,8 +54,9 @@ else:
 
 class   ParameterGeneration(object):
 
-    def __init__(self, gen_wav_features = ['mgc', 'lf0', 'bap']):
+    def __init__(self, gen_wav_features = ['mgc', 'lf0', 'bap'], enforce_silence=False):
         self.gen_wav_features = gen_wav_features
+        self.enforce_silence  = enforce_silence
         self.inf_float = -1.0e+10
 
         # not really necessary to have the logger rembered in the class - can easily obtain it by name instead
@@ -102,7 +103,7 @@ class   ParameterGeneration(object):
 
             logger.debug('wrote to file %s' % new_file_name)
 
-    def acoustic_decomposition(self, in_file_list, dimension, out_dimension_dict, file_extension_dict, var_file_dict, do_MLPG=True):
+    def acoustic_decomposition(self, in_file_list, dimension, out_dimension_dict, file_extension_dict, var_file_dict, do_MLPG=True, cfg=None):
 
         logger = logging.getLogger('param_generation')
 
@@ -174,21 +175,28 @@ class   ParameterGeneration(object):
 
                 new_file_name = os.path.join(dir_name, file_id + file_extension_dict[feature_name])
 
-                '''
-                if cfg.enforce_silence:
+                if self.enforce_silence:
+                    silence_pattern = cfg.silence_pattern
                     label_align_dir = cfg.in_label_align_dir
                     in_f = open(label_align_dir+'/'+file_id+'.lab','r')
-                    for j in in_f.readlines():
-                        fstr = j.strip().split()
-                        ftag = fstr[2]
-                        ph = ftag[ftag.index('-')+1:ftag.index('+')]
+                    for line in in_f.readlines():
+                        line = line.strip()
             
-                        ph_start = int(int(fstr[0])*(10**-4)/5)
-                        ph_end    = int(int(fstr[1])*(10**-4)/5)
+                        if len(line) < 1:
+                            continue
+                        temp_list  = re.split('\s+', line)
+                        start_time = int(int(temp_list[0])*(10**-4)/5)
+                        end_time   = int(int(temp_list[1])*(10**-4)/5)
             
-                        if ph=='SIL':
-                            gen_features[ph_start:ph_end, :] = 0.0
-                '''
+                        full_label = temp_list[2]
+            
+                        label_binary_flag = self.check_silence_pattern(full_label, silence_pattern)
+                        
+                        if label_binary_flag:
+                            if feature_name in ['lf0', 'F0']:
+                                gen_features[start_time:end_time, :] = self.inf_float
+                            else:
+                                gen_features[start_time:end_time, :] = 0.0
 
                 io_funcs.array_to_binary_file(gen_features, new_file_name)
                 logger.debug(' wrote to file %s' % new_file_name)
@@ -205,6 +213,12 @@ class   ParameterGeneration(object):
             self.var[feature_name] = var_values
 
 
+    def check_silence_pattern(self, label, silence_pattern): 
+        for current_pattern in silence_pattern:
+            current_pattern = current_pattern.strip('*')
+            if current_pattern in label:
+                return 1
+        return 0
 
 
 

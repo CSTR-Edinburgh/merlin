@@ -554,7 +554,11 @@ def main_function(cfg):
             min_max_normaliser.load_min_max_values(label_norm_file)
         else:
             min_max_normaliser.find_min_max_values(nn_label_file_list[0:cfg.train_file_number])
-        min_max_normaliser.normalise_data(nn_label_file_list, nn_label_norm_file_list)
+        ### enforce silence such that the normalization runs without removing silence: only for final synthesis
+        if cfg.GenTestList and cfg.enforce_silence:
+            min_max_normaliser.normalise_data(binary_label_file_list, nn_label_norm_file_list)
+        else:
+            min_max_normaliser.normalise_data(nn_label_file_list, nn_label_norm_file_list)
 
 
     if cfg.NORMLAB and (cfg.label_style == 'composed'):
@@ -868,7 +872,9 @@ def main_function(cfg):
 
     if cfg.GenTestList:
         gen_file_id_list = test_id_list
-        test_x_file_list = nn_label_norm_file_list 
+        test_x_file_list = nn_label_norm_file_list
+        ### comment the below line if you don't want the files in a separate folder
+        gen_dir = cfg.test_synth_dir
 
     if cfg.DNNGEN:
     	logger.info('generating from DNN')
@@ -910,8 +916,8 @@ def main_function(cfg):
         if cfg.AcousticModel:
             ##perform MLPG to smooth parameter trajectory
             ## lf0 is included, the output features much have vuv. 
-            generator = ParameterGeneration(gen_wav_features = cfg.gen_wav_features)
-            generator.acoustic_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict, var_file_dict, do_MLPG=cfg.do_MLPG)    
+            generator = ParameterGeneration(gen_wav_features = cfg.gen_wav_features, enforce_silence = cfg.enforce_silence)
+            generator.acoustic_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict, var_file_dict, do_MLPG=cfg.do_MLPG, cfg=cfg)    
 
         if cfg.DurationModel:
             ### Perform duration normalization(min. state dur set to 1) ### 
@@ -929,7 +935,6 @@ def main_function(cfg):
     ### generate wav
     if cfg.GENWAV:
     	logger.info('reconstructing waveform(s)')
-    	print   len(gen_file_id_list)
     	generate_wav(gen_dir, gen_file_id_list, cfg)     # generated speech
 #    	generate_wav(nn_cmp_dir, gen_file_id_list, cfg)  # reference copy synthesis speech
     	

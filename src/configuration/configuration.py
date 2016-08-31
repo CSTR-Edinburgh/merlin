@@ -205,6 +205,7 @@ class configuration(object):
             ('fill_missing_values',  False,                                                     'Labels', 'fill_missing_values'),
             ('xpath_label_align_dir', os.path.join(self.work_dir, 'data/label_state_align'),    'Labels', 'xpath_label_align'),
 
+            ('enforce_silence', False, 'Labels', 'enforce_silence'),
             ('remove_silence_using_binary_labels', False, 'Labels', 'remove_silence_using_binary_labels'),
             ('precompile_xpaths', True, 'Labels', 'precompile_xpaths'),
             ('iterate_over_frames', True, 'Labels', 'iterate_over_frames'),
@@ -362,8 +363,9 @@ class configuration(object):
             ('fw_alpha'         ,0.77                  ,'Waveform'  , 'fw_alpha'),
             ('pf_coef'          ,1.4                   ,'Waveform'  , 'postfilter_coef'),
             ('co_coef'          ,2047                  ,'Waveform'  , 'minimum_phase_order'),
-            ('use_cep_ap'       ,True                 ,'Waveform'  , 'use_cep_ap'),
+            ('use_cep_ap'       ,True                  ,'Waveform'  , 'use_cep_ap'),
             ('do_post_filtering',True                  ,'Waveform'  , 'do_post_filtering'), 
+            ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
             
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),
