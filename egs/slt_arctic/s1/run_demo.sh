@@ -36,5 +36,6 @@ echo "Step 4: synthesizing speech..."
 echo "Step 5: deleting intermediate synthesis files..."
 ./scripts/remove_intermediate_files.sh conf/global_settings.cfg
 
-
+echo "synthesized audio files are in: experiments/${Voice}/test_synthesis/wav"
+echo "All successfull!! Your demo voice is ready :)"
 
