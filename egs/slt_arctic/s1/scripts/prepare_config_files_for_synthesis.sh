@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if test "$#" -ne 1; then
-    echo "Usage: ./scripts/prepare_config_files.sh conf/global_settings.cfg"
+    echo "Usage: ./scripts/prepare_config_files_for_synthesis.sh conf/global_settings.cfg"
     exit 1
 fi
 
@@ -16,7 +16,7 @@ fi
 ######## duration config file ###########
 #########################################
 
-duration_config_file=conf/duration_${Voice}.conf
+duration_config_file=conf/test_dur_synth_${Voice}.conf
 
 echo "[DEFAULT]" > $duration_config_file 
 
@@ -40,6 +40,7 @@ echo "data: %(work)s/data" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "# list of file basenames, training and validation in a single list" >> $duration_config_file
 echo "file_id_list: %(data)s/${FileIDList}" >> $duration_config_file
+echo "test_id_list: %(TOPLEVEL)s/experiments/${Voice}/test_synthesis/test_id_list.scp" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "# output duration features" >> $duration_config_file 
@@ -64,7 +65,7 @@ echo "[Labels]" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "silence_pattern : ['*-sil+*']" >> $duration_config_file
 echo "label_type : ${Labels}" >> $duration_config_file
-echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/duration_model/data/label_${Labels}" >> $duration_config_file
+echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/test_synthesis/prompt-lab" >> $duration_config_file
 echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $duration_config_file
 
 echo "" >> $duration_config_file
@@ -85,7 +86,14 @@ then
 echo "dur    : 1" >> $duration_config_file
 else
     echo "These labels ($Lables) are not supported as of now...please use state_align or phone_align!!"
+    exit 1
 fi
+
+echo "" >> $duration_config_file
+echo "[Waveform]" >> $duration_config_file
+
+echo "" >> $duration_config_file
+echo "test_synth_dir :  %(TOPLEVEL)s/experiments/${Voice}/test_synthesis/gen-lab" >> $duration_config_file  
 
 echo "" >> $duration_config_file
 echo "[Architecture]" >> $duration_config_file
@@ -135,19 +143,14 @@ echo "" >> $duration_config_file
 echo "# Main processes" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "DurationModel : True" >> $duration_config_file
+echo "GenTestList   : True" >> $duration_config_file
 
 echo "" >> $duration_config_file
 echo "# sub-processes" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "NORMLAB  : True" >> $duration_config_file
-echo "MAKEDUR  : True" >> $duration_config_file
-echo "MAKECMP  : True" >> $duration_config_file
-echo "NORMCMP  : True" >> $duration_config_file
 echo "" >> $duration_config_file
-echo "TRAINDNN : True" >> $duration_config_file
 echo "DNNGEN   : True" >> $duration_config_file
-echo "" >> $duration_config_file
-echo "CALMCD   : True" >> $duration_config_file
 echo "" >> $duration_config_file
 echo "" >> $duration_config_file
 
@@ -157,7 +160,7 @@ echo "Duration configuration settings stored in $duration_config_file"
 ######## acoustic config file ###########
 #########################################
 
-acoustic_config_file=conf/acoustic_${Voice}.conf
+acoustic_config_file=conf/test_synth_${Voice}.conf
 
 echo "[DEFAULT]" > $acoustic_config_file
 
@@ -181,6 +184,7 @@ echo "data: %(work)s/data" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
 echo "# list of file basenames, training and validation in a single list" >> $acoustic_config_file
 echo "file_id_list: %(data)s/${FileIDList}" >> $acoustic_config_file
+echo "test_id_list: %(TOPLEVEL)s/experiments/${Voice}/test_synthesis/test_id_list.scp" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
@@ -219,9 +223,10 @@ echo "" >> $acoustic_config_file
 echo "[Labels]" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
+echo "enforce_silence : True" >> $acoustic_config_file
 echo "silence_pattern : ['*-sil+*']" >> $acoustic_config_file
 echo "label_type : ${Labels}" >> $acoustic_config_file
-echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/acoustic_model/data/label_${Labels}" >> $acoustic_config_file
+echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/test_synthesis/gen-lab" >> $acoustic_config_file
 echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
@@ -270,6 +275,7 @@ echo "" >> $acoustic_config_file
 echo "[Waveform]" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
+echo "test_synth_dir :  %(TOPLEVEL)s/experiments/${Voice}/test_synthesis/wav" >> $acoustic_config_file  
 echo "vocoder_type : ${Vocoder}" >> $acoustic_config_file
 
 if [ "$SamplingFreq" == "16000" ]
@@ -324,6 +330,7 @@ echo "" >> $acoustic_config_file
 echo "[Streams]" >> $acoustic_config_file
 echo "# which feature to be used in the output" >> $acoustic_config_file
 echo "output_features      : ['mgc', 'lf0', 'vuv', 'bap']" >> $acoustic_config_file
+echo "gen_wav_features     : ['mgc', 'lf0', 'bap']" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
@@ -343,19 +350,16 @@ echo "# Main processes" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "AcousticModel : True" >> $acoustic_config_file
+echo "GenTestList   : True" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "# sub-processes" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
 echo "NORMLAB  : True" >> $acoustic_config_file
-echo "MAKECMP  : True" >> $acoustic_config_file
-echo "NORMCMP  : True" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
-echo "TRAINDNN : True" >> $acoustic_config_file
 echo "DNNGEN   : True" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
 echo "GENWAV   : True" >> $acoustic_config_file
-echo "CALMCD   : True" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
 echo "" >> $acoustic_config_file
 

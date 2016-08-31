@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if test "$#" -ne 1; then
-    echo "Usage: ./setup.sh <voice_directory_name>"
+    echo "Usage: ./scripts/setup.sh <voice_directory_name>"
     exit 1
 fi
 
@@ -14,6 +14,7 @@ voice_dir=${experiments_dir}/${voice_name}
 
 acoustic_dir=${voice_dir}/acoustic_model
 duration_dir=${voice_dir}/duration_model
+synthesis_dir=${voice_dir}/test_synthesis
 
 mkdir -p ${experiments_dir}
 mkdir -p ${voice_dir}
@@ -53,6 +54,7 @@ if [[ ! -d ${data_dir} ]] || [[ -n "$do_unzip" ]]; then
     unzip -q ${data_dir}.zip
     mv ${data_dir}/merlin_baseline_practice/duration_data/ ${duration_dir}/data
     mv ${data_dir}/merlin_baseline_practice/acoustic_data/ ${acoustic_dir}/data
+    mv ${data_dir}/merlin_baseline_practice/test_data/ ${synthesis_dir}
 fi
 echo "data is ready!"
 
