@@ -24,11 +24,15 @@ gen_wav_dir=${synthesis_dir}/wav
 
 shopt -s extglob
 
-cd ${gen_lab_dir}
-rm -f *.!(lab)
+if [ -d "$gen_lab_dir" ]; then
+    cd ${gen_lab_dir}
+    rm -f *.!(lab)
+fi
 
-cd ${gen_wav_dir}
-rm -f weight
-rm -f *.!(wav)
+if [ -d "$gen_wav_dir" ]; then
+    cd ${gen_wav_dir}
+    rm -f weight
+    rm -f *.!(wav)
+fi
 
 cd ${current_working_dir}
