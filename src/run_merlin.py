@@ -1081,13 +1081,17 @@ if __name__ == '__main__':
     logger.info('Installation information:')
     logger.info('  Merlin directory: '+os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)))
     logger.info('  PATH:')
-    env_PATHs = os.getenv('PATH').split(':')
-    for p in env_PATHs:
-        if len(p)>0: logger.info('      '+p)
+    env_PATHs = os.getenv('PATH')
+    if env_PATHs:
+        env_PATHs = env_PATHs.split(':')
+        for p in env_PATHs:
+            if len(p)>0: logger.info('      '+p)
     logger.info('  LD_LIBRARY_PATH:')
-    env_LD_LIBRARY_PATHs = os.getenv('LD_LIBRARY_PATH').split(':')
-    for p in env_LD_LIBRARY_PATHs:
-        if len(p)>0: logger.info('      '+p)
+    env_LD_LIBRARY_PATHs = os.getenv('LD_LIBRARY_PATH')
+    if env_LD_LIBRARY_PATHs:
+        env_LD_LIBRARY_PATHs = env_LD_LIBRARY_PATHs.split(':')
+        for p in env_LD_LIBRARY_PATHs:
+            if len(p)>0: logger.info('      '+p)
     logger.info('  Python version: '+sys.version.replace('\n',''))
     logger.info('    PYTHONPATH:')
     env_PYTHONPATHs = os.getenv('PYTHONPATH')
