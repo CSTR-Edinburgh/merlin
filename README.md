@@ -12,6 +12,8 @@ To run the example system builds, see `egs/README.txt`
 
 As a first demo, please follow the scripts in `egs/slt_arctic`
 
+Listen to [Synthetic speech samples](https://cstr-edinburgh.github.io/merlin/demo.html) from demo voice.
+
 Development pattern for contributors
 ------------------------------------
 
