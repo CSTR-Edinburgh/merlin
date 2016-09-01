@@ -46,6 +46,7 @@ own vocoder to replace this script.
 import sys, os, subprocess, glob, commands
 #from utils import GlobalCfg
 
+from io_funcs.binary_io import  BinaryIOCollection
 import numpy as np
 
 import logging
@@ -152,6 +153,21 @@ def generate_wav(gen_dir, file_id_list, cfg):
     co_coef = cfg.co_coef
     fl_coef = cfg.fl
 
+    if cfg.apply_GV:
+        io_funcs = BinaryIOCollection()
+
+        logger.info('loading global variance stats from %s' % (cfg.GV_dir))
+
+        ref_gv_mean_file = os.path.join(cfg.GV_dir, 'ref_gv.mean')
+        gen_gv_mean_file = os.path.join(cfg.GV_dir, 'gen_gv.mean')
+        ref_gv_std_file  = os.path.join(cfg.GV_dir, 'ref_gv.std')
+        gen_gv_std_file  = os.path.join(cfg.GV_dir, 'gen_gv.std')
+
+        ref_gv_mean, frame_number = io_funcs.load_binary_file_frame(ref_gv_mean_file, 1)
+        gen_gv_mean, frame_number = io_funcs.load_binary_file_frame(gen_gv_mean_file, 1)
+        ref_gv_std, frame_number = io_funcs.load_binary_file_frame(ref_gv_std_file, 1)
+        gen_gv_std, frame_number = io_funcs.load_binary_file_frame(gen_gv_std_file, 1)
+
     counter=1
     max_counter = len(file_id_list)
 
@@ -209,6 +225,25 @@ def generate_wav(gen_dir, file_id_list, cfg):
 
             mgc_file_name = files['mgc']+'_p_mgc'
             
+        if cfg.vocoder_type == "STRAIGHT" and cfg.apply_GV:
+            gen_mgc, frame_number = io_funcs.load_binary_file_frame(mgc_file_name, cfg.mgc_dim)
+
+            gen_mu  = np.reshape(np.mean(gen_mgc, axis=0), (-1, 1))
+            gen_std = np.reshape(np.std(gen_mgc, axis=0), (-1, 1))
+   
+            local_gv = (ref_gv_std/gen_gv_std) * (gen_std - gen_gv_mean) + ref_gv_mean;
+   
+            enhanced_mgc = np.repeat(local_gv, frame_number, 1).T / np.repeat(gen_std, frame_number, 1).T * (gen_mgc - np.repeat(gen_mu, frame_number, 1).T) + np.repeat(gen_mu, frame_number, 1).T;
+            
+            new_mgc_file_name = files['mgc']+'_p_mgc'
+            io_funcs.array_to_binary_file(enhanced_mgc, new_mgc_file_name) 
+            
+            mgc_file_name = files['mgc']+'_p_mgc'
+        
+        if cfg.do_post_filtering and cfg.apply_GV:
+            logger.critical('Both smoothing techniques together can\'t be applied!!\n' )
+            raise
+
         ###mgc to sp to wav
         if cfg.vocoder_type == 'STRAIGHT':
             run_process('{mgc2sp} -a {alpha} -g 0 -m {order} -l {fl} -o 2 {mgc} > {sp}'
@@ -244,6 +279,7 @@ def generate_wav(gen_dir, file_id_list, cfg):
         else:
         
             logger.critical('The vocoder %s is not supported yet!\n' % cfg.vocoder_type )
+            raise
         
         os.chdir(cur_dir)
 

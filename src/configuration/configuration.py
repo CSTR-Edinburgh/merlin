@@ -166,6 +166,8 @@ class configuration(object):
             ('file_id_scp'       , os.path.join(self.work_dir, 'data/file_id_list.scp')    , 'Paths', 'file_id_list'),
             ('test_id_scp'       , os.path.join(self.work_dir, 'data/test_id_list.scp')    , 'Paths', 'test_id_list'),
 
+            ('GV_dir'       , os.path.join(self.work_dir, 'data/GV' )  , 'Paths', 'GV_dir'),
+
             ('in_stepw_dir' , os.path.join(self.work_dir, 'data/stepw'), 'Paths', 'in_stepw_dir'),
             ('in_mgc_dir'   , os.path.join(self.work_dir, 'data/mgc')  , 'Paths', 'in_mgc_dir'),
             ('in_lf0_dir'   , os.path.join(self.work_dir, 'data/lf0')  , 'Paths', 'in_lf0_dir'),
@@ -365,6 +367,7 @@ class configuration(object):
             ('co_coef'          ,2047                  ,'Waveform'  , 'minimum_phase_order'),
             ('use_cep_ap'       ,True                  ,'Waveform'  , 'use_cep_ap'),
             ('do_post_filtering',True                  ,'Waveform'  , 'do_post_filtering'), 
+            ('apply_GV'         ,False                 ,'Waveform'  , 'apply_GV'), 
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
             
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
