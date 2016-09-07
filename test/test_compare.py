@@ -21,13 +21,13 @@ def similar_reals(ref, test, tol, colnames=None):
 
     row_format ="{:>10}" * len(ref)
 
+    if colnames:
+        print('           '+row_format.format(*colnames))
+    print('Reference: '+row_format.format(*ref))
+    print('Test:      '+row_format.format(*test))
+    print('Diff:      '+row_format.format(*(ref-test)))
+    print('Tolerance: '+row_format.format(*tol))
     if any(abs(ref-test)>tol):
-        if colnames:
-            print('           '+row_format.format(*colnames))
-        print('Reference: '+row_format.format(*ref))
-        print('Test:      '+row_format.format(*test))
-        print('Diff:      '+row_format.format(*(ref-test)))
-        print('Tolerance: '+row_format.format(*tol))
         print('FAILED')
         return False
 
