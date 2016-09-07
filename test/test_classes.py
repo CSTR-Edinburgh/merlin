@@ -4,10 +4,18 @@
 import sys
 import os
 sys.path.append('../src')
+import errno
 
 import numpy as np
 import cPickle
 import logging
+
+def makedir(path):
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
 def build_model(hidden_layer_type):
     logger.info('  DeepRecurrentNetwork '+str(hidden_layer_type))
@@ -15,6 +23,7 @@ def build_model(hidden_layer_type):
     
     # Always try to save it and reload it
     modelfile = 'log/model.pkl'
+    makedir('log')
     cPickle.dump(nnmodel, open(modelfile, 'wb'))
     nnmodel = cPickle.load(open(modelfile, 'rb'))
 
