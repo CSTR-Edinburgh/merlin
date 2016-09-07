@@ -8,6 +8,7 @@ fi
 ### Step 1: setup directories and the training data files ###
 echo "Step 1: setting up experiments directory and the training data files..."
 global_config_file=conf/global_settings.cfg
+mkdir conf
 ./scripts/setup.sh slt_arctic_demo
 ./scripts/prepare_config_files.sh $global_config_file
 ./scripts/prepare_config_files_for_synthesis.sh $global_config_file
