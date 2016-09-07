@@ -195,7 +195,10 @@ class LstmBase(object):
         :param p: the probability of dropout
         :param training: a binary value to indicate training or testing (for dropout training)
         """
-    
+  
+        n_in = int(n_in)  # ensure sizes have integer type
+        n_h = int(n_h)# ensure sizes have integer type
+
         self.input = x
                 
         if p > 0.0:
