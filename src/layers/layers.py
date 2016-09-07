@@ -84,6 +84,8 @@ class MixtureDensityOutputLayer(object):
 
 class LinearLayer(object):
     def __init__(self, rng, input, n_in, n_out, W = None, b = None):
+        n_in = int(n_in)  # ensure sizes have integer type
+        n_out = int(n_out)# ensure sizes have integer type
 
         self.input = input
 
@@ -124,6 +126,8 @@ class LinearLayer(object):
 
 class SigmoidLayer(object):
     def __init__(self, rng, x, n_in, n_out, W = None, b = None, activation = T.tanh, p=0.0, training=0):
+        n_in = int(n_in)  # ensure sizes have integer type
+        n_out = int(n_out)# ensure sizes have integer type
 
         self.x = x
 
