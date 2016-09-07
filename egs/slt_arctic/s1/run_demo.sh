@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 if test "$#" -ne 0; then
     echo "Usage: ./run_demo.sh"
