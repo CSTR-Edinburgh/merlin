@@ -48,17 +48,18 @@ TESTNAME=charac_slt_short
         FAILED="$FAILED ${TESTNAME}_merlin_execution"
     else
         REF=$(get_duration_rmse_corr testrefs/slt_arctic_demo/duration_model/log/DNN_TANH_TANH_TANH_TANH_LINEAR__dur_50_259_4_512_0.002000*.log)
-        TEST=$(get_duration_rmse_corr experiments/slt_arctic_demo/duration_model/log/DNN_TANH_TANH_TANH_TANH_LINEAR__dur_50_259_4_512_0.002000*.log)
+        TESTFILE=`grep -Rnsl 'main: Test' experiments/slt_arctic_demo/duration_model/log/DNN_TANH_TANH_TANH_TANH_LINEAR__dur_50_259_4_512_0.002000*.log`
+        TEST=$(get_duration_rmse_corr $TESTFILE)
         python $TESTROOT/test_compare.py --ref $REF --test $TEST --colnames RMSE CORR
         if [[ "$?" == "1" ]]; then FAILED="$FAILED ${TESTNAME}_duration"; fi
 
         REF=$(get_acoustic_mcd_bap_f0rmse_f0corr_vuv testrefs/slt_arctic_demo/acoustic_model/log/DNN_TANH_TANH_TANH_TANH_LINEAR__mgc_lf0_vuv_bap_50_259_4_512_0.002000*.log)
-        TEST=$(get_acoustic_mcd_bap_f0rmse_f0corr_vuv experiments/slt_arctic_demo/acoustic_model/log/DNN_TANH_TANH_TANH_TANH_LINEAR__mgc_lf0_vuv_bap_50_259_4_512_0.002000*.log)
+        TESTFILE=`grep -Rnsl 'main: Test' experiments/slt_arctic_demo/acoustic_model/log/DNN_TANH_TANH_TANH_TANH_LINEAR__mgc_lf0_vuv_bap_50_259_4_512_0.002000*.log`
+        TEST=$(get_acoustic_mcd_bap_f0rmse_f0corr_vuv $TESTFILE)
         python $TESTROOT/test_compare.py --ref $REF --test $TEST --colnames MCD BAP F0-RMSE F0-CORR VUV
         if [[ "$?" == "1" ]]; then FAILED="$FAILED ${TESTNAME}_acoustic"; fi
-
-        echo " "
     fi
+    echo " "
 
 # Add new tests here
 
