@@ -203,14 +203,14 @@ echo "log_file: %(work)s/log/mylogfilename.log" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
 echo "# where are my tools" >> $acoustic_config_file
-echo "sptk:  %(Merlin)s/tools/SPTK-3.7/bin" >> $acoustic_config_file
+echo "sptk:  %(Merlin)s/tools/bin/SPTK-3.9" >> $acoustic_config_file
 
 if [ "$Vocoder" == "STRAIGHT" ]
 then
-    echo "straight :%(Merlin)s/tools/straight/bin" >> $acoustic_config_file
+    echo "straight :%(Merlin)s/tools/bin/straight" >> $acoustic_config_file
 elif [ "$Vocoder" == "WORLD" ]
 then
-    echo "world: %(Merlin)s/tools/WORLD/build" >> $acoustic_config_file
+    echo "world: %(Merlin)s/tools/bin/WORLD" >> $acoustic_config_file
 else
     echo "This vocoder ($Vocoder) is not supported as of now...please configure yourself!!"
 fi

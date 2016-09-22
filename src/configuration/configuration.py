@@ -224,9 +224,9 @@ class configuration(object):
             ('log_file', '', 'Paths','log_file'),
             ('log_config_file', 'configuration/exampleloggingconfigfile.conf', 'Paths', 'log_config_file'),
 
-            ('sptk_bindir', 'tools/env/bin', 'Paths','sptk'),
-            ('straight_bindir', 'tools/straight/bin', 'Paths','straight'),
-            ('world_bindir', 'tools/WORLD/build', 'Paths','world'),
+            ('sptk_bindir', 'tools/bin/SPTK-3.9', 'Paths','sptk'),
+            ('straight_bindir', 'tools/bin/straight', 'Paths','straight'),
+            ('world_bindir', 'tools/bin/WORLD', 'Paths','world'),
 
             ('network_type'           , 'RNN'                                           , 'Architecture', 'network_type'),
             ('model_type'           , 'DNN'                                             , 'Architecture', 'model_type'),
