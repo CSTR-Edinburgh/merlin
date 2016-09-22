@@ -1,6 +1,6 @@
 
 # top merlin directory
-merlin_dir="/home/bollepb1/SRC/merlin"
+merlin_dir="/u/97/bollepb1/unix/work/git_hub/merlin"
 
 # tools directory
 world="${merlin_dir}/tools/WORLD/build"
@@ -44,7 +44,7 @@ alpha=0.77
 fi
 
 mcsize=59
-order=5
+order=1
 
 for file in $wav_dir/*.wav #.wav
 do
@@ -55,7 +55,7 @@ do
    
     ### WORLD ANALYSIS -- extract vocoder parameters ###
 
-    ### extract f0, sp, ap ### 
+    ## extract f0, sp, ap ### 
     $world/analysis ${wav_dir}/$file_id.wav ${f0_dir}/$file_id.f0 ${sp_dir}/$file_id.sp ${bap_dir}/$file_id.ap
 
     ### convert f0 to lf0 ###
@@ -82,7 +82,7 @@ do
     $sptk/mgc2sp -a $alpha -g 0 -m $order -l $nFFTHalf -o 2 ${bap_dir}/$file_id.bap | $sptk/sopr -d 32768.0 -P | $sptk/x2x +fd > ${resyn_dir}/$file_id.resyn.ap
    
 
-    $world/synth $nFFTHalf $fs ${resyn_dir}/$file_id.resyn.f0 ${resyn_dir}/$file_id.resyn.sp ${resyn_dir}/$file_id.resyn.bapd ${out_dir}/$file_id.resyn.wav
+    $world/synth $nFFTHalf $fs ${resyn_dir}/$file_id.resyn.f0 ${resyn_dir}/$file_id.resyn.sp ${resyn_dir}/$file_id.resyn.ap ${out_dir}/$file_id.resyn.wav
 done
 
 rm -rf $sp_dir $mgc_dir $f0_dir $lf0_dir $bap_dir

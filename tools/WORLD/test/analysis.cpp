@@ -194,7 +194,7 @@ void AperiodicityEstimation(double *x, int x_length,
   DWORD elapsed_time = timeGetTime();
   // option is not implemented in this version. This is for future update.
   // We can use "NULL" as the argument.
-  D4C_coarse(x, x_length, world_parameters->fs, world_parameters->time_axis,
+  D4C(x, x_length, world_parameters->fs, world_parameters->time_axis,
       world_parameters->f0, world_parameters->f0_length,
       world_parameters->fft_size, &option, world_parameters->aperiodicity);
   printf("D4C: %d [msec]\n", timeGetTime() - elapsed_time);

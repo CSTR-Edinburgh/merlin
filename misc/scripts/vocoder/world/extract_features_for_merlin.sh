@@ -43,7 +43,7 @@ alpha=0.77
 fi
 
 mcsize=59
-order=5
+order=1
 
 for file in $wav_dir/*.wav #.wav
 do
