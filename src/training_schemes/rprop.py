@@ -45,6 +45,7 @@ import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 import  matplotlib.pyplot as plt
+from collections import OrderedDict
 
 def compile_RPROP_train_function(model, gparams, params_to_update=[]):
 
@@ -85,7 +86,7 @@ def compile_RPROP_train_function(model, gparams, params_to_update=[]):
 
     if model.use_rprop in [2,4]:
     
-        updates = theano.compat.python2x.OrderedDict()
+        updates = OrderedDict()
 
         for (i, (prev_gparam, gparam, update_step, param))  in enumerate(zip(model.previous_gparams, gparams, \
                                                         model.update_values, model.params)):
