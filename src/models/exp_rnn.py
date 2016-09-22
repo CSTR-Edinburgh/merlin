@@ -27,6 +27,7 @@
 import sys
 
 import numpy as np
+from collections import OrderedDict
 
 import theano
 import theano.tensor as T
@@ -219,7 +220,7 @@ class DeepRecurrentNetwork(object):
         
         
         # zip just concatenate two lists
-        updates = theano.compat.python2x.OrderedDict()
+        updates = OrderedDict()
         
         for param, gparam in zip(self.params, gparams):
             weight_update = self.updates[param]
@@ -266,7 +267,7 @@ class DeepRecurrentNetwork(object):
 
 
         # zip just concatenate two lists
-        updates = theano.compat.python2x.OrderedDict()
+        updates = OrderedDict()
 
         for param, gparam in zip(self.params, gparams):
             weight_update = self.updates[param]
@@ -315,7 +316,7 @@ class DeepRecurrentNetwork(object):
 
 
         # zip just concatenate two lists
-        updates = theano.compat.python2x.OrderedDict()
+        updates = OrderedDict()
 
         for param, gparam in zip(self.params, gparams):
             weight_update = self.updates[param]

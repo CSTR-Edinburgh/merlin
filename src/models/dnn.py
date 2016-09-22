@@ -46,6 +46,7 @@ import sys
 import time
 
 import numpy
+from collections import OrderedDict
 
 import theano
 import theano.tensor as T
@@ -178,7 +179,7 @@ class DNN(object):
 
         if self.use_rprop == 0:
 
-            updates = theano.compat.python2x.OrderedDict()
+            updates = OrderedDict()
             layer_index = 0
             for dparam, gparam in zip(self.delta_params, gparams):
                 updates[dparam] = momentum * dparam - gparam * lr_list[layer_index]

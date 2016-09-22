@@ -43,6 +43,7 @@ import sys
 import time
 
 import numpy
+from collections import OrderedDict
 
 import theano
 import theano.tensor as T
@@ -266,7 +267,7 @@ class TokenProjectionDNN(object):
         gparams = T.grad(self.finetune_cost, self.params)
 
         def make_updates_plain(param_list, delta_param_list, gparam_list, lr_list, params_to_update):
-            updates = theano.compat.python2x.OrderedDict()
+            updates = OrderedDict()
             for dparam, gparam, lrate in zip(delta_param_list, gparam_list, lr_list):
                 updates[dparam] = momentum * dparam - gparam * lrate
             for dparam, param in zip(delta_param_list, param_list):
@@ -314,7 +315,7 @@ class TokenProjectionDNN(object):
         ##### OLDER VERSION:--
         '''
         ## All updates:
-        updates = theano.compat.python2x.OrderedDict()
+        updates = OrderedDict()
         layer_index = 0
         for dparam, gparam in zip(self.delta_params, gparams):
             updates[dparam] = momentum * dparam - gparam * lr_list[layer_index]
@@ -324,7 +325,7 @@ class TokenProjectionDNN(object):
             updates[param] = param + updates[dparam]
 
         ## These updates exclude parameters at 0 and 2  -- proj. weights and proj. half of split layer
-        subword_updates = theano.compat.python2x.OrderedDict()
+        subword_updates = OrderedDict()
         for (i, (dparam, gparam)) in enumerate(zip(self.delta_params, gparams)):
             if i not in [0,2]:  ## proj weights and proj half of split layer
                 subword_updates[dparam] = momentum * dparam - gparam * lr_list[i]
@@ -335,7 +336,7 @@ class TokenProjectionDNN(object):
 
         ## These updates exclude parameters at 1 -- subword half of split layer
         ### NO!!! -- just the word half of the split layer, and bias of that layer
-        word_updates = theano.compat.python2x.OrderedDict()
+        word_updates = OrderedDict()
         for (i, (dparam, gparam)) in enumerate(zip(self.delta_params, gparams)):
             if i in [0,2,3]:  
                 word_updates[dparam] = momentum * dparam - gparam * lr_list[i]
@@ -346,7 +347,7 @@ class TokenProjectionDNN(object):
 
 
         ## These updates exclude all but parameters at 0 -- projection layer
-        projection_updates = theano.compat.python2x.OrderedDict()
+        projection_updates = OrderedDict()
         for (i, (dparam, gparam)) in enumerate(zip(self.delta_params, gparams)):
             if i == 0: 
                 projection_updates[dparam] = momentum * dparam - gparam * lr_list[i]
