@@ -101,11 +101,11 @@ def prepare_file_path_list(file_id_list, file_dir, file_extension, new_dir_switc
 
 def visualize_dnn(dnn):
 
-    layer_num = len(dnn.params)     ## including input and output
+    layer_num = len(dnn.params[0:-1:2])     ## including input and output
     plotlogger = logging.getLogger("plotting")
-    
+
     for i in xrange(layer_num):
-        fig_name = 'Activation weights W' + str(i) + '_' + dnn.params[i].name
+        fig_name = 'Activation weights W' + str(i) + '_' + dnn.params[2*i].name
         fig_title = 'Activation weights of W' + str(i)
         xlabel = 'Neuron index of hidden layer ' + str(i)
         ylabel = 'Neuron index of hidden layer ' + str(i+1)
@@ -114,11 +114,11 @@ def visualize_dnn(dnn):
         if i == layer_num-1:
             ylabel = 'Output feature index'
 
-        aa = dnn.params[i].get_value(borrow=True).T
+        aa = dnn.params[2*i].get_value(borrow=True).T
         print   aa.shape, aa.size
         if aa.size > aa.shape[0]:
             logger.create_plot(fig_name, SingleWeightMatrixPlot)
-            plotlogger.add_plot_point(fig_name, fig_name, dnn.params[i].get_value(borrow=True).T)
+            plotlogger.add_plot_point(fig_name, fig_name, dnn.params[2*i].get_value(borrow=True).T)
             plotlogger.save_plot(fig_name, title=fig_name, xlabel=xlabel, ylabel=ylabel)
 
 def load_covariance(var_file_dict, out_dimension_dict): 
