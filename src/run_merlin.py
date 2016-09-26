@@ -103,7 +103,7 @@ def visualize_dnn(dnn):
     plotlogger = logging.getLogger("plotting")
 
 	# reference activation weights in layers
-	W = list(); layer_name = list()
+    W = list(); layer_name = list()
     for i in xrange(len(dnn.params)):
         aa = dnn.params[i].get_value(borrow=True).T
         print   aa.shape, aa.size
