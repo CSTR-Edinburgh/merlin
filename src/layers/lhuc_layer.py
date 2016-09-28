@@ -53,7 +53,6 @@ class SigmoidLayer_LHUC(object):
         self.output = T.dot(self.x, self.W) + self.b
         self.output = activation(self.output)
         self.output = 2.* T.nnet.sigmoid(self.c) * self.output
-        #self.output = self.c * self.output
 
         self.params = [self.W, self.b, self.c]
         self.delta_params = [self.delta_W, self.delta_b, self.delta_c]
