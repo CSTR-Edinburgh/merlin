@@ -274,10 +274,10 @@ def generate_wav(gen_dir, file_id_list, cfg):
             run_process('{mgc2sp} -a {alpha} -g 0 -m {order} -l {fl} -o 2 {mgc} | {sopr} -d 32768.0 -P | {x2x} +fd > {sp}'
                         .format(mgc2sp=SPTK['MGC2SP'], alpha=cfg.fw_alpha, order=cfg.mgc_dim-1, fl=cfg.fl, mgc=mgc_file_name, sopr=SPTK['SOPR'], x2x=SPTK['X2X'], sp=files['sp']))
 
-            run_process('{synworld} {fl} {sr} {f0} {sp} {bapd} {wav}'
-                         .format(synworld=WORLD['SYNTHESIS'], fl=cfg.fl, sr=cfg.sr, f0=files['f0'], sp=files['sp'], bapd=files['bap'] + '.double', wav=files['wav']))
+            run_process('{synworld} {fl} {sr} {f0} {sp} {ap} {wav}'
+                         .format(synworld=WORLD['SYNTHESIS'], fl=cfg.fl, sr=cfg.sr, f0=files['f0'], sp=files['sp'], ap=files['ap'], wav=files['wav']))
             
-            run_process('rm -f {sp} {f0}'.format(sp=files['sp'],f0=files['f0']))
+            run_process('rm -f {ap} {sp} {f0}'.format(ap=files['ap'],sp=files['sp'],f0=files['f0']))
 
         else:
         
