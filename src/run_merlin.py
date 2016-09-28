@@ -98,28 +98,34 @@ def prepare_file_path_list(file_id_list, file_dir, file_extension, new_dir_switc
     return  file_name_list
 
     
-
 def visualize_dnn(dnn):
 
-    layer_num = len(dnn.params)     ## including input and output
     plotlogger = logging.getLogger("plotting")
-    
-    for i in xrange(layer_num):
-        fig_name = 'Activation weights W' + str(i) + '_' + dnn.params[i].name
-        fig_title = 'Activation weights of W' + str(i)
-        xlabel = 'Neuron index of hidden layer ' + str(i)
-        ylabel = 'Neuron index of hidden layer ' + str(i+1)
-        if i == 0:
-            xlabel = 'Input feature index'
-        if i == layer_num-1:
-            ylabel = 'Output feature index'
 
+	# reference activation weights in layers
+    W = list(); layer_name = list()
+    for i in xrange(len(dnn.params)):
         aa = dnn.params[i].get_value(borrow=True).T
         print   aa.shape, aa.size
         if aa.size > aa.shape[0]:
-            logger.create_plot(fig_name, SingleWeightMatrixPlot)
-            plotlogger.add_plot_point(fig_name, fig_name, dnn.params[i].get_value(borrow=True).T)
-            plotlogger.save_plot(fig_name, title=fig_name, xlabel=xlabel, ylabel=ylabel)
+        	W.append(aa)
+        	layer_name.append(dnn.params[i].name)
+        	
+    ## plot activation weights including input and output
+    layer_num = len(W)		
+    for i_layer in xrange(layer_num):
+		fig_name = 'Activation weights W' + str(i_layer) + '_' + layer_name[i_layer]
+		fig_title = 'Activation weights of W' + str(i_layer)
+		xlabel = 'Neuron index of hidden layer ' + str(i_layer)
+		ylabel = 'Neuron index of hidden layer ' + str(i_layer+1)
+		if i_layer == 0:
+			xlabel = 'Input feature index'
+		if i_layer == layer_num-1:
+			ylabel = 'Output feature index'
+		logger.create_plot(fig_name, SingleWeightMatrixPlot)
+		plotlogger.add_plot_point(fig_name, fig_name, W[i_layer])
+		plotlogger.save_plot(fig_name, title=fig_name, xlabel=xlabel, ylabel=ylabel)
+
 
 def load_covariance(var_file_dict, out_dimension_dict): 
     var = {}
