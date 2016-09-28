@@ -39,6 +39,7 @@
 
 
 import logging
+import sys
 
 ## a generic class of linguistic feature extraction
 ## 

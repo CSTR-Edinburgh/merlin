@@ -43,7 +43,7 @@ alpha=0.77
 fi
 
 mcsize=59
-order=24
+order=1
 
 for file in $wav_dir/*.wav #.wav
 do
@@ -55,7 +55,7 @@ do
     ### WORLD ANALYSIS -- extract vocoder parameters ###
 
     ### extract f0, sp, ap ### 
-    $world/analysis ${wav_dir}/$file_id.wav ${f0_dir}/$file_id.f0 ${sp_dir}/$file_id.sp ${bap_dir}/$file_id.bapd
+    $world/analysis ${wav_dir}/$file_id.wav ${f0_dir}/$file_id.f0 ${sp_dir}/$file_id.sp ${bap_dir}/$file_id.ap
 
     ### convert f0 to lf0 ###
     $sptk/x2x +da ${f0_dir}/$file_id.f0 > ${f0_dir}/$file_id.f0a
@@ -64,11 +64,11 @@ do
     ### convert sp to mgc ###
     $sptk/x2x +df ${sp_dir}/$file_id.sp | $sptk/sopr -R -m 32768.0 | $sptk/mcep -a $alpha -m $mcsize -l $nFFTHalf -e 1.0E-8 -j 0 -f 0.0 -q 3 > ${mgc_dir}/$file_id.mgc
 
-    ### convert bapd to bap ###
-    $sptk/x2x +df ${bap_dir}/$file_id.bapd > ${bap_dir}/$file_id.bap
+     ### convert ap to bap ###
+    $sptk/x2x +df ${bap_dir}/$file_id.ap | $sptk/sopr -R -m 32768.0 | $sptk/mcep -a $alpha -m $order -l $nFFTHalf -e 1.0E-8 -j 0 -f 0.0 -q 3 > ${bap_dir}/$file_id.bap
 
 done
 
 rm -rf $sp_dir 
 rm -rf $f0_dir
-rm -rf $bap_dir/*.bapd
+rm -rf $bap_dir/*.ap
