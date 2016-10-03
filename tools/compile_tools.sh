@@ -20,4 +20,18 @@ echo "compiling WORLD..."
 (
     cd WORLD;
     make
+    make analysis synth
+    make clean
 )
+
+# 3. Copy binaries
+
+mkdir -p bin
+mkdir -p bin/SPTK-3.9
+mkdir -p bin/WORLD
+
+cp SPTK-3.9/build/bin/* bin/SPTK-3.9/
+cp WORLD/build/analysis bin/WORLD/
+cp WORLD/build/synth bin/WORLD/
+
+echo "All tools successfully compiled!!"

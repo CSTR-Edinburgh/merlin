@@ -1,14 +1,24 @@
 //-----------------------------------------------------------------------------
-// 
-// Author: Zhizheng Wu (wuzhizheng@gmail.com)
-// Date: 11-03-2016
+// Copyright 2012-2016 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
-// To extract F0, spectrum and band aperiodicities with WORLD vocoder
-//
-// This is modified based on Msanori Morise's test.cpp. Low-dimensional band aperiodicities are used as suggested by Oliver.
-//
-// analysis input_waveform F0_file spectrogram_file aperiodicity_file
-//
+// Test program for WORLD 0.1.2 (2012/08/19)
+// Test program for WORLD 0.1.3 (2013/07/26)
+// Test program for WORLD 0.1.4 (2014/04/29)
+// Test program for WORLD 0.1.4_3 (2015/03/07)
+// Test program for WORLD 0.2.0 (2015/05/29)
+// Test program for WORLD 0.2.0_1 (2015/05/31)
+// Test program for WORLD 0.2.0_2 (2015/06/06)
+// Test program for WORLD 0.2.0_3 (2015/07/28)
+// Test program for WORLD 0.2.0_4 (2015/11/15)
+// Test program for WORLD in GitHub (2015/11/16-)
+// Latest update: 2016/03/04
+
+// test.exe input.wav outout.wav f0 spec
+// input.wav  : Input file
+// output.wav : Output file
+// f0         : F0 scaling (a positive number)
+// spec       : Formant scaling (a positive number)
 //-----------------------------------------------------------------------------
 
 #include <math.h>
@@ -40,9 +50,6 @@
 #include "world/stonemask.h"
 #include "world/synthesis.h"
 
-#include "world/common.h"
-#include "world/constantnumbers.h"
-
 #if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__))
 // Linux porting section: implement timeGetTime() by gettimeofday(),
 #ifndef DWORD
@@ -72,8 +79,6 @@ typedef struct {
   double **spectrogram;
   double **aperiodicity;
   int fft_size;
-  
-  int number_of_aperiodicities;
 } WorldParameters;
 
 namespace {
@@ -177,24 +182,17 @@ void AperiodicityEstimation(double *x, int x_length,
   D4COption option = {0};
   InitializeD4COption(&option);
 
-  int number_of_aperiodicities =
-    static_cast<int>(MyMinDouble(world::kUpperLimit, world_parameters->fs / 2.0 -
-      world::kFrequencyInterval) / world::kFrequencyInterval);
-
   // Parameters setting and memory allocation.
   world_parameters->aperiodicity = new double *[world_parameters->f0_length];
   for (int i = 0; i < world_parameters->f0_length; ++i) {
-//    world_parameters->aperiodicity[i] =
-//      new double[world_parameters->fft_size / 2 + 1];
-    world_parameters->aperiodicity[i] = new double[number_of_aperiodicities];
+    world_parameters->aperiodicity[i] =
+      new double[world_parameters->fft_size / 2 + 1];
   }
-
-  world_parameters->number_of_aperiodicities = number_of_aperiodicities;
 
   DWORD elapsed_time = timeGetTime();
   // option is not implemented in this version. This is for future update.
   // We can use "NULL" as the argument.
-  D4C_coarse(x, x_length, world_parameters->fs, world_parameters->time_axis,
+  D4C(x, x_length, world_parameters->fs, world_parameters->time_axis,
       world_parameters->f0, world_parameters->f0_length,
       world_parameters->fft_size, &option, world_parameters->aperiodicity);
   printf("D4C: %d [msec]\n", timeGetTime() - elapsed_time);
@@ -269,9 +267,9 @@ void DestroyMemory(WorldParameters *world_parameters) {
 // Test program.
 // test.exe input.wav outout.wav f0 spec flag
 // input.wav  : argv[1] Input file
-// output.wav : argv[2] sp file
-// f0         : argv[3] ap file
-// spec       : argv[4] f0 file
+// output.wav : argv[2] Output file
+// f0         : argv[3] F0 scaling (a positive number)
+// spec       : argv[4] Formant shift (a positive number)
 //-----------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   if (argc != 2 && argc != 3 && argc != 4 && argc != 5) {
@@ -318,30 +316,26 @@ int main(int argc, char *argv[]) {
 
   // Aperiodicity estimation by D4C
   AperiodicityEstimation(x, x_length, &world_parameters);
-  
-  FILE * file = fopen(argv[2], "wb");
-  fwrite(world_parameters.f0, sizeof(double), world_parameters.f0_length, file);
-  fclose(file);
 
-  FILE * fsp = fopen(argv[3], "wb");
-  for  (int i=0; i<world_parameters.f0_length; i++) {
-      fwrite(world_parameters.spectrogram[i], sizeof(double), world_parameters.fft_size/2+1, fsp);
-  }
-  fclose(fsp);
+  // Note that F0 must not be changed until all parameters are estimated.
+  ParameterModification(argc, argv, fs, world_parameters.f0_length,
+    world_parameters.fft_size, world_parameters.f0,
+    world_parameters.spectrogram);
 
-  FILE * fap = fopen(argv[4], "wb");
-  for  (int i=0; i<world_parameters.f0_length; i++) {
-      fwrite(world_parameters.aperiodicity[i], sizeof(double), world_parameters.number_of_aperiodicities, fap);
-  }
-  fclose(fap);
+  //---------------------------------------------------------------------------
+  // Synthesis part
+  //---------------------------------------------------------------------------
+  // The length of the output waveform
+  int y_length = static_cast<int>((world_parameters.f0_length - 1) *
+    world_parameters.frame_period / 1000.0 * fs) + 1;
+  double *y = new double[y_length];
+  // Synthesis
+  WaveformSynthesis(&world_parameters, fs, y_length, y);
 
-//    for (int i=0; i<world_parameters.f0_length; i++) {
-//        printf("%d %F\n", i, world_parameters.f0[i]);
-//    }
-    
-    printf("%d %d %d\n", world_parameters.f0_length, world_parameters.fft_size, world_parameters.number_of_aperiodicities);
-    
-    
+  // Output
+  wavwrite(y, y_length, fs, 16, argv[2]);
+
+  delete[] y;
   delete[] x;
   DestroyMemory(&world_parameters);
 

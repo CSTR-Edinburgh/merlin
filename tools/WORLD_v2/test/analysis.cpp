@@ -73,7 +73,7 @@ typedef struct {
   double **aperiodicity;
   int fft_size;
   
-  int number_of_aperiodicities;
+  //int number_of_aperiodicities;
 } WorldParameters;
 
 namespace {
@@ -177,24 +177,24 @@ void AperiodicityEstimation(double *x, int x_length,
   D4COption option = {0};
   InitializeD4COption(&option);
 
-  int number_of_aperiodicities =
-    static_cast<int>(MyMinDouble(world::kUpperLimit, world_parameters->fs / 2.0 -
-      world::kFrequencyInterval) / world::kFrequencyInterval);
+  //int number_of_aperiodicities =
+  //  static_cast<int>(MyMinDouble(world::kUpperLimit, world_parameters->fs / 2.0 -
+  //    world::kFrequencyInterval) / world::kFrequencyInterval);
 
   // Parameters setting and memory allocation.
   world_parameters->aperiodicity = new double *[world_parameters->f0_length];
   for (int i = 0; i < world_parameters->f0_length; ++i) {
-//    world_parameters->aperiodicity[i] =
-//      new double[world_parameters->fft_size / 2 + 1];
-    world_parameters->aperiodicity[i] = new double[number_of_aperiodicities];
+      world_parameters->aperiodicity[i] = 
+        new double[world_parameters->fft_size / 2 + 1];
+    //world_parameters->aperiodicity[i] = new double[number_of_aperiodicities];
   }
 
-  world_parameters->number_of_aperiodicities = number_of_aperiodicities;
+  //world_parameters->number_of_aperiodicities = number_of_aperiodicities;
 
   DWORD elapsed_time = timeGetTime();
   // option is not implemented in this version. This is for future update.
   // We can use "NULL" as the argument.
-  D4C_coarse(x, x_length, world_parameters->fs, world_parameters->time_axis,
+  D4C(x, x_length, world_parameters->fs, world_parameters->time_axis,
       world_parameters->f0, world_parameters->f0_length,
       world_parameters->fft_size, &option, world_parameters->aperiodicity);
   printf("D4C: %d [msec]\n", timeGetTime() - elapsed_time);
@@ -331,7 +331,8 @@ int main(int argc, char *argv[]) {
 
   FILE * fap = fopen(argv[4], "wb");
   for  (int i=0; i<world_parameters.f0_length; i++) {
-      fwrite(world_parameters.aperiodicity[i], sizeof(double), world_parameters.number_of_aperiodicities, fap);
+      //fwrite(world_parameters.aperiodicity[i], sizeof(double), world_parameters.number_of_aperiodicities, fap);
+      fwrite(world_parameters.aperiodicity[i], sizeof(double), world_parameters.fft_size/2+1, fap);
   }
   fclose(fap);
 
@@ -339,7 +340,8 @@ int main(int argc, char *argv[]) {
 //        printf("%d %F\n", i, world_parameters.f0[i]);
 //    }
     
-    printf("%d %d %d\n", world_parameters.f0_length, world_parameters.fft_size, world_parameters.number_of_aperiodicities);
+    //printf("%d %d %d\n", world_parameters.f0_length, world_parameters.fft_size, world_parameters.number_of_aperiodicities);
+    printf("%d %d %d\n", world_parameters.f0_length, world_parameters.fft_size, world_parameters.fft_size);
     
     
   delete[] x;
