@@ -86,33 +86,6 @@ sed -i s#'file_id_list:.*'#'file_id_list: %(data)s/'${FileIDList}# $acoustic_con
 
 # [Labels]
 
-echo "" >> $acoustic_config_file
-echo "# where are my tools" >> $acoustic_config_file
-echo "sptk:  %(Merlin)s/tools/bin/SPTK-3.9" >> $acoustic_config_file
-
-if [ "$Vocoder" == "STRAIGHT" ]
-then
-    echo "straight :%(Merlin)s/tools/bin/straight" >> $acoustic_config_file
-elif [ "$Vocoder" == "WORLD" ]
-then
-    echo "world: %(Merlin)s/tools/bin/WORLD" >> $acoustic_config_file
-else
-    echo "This vocoder ($Vocoder) is not supported as of now...please configure yourself!!"
-fi
-
-echo "" >> $acoustic_config_file
-echo "[Labels]" >> $acoustic_config_file
-
-echo "" >> $acoustic_config_file
-echo "silence_pattern : ['*-sil+*']" >> $acoustic_config_file
-echo "label_type : ${Labels}" >> $acoustic_config_file
-echo "label_align: %(TOPLEVEL)s/experiments/${Voice}/acoustic_model/data/label_${Labels}" >> $acoustic_config_file
-echo "question_file_name  : %(Merlin)s/misc/questions/${QuestionFile}" >> $acoustic_config_file
-
-echo "" >> $acoustic_config_file
-echo "add_frame_features    : True" >> $acoustic_config_file
-
-echo "" >> $acoustic_config_file
 sed -i s#'label_type:.*'#'label_type: '${Labels}# $acoustic_config_file
 sed -i s#'label_align:.*'#'label_align: %(TOPLEVEL)s/experiments/'${Voice}'/acoustic_model/data/label_'${Labels}# $acoustic_config_file
 sed -i s#'question_file_name:.*'#'question_file_name: %(Merlin)s/misc/questions/'${QuestionFile}# $acoustic_config_file

@@ -97,19 +97,6 @@ acoustic_config_file=conf/test_synth_${Voice}.conf
 # Start with a general recipe...
 cp -f $MerlinDir/misc/recipes/acoustic_demo.conf $acoustic_config_file
 
-echo "" >> $acoustic_config_file
-echo "# where are my tools" >> $acoustic_config_file
-echo "sptk:  %(Merlin)s/tools/bin/SPTK-3.9" >> $acoustic_config_file
-
-if [ "$Vocoder" == "STRAIGHT" ]
-then
-    echo "straight :%(Merlin)s/tools/bin/straight" >> $acoustic_config_file
-elif [ "$Vocoder" == "WORLD" ]
-then
-    echo "world: %(Merlin)s/tools/bin/WORLD" >> $acoustic_config_file
-else
-    echo "This vocoder ($Vocoder) is not supported as of now...please configure yourself!!"
-fi
 # ... and modify it:
 
 sed -i s#'Merlin\s*:.*'#'Merlin: '$MerlinDir# $acoustic_config_file
