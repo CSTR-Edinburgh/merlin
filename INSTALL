@@ -1,7 +1,9 @@
 INSTALL
 =======
 
-Merlin is coded in python and need third-party python libraries such as:
+(1) go to tools/  and follow INSTALL instructions there.
+
+(2) Merlin is coded in python and need third-party python libraries such as:
 
 numpy, scipy, matplotlib, lxml
     Usually shipped with your python packages
