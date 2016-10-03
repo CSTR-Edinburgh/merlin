@@ -97,7 +97,6 @@ acoustic_config_file=conf/test_synth_${Voice}.conf
 # Start with a general recipe...
 cp -f $MerlinDir/misc/recipes/acoustic_demo.conf $acoustic_config_file
 
-<<<<<<< HEAD
 echo "" >> $acoustic_config_file
 echo "# where are my tools" >> $acoustic_config_file
 echo "sptk:  %(Merlin)s/tools/bin/SPTK-3.9" >> $acoustic_config_file
@@ -111,13 +110,11 @@ then
 else
     echo "This vocoder ($Vocoder) is not supported as of now...please configure yourself!!"
 fi
-=======
 # ... and modify it:
 
 sed -i s#'Merlin\s*:.*'#'Merlin: '$MerlinDir# $acoustic_config_file
 sed -i s#'TOPLEVEL\s*:.*'#'TOPLEVEL: '${WorkDir}# $acoustic_config_file
 sed -i s#'work\s*:.*'#'work: %(TOPLEVEL)s/experiments/'${Voice}'/acoustic_model'# $acoustic_config_file
->>>>>>> 4971c238adee3e6e7e3e97fc8dd0a84339e84b74
 
 sed -i s#'file_id_list\s*:.*'#'file_id_list: %(data)s/'${FileIDList}# $acoustic_config_file
 sed -i s#'test_id_list\s*:.*'#'test_id_list: %(TOPLEVEL)s/experiments/'${Voice}'/test_synthesis/test_id_list.scp'# $acoustic_config_file

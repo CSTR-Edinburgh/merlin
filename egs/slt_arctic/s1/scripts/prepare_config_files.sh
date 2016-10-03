@@ -86,7 +86,6 @@ sed -i s#'file_id_list:.*'#'file_id_list: %(data)s/'${FileIDList}# $acoustic_con
 
 # [Labels]
 
-<<<<<<< HEAD
 echo "" >> $acoustic_config_file
 echo "# where are my tools" >> $acoustic_config_file
 echo "sptk:  %(Merlin)s/tools/bin/SPTK-3.9" >> $acoustic_config_file
@@ -114,12 +113,10 @@ echo "" >> $acoustic_config_file
 echo "add_frame_features    : True" >> $acoustic_config_file
 
 echo "" >> $acoustic_config_file
-=======
 sed -i s#'label_type:.*'#'label_type: '${Labels}# $acoustic_config_file
 sed -i s#'label_align:.*'#'label_align: %(TOPLEVEL)s/experiments/'${Voice}'/acoustic_model/data/label_'${Labels}# $acoustic_config_file
 sed -i s#'question_file_name:.*'#'question_file_name: %(Merlin)s/misc/questions/'${QuestionFile}# $acoustic_config_file
 
->>>>>>> 4971c238adee3e6e7e3e97fc8dd0a84339e84b74
 if [ "$Labels" == "state_align" ]
 then
     sed -i s#'subphone_feats:.*'#'subphone_feats: full'# $acoustic_config_file
