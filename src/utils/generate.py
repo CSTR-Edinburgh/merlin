@@ -269,8 +269,9 @@ def generate_wav(gen_dir, file_id_list, cfg):
             run_process('{sopr} -magic -1.0E+10 -EXP -MAGIC 0.0 {lf0} | {x2x} +fd > {f0}'.format(sopr=SPTK['SOPR'], lf0=files['lf0'], x2x=SPTK['X2X'], f0=files['f0']))        
             
             run_process('{sopr} -c 0 {bap} | {x2x} +fd > {ap}'.format(sopr=SPTK['SOPR'],bap=files['bap'],x2x=SPTK['X2X'],ap=files['ap']))
-            #run_process('{x2x} +fd {bap} > {ap}'.format(x2x=SPTK['X2X'], bap=files['bap'], ap=files['ap']))
-            #run_process('{mgc2sp} -a {alpha} -g 0 -m {order} -l {fl} -o 2 {bap} | {sopr} -d 32768.0 -P | {x2x} +fd > {ap}'
+            
+            ### If using world v2, please comment above line and uncomment this
+            #run_process('{mgc2sp} -a {alpha} -g 0 -m {order} -l {fl} -o 0 {bap} | {sopr} -d 32768.0 -P | {x2x} +fd > {ap}'
             #            .format(mgc2sp=SPTK['MGC2SP'], alpha=cfg.fw_alpha, order=cfg.bap_dim, fl=cfg.fl, bap=bap_file_name, sopr=SPTK['SOPR'], x2x=SPTK['X2X'], ap=files['ap']))
 
             run_process('{mgc2sp} -a {alpha} -g 0 -m {order} -l {fl} -o 2 {mgc} | {sopr} -d 32768.0 -P | {x2x} +fd > {sp}'
