@@ -4,7 +4,7 @@
 merlin_dir="/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin"
 
 # tools directory
-world="${merlin_dir}/tools/bin/WORLD"
+straight="${merlin_dir}/tools/bin/straight"
 sptk="${merlin_dir}/tools/bin/SPTK-3.9"
 
 # input audio directory
