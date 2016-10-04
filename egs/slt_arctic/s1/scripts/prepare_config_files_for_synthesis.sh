@@ -32,7 +32,7 @@ sed -i s#'test_id_list\s*:.*'#'test_id_list: %(TOPLEVEL)s/experiments/'${Voice}'
 
 
 # [Labels]
-
+sed -i s#'label_type:.*'#'label_type: '${Labels}# $duration_config_file
 sed -i s#'label_align\s*:.*'#'label_align: %(TOPLEVEL)s/experiments/'${Voice}'/test_synthesis/prompt-lab'# $duration_config_file
 sed -i s#'question_file_name\s*:.*'#'question_file_name: %(Merlin)s/misc/questions/'${QuestionFile}# $duration_config_file
 
