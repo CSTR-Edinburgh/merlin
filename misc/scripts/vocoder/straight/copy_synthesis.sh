@@ -79,7 +79,7 @@ do
     $sptk/mcep -a $alpha -m $order -l $nFFT -e 1.0E-8 -j 0 -f 0.0 -q 1 $ap_dir/$file_id.ap > $bap_dir/$file_id.bap
     
     ## 2nd version of extracting bap -- not recommended
-    #$straight/straight_bndap -nmsg -f $fs -fftl $nFFT -apord $nFFTHalf -shift $fshift -f0shift $fshift -bndap -float -f0file $f0_dir/$file_id.f0 -raw $wav_dir/$file_id.raw $ap_dir/$file_id.bap
+    #$straight/straight_bndap -nmsg -f $fs -fftl $nFFT -apord $nFFTHalf -shift $fshift -f0shift $fshift -bndap -float -f0file $f0_dir/$file_id.f0 -raw $raw_dir/$file_id.raw $bap_dir/$file_id.bap
 
     ### STRAIGHT Re-synthesis -- reconstruction of parameters ###
 
@@ -93,7 +93,7 @@ do
     $sptk/mgc2sp -a $alpha -g 0 -m $order -l $nFFT -o 0 $bap_dir/$file_id.bap > $resyn_dir/$file_id.ap
     
     ## if using v2 of bap
-    #$straight/bndap2ap $analysis_dir/$file_id.bap > $resyn_dir/$file_id.ap
+    #$straight/bndap2ap $bap_dir/$file_id.bap > $resyn_dir/$file_id.ap
 
     $straight/synthesis_fft -f $fs -spec -fftl $nFFT -shift $fshift -sigp 1.2 -cornf 4000 -float -apfile $resyn_dir/$file_id.ap $resyn_dir/$file_id.f0 $resyn_dir/$file_id.sp $wav_dir/$file_id.resyn.wav
    
