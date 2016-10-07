@@ -14,9 +14,28 @@ else
     source $global_config_file
 fi
 
+### define few variables here
+testDir=experiments/${Voice}/test_synthesis
+
+txt_dir=${testDir}/txt
+txt_file=${testDir}/utts.data
+
+if [[ ! -d "${txt_dir}" ]] && [[ ! -f "${txt_file}" ]]; then
+    echo "Please give input: either 1 or 2"
+    echo "1. ${txt_dir}  -- a text directory containing text files"
+    echo "2. ${txt_file} -- a single text file with each sentence in a new line in festival format"
+    exit 1
+fi
+
 ### Step 1: create label files from text ###
 echo "Step 1: creating label files from text..."
 ./scripts/prepare_labels_from_txt.sh $global_config_file
+
+status_step1=$?
+if [ $status_step1 -eq 1 ]; then
+    echo "Step 1 not successful !!"
+    exit 1
+fi
 
 ### Step 2: synthesize speech   ###
 echo "Step 2: synthesizing speech..."

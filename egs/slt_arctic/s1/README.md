@@ -30,5 +30,5 @@ Generate new sentences
 To generate new sentences, please follow below steps:
 
 Step 1: Run either demo voice or full voice. <br/>
-Step 2: ./text_to_speech.sh
+Step 2: ./merlin_synthesis.sh
 
