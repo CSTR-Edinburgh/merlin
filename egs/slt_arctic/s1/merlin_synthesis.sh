@@ -1,14 +1,21 @@
 #!/bin/bash
 
 if test "$#" -ne 0; then
-    echo "Usage: ./text_to_speech.sh"
+    echo "Usage: ./merlin_synthesis.sh"
     exit 1
 fi
+
+PrintUsage () {
+    echo "Please first run either demo voice or full voice!!"
+    echo "To run demo voice: ./run_demo.sh"
+    echo "To run full voice: ./run_full_voice.sh"
+}
 
 global_config_file=conf/global_settings.cfg
 
 if [ ! -f  $global_config_file ]; then
     echo "Global config file doesn't exist"
+    PrintUsage
     exit 1
 else
     source $global_config_file
@@ -19,6 +26,11 @@ testDir=experiments/${Voice}/test_synthesis
 
 txt_dir=${testDir}/txt
 txt_file=${testDir}/utts.data
+
+if [[ ! -d "${testDir}" ]]; then
+    PrintUsage
+    exit 1
+fi
 
 if [[ ! -d "${txt_dir}" ]] && [[ ! -f "${txt_file}" ]]; then
     echo "Please give input: either 1 or 2"
