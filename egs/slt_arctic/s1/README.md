@@ -27,7 +27,8 @@ Compare the results in log files to baseline results from full data in [RESULTS.
 Generate new sentences
 ----------------------
 
-To generate new sentences, please run below script:
+To generate new sentences, please follow below steps:
 
-./text_to_speech.sh
+Step 1: Run either demo voice or full voice. <br/>
+Step 2: ./text_to_speech.sh
 
