@@ -17,6 +17,7 @@ def create_utt_text_from_dir(txt_dir):
     for i in xrange(num_of_files):
         textfile = textfiles[i]
         junk,filename = os.path.split(textfile)
+        filename = filename.split('.')[0]
         
         text = readtext(textfile)
         utt_text[filename] = text
@@ -61,8 +62,6 @@ if __name__ == "__main__":
         in_txt_file = sys.argv[1]
         utt_text    = create_utt_text_from_scheme_file(in_txt_file)
 
-    print utt_text
-    
     sorted_utt_text = collections.OrderedDict(sorted(utt_text.items()))
 
     out_f = open(out_scm_file, 'w')
