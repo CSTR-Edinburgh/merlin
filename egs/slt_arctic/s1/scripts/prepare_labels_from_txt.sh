@@ -19,13 +19,33 @@ if [ ! -d "${FESTDIR}" ]; then
     exit 1
 fi
 
-### define variables here
+### define few variables here
 frontend=${MerlinDir}/misc/scripts/frontend
 testDir=experiments/${Voice}/test_synthesis
 
-### create a scheme file with options: from text directory or txt.done.data
+txt_dir=${testDir}/txt
+txt_file=${testDir}/utts.data
+
+### create a scheme file with options from: txt directory or utts.data file
+
+if [ -d "${txt_dir}" ]; then
+    if [ ! "$(ls -A ${txt_dir})" ]; then
+        echo "Please place your new test sentences (files) in: ${txt_dir} !!"
+        exit 1
+    else
+        in_txt=${txt_dir}
+    fi
+elif [ -f "${txt_file}" ]; then
+    in_txt=${txt_file}
+else
+    echo "Please give input: either 1 or 2"
+    echo "1. ${txt_dir}  -- a text directory containing text files"
+    echo "2. ${txt_file} -- a single text file with each sentence in a new line in festival format"
+    exit 1
+fi
+
 python ${frontend}/utils/genScmFile.py \
-                            ${testDir}/txt \
+                            ${in_txt} \
                             ${testDir}/prompt-utt \
                             ${testDir}/new_test_sentences.scm \
                             ${testDir}/test_id_list.scp 
