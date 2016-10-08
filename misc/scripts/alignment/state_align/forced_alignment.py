@@ -16,11 +16,12 @@ HMMDEFS = 'hmmdefs'
 VFLOORS = 'vFloors'
 
 ##
-HCompV = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1/HCompV'
-HCopy  = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1/HCopy'
-HERest = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1/HERest'
-HHEd   = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1/HHEd'
-HVite  = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1/HVite'
+HTKDIR = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1'
+HCompV = os.path.join(HTKDIR, 'HCompV')
+HCopy  = os.path.join(HTKDIR, 'HCopy' )
+HERest = os.path.join(HTKDIR, 'HERest')
+HHEd   = os.path.join(HTKDIR, 'HHEd'  )
+HVite  = os.path.join(HTKDIR, 'HVite' )
 
 class ForcedAlignment(object):
 
@@ -263,7 +264,6 @@ NUMCEPS = 12"""
         Perform one or more rounds of estimation
         """
 
-#        self.cur_dir = os.path.join(self.model_dir, 'hmm0')
         print time.strftime("%c")
         print  '---training HMM models'
         done = 0
@@ -354,24 +354,17 @@ NUMCEPS = 12"""
                 sys.exit(1)
         fid.close()
 
-#    def initial_hmm(self):
-
-#    def train_hmm(self):
-
-#    def _increase_mix(self):
-
-
 
 if __name__ == '__main__':
 
     work_dir = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin/misc/scripts/alignment/state_align'
 
     wav_dir = os.path.join(work_dir, 'slt_wav')
-    lab_dir = os.path.join(work_dir, 'lab')
+    lab_dir = os.path.join(work_dir, 'lab_no_align')
     lab_align_dir = os.path.join(work_dir, 'lab_align')
 
     file_id_list_name = os.path.join(work_dir, 'file_id_list.scp')
-
+    
     ## if multiple_speaker is tuned on. the file_id_list.scp has to reflact this
     ## for example
     ## speaker_1/0001
