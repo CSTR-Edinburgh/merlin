@@ -16,7 +16,7 @@ HMMDEFS = 'hmmdefs'
 VFLOORS = 'vFloors'
 
 ##
-HTKDIR = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/Alignment/htk3.4.1'
+HTKDIR = path/to/tools/htk
 HCompV = os.path.join(HTKDIR, 'HCompV')
 HCopy  = os.path.join(HTKDIR, 'HCopy' )
 HERest = os.path.join(HTKDIR, 'HERest')
@@ -357,11 +357,11 @@ NUMCEPS = 12"""
 
 if __name__ == '__main__':
 
-    work_dir = '/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin/misc/scripts/alignment/state_align'
+    work_dir = os.getcwd()  
 
     wav_dir = os.path.join(work_dir, 'slt_wav')
-    lab_dir = os.path.join(work_dir, 'lab_no_align')
-    lab_align_dir = os.path.join(work_dir, 'lab_align')
+    lab_dir = os.path.join(work_dir, 'label_no_align')
+    lab_align_dir = os.path.join(work_dir, 'label_state_align')
 
     file_id_list_name = os.path.join(work_dir, 'file_id_list.scp')
     
