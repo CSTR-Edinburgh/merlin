@@ -1,10 +1,10 @@
 About the Nick Hurricane corpus
 -------------------------------
 
-This corpus is subset of Nick corpus and is used in Merlin demo paper from CSTR in SSW9. <br/>
+This corpus is subset of Nick corpus and is used in Merlin demo paper from CSTR in SSW9.
 It consists of 2542 sentences -- train(2400), valid(70) and test(72).
 
-For more details about the corpus, please follow below link: <br/>
+For more details about the corpus, please follow below link:
 http://datashare.is.ed.ac.uk/handle/10283/347 
 
 Each subdirectory of this directory contains the scripts for a sequence of experiments.
