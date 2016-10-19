@@ -29,6 +29,7 @@ from frontend.mean_variance_norm import MeanVarianceNorm
 # the new class for label composition and normalisation
 from frontend.label_composer import LabelComposer
 from frontend.label_modifier import HTSLabelModification
+from frontend.merge_features import MergeFeat
 #from frontend.mlpg_fast import MLParameterGenerationFast
 
 #from frontend.mlpg_fast_layer import MLParameterGenerationFastLayer
@@ -499,7 +500,8 @@ def main_function(cfg):
 
     if cfg.label_style == 'HTS':
         label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name, add_frame_features=cfg.add_frame_features, subphone_feats=cfg.subphone_feats)
-        lab_dim = label_normaliser.dimension + cfg.appended_input_dim
+        add_feat_dim = sum(cfg.additional_features.values())
+        lab_dim = label_normaliser.dimension + add_feat_dim + cfg.appended_input_dim
         logger.info('Input label dimension is %d' % lab_dim)
         suffix=str(lab_dim)
     # no longer supported - use new "composed" style labels instead
@@ -513,7 +515,7 @@ def main_function(cfg):
         label_data_dir = data_dir
 
     # the number can be removed
-    binary_label_dir      = os.path.join(label_data_dir, 'binary_label_'+suffix)
+    binary_label_dir      = os.path.join(label_data_dir, 'binary_label_'+str(label_normaliser.dimension))
     nn_label_dir          = os.path.join(label_data_dir, 'nn_no_silence_lab_'+suffix)
     nn_label_norm_dir     = os.path.join(label_data_dir, 'nn_no_silence_lab_norm_'+suffix)
 
@@ -548,8 +550,22 @@ def main_function(cfg):
 
     if cfg.NORMLAB and (cfg.label_style == 'HTS'):
         # simple HTS labels 
-    	logger.info('preparing label data (input) using standard HTS style labels')
+        logger.info('preparing label data (input) using standard HTS style labels')
         label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list, label_type=cfg.label_type)
+        
+        if cfg.additional_features:
+            out_feat_dir  = os.path.join(data_dir, 'binary_label_'+suffix)
+            out_feat_file_list = prepare_file_path_list(file_id_list, out_feat_dir, cfg.lab_ext)
+            in_dim = label_normaliser.dimension
+            for new_feature, new_feature_dim in cfg.additional_features.iteritems():
+                new_feat_dir  = os.path.join(data_dir, new_feature)
+                new_feat_file_list = prepare_file_path_list(file_id_list, new_feat_dir, '.'+new_feature)
+                
+                merger = MergeFeat(lab_dim = in_dim, feat_dim = new_feature_dim) 
+                merger.merge_data(binary_label_file_list, new_feat_file_list, out_feat_file_list)
+                in_dim += new_feature_dim
+                
+                binary_label_file_list = out_feat_file_list
 
         remover = SilenceRemover(n_cmp = lab_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
         remover.remove_silence(binary_label_file_list, in_label_align_file_list, nn_label_file_list)
@@ -768,7 +784,8 @@ def main_function(cfg):
     # currently, there are two ways to do this
     if cfg.label_style == 'HTS':
         label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name, add_frame_features=cfg.add_frame_features, subphone_feats=cfg.subphone_feats)
-        lab_dim = label_normaliser.dimension + cfg.appended_input_dim
+        add_feat_dim = sum(cfg.additional_features.values())
+        lab_dim = label_normaliser.dimension + add_feat_dim + cfg.appended_input_dim
 
     elif cfg.label_style == 'composed':
         label_composer = LabelComposer()

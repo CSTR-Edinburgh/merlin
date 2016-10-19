@@ -193,12 +193,13 @@ class configuration(object):
 
 
 
-            ('label_style', 'HTS'   , 'Labels', 'label_style'),
-            ('label_type', 'state_align'   , 'Labels', 'label_type'),
-            ('in_label_align_dir', os.path.join(self.work_dir, 'data/label_state_align')  ,    'Labels', 'label_align'),
-            ('question_file_name', os.path.join(self.work_dir, 'data/questions.hed')      ,    'Labels', 'question_file_name'),
-            ('silence_pattern'   , ['*-#+*']                                              ,    'Labels', 'silence_pattern'),
-            ('subphone_feats', 'full'   , 'Labels', 'subphone_feats'),
+            ('label_style'        , 'HTS'                                                 ,    'Labels', 'label_style'),
+            ('label_type'         , 'state_align'                                         ,    'Labels', 'label_type'),
+            ('in_label_align_dir' , os.path.join(self.work_dir, 'data/label_state_align') ,    'Labels', 'label_align'),
+            ('question_file_name' , os.path.join(self.work_dir, 'data/questions.hed')     ,    'Labels', 'question_file_name'),
+            ('silence_pattern'    , ['*-#+*']                                             ,    'Labels', 'silence_pattern'),
+            ('subphone_feats'     , 'full'                                                ,    'Labels', 'subphone_feats'),
+            ('additional_features', {}                                                    ,    'Labels', 'additional_features'),
 
             ('xpath_file_name',      os.path.join(self.work_dir, 'data/xml_labels/xpaths.txt'), 'Labels', 'xpath_file_name'),
 
@@ -440,6 +441,8 @@ class configuration(object):
                 exec('self.%s = bool(%s)'  % (variable,value))
             elif type(default) == list:
                 exec('self.%s = list(%s)'  % (variable,value))
+            elif type(default) == dict:
+                exec('self.%s = dict(%s)'  % (variable,value))
             else:
                 logger.critical('Variable %s has default value of unsupported type %s',variable,type(default))
                 raise Exception('Internal error in configuration settings: unsupported default type')
