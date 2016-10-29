@@ -134,13 +134,13 @@ class HTK_Parm_IO(object):
             
             file = open(filename, 'wb')
             
-            file.write(struct.pack('>I', self.n_samples))
-            file.write(struct.pack('>I', self.samp_period))
-            file.write(struct.pack('>H', self.samp_size))
-            file.write(struct.pack('>H', self.param_kind))
+            file.write(struct.pack('<I', self.n_samples))
+            file.write(struct.pack('<I', self.samp_period))
+            file.write(struct.pack('<H', self.samp_size))
+            file.write(struct.pack('<H', self.param_kind))
             
-            if(sys.byteorder=='little'):
-                self.data.byteswap(True) # force big-endian byte ordering
+            #if(sys.byteorder=='little'):
+            #    self.data.byteswap(True) # force big-endian byte ordering
             
             self.data.tofile(file)
 
