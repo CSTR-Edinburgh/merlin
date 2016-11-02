@@ -53,7 +53,7 @@ class ForcedAlignment(object):
         fid.close()
 
         ## make vFloors
-        check_call(['HCompV', '-f', F, '-C', self.cfg,
+        check_call([HCompV, '-f', F, '-C', self.cfg,
                               '-S', self.train_scp,
                               '-M', self.cur_dir, self.proto])
         ## make local macro
@@ -185,7 +185,7 @@ ENORMALIZE = T
 CEPLIFTER = 22
 NUMCHANS = 20
 NUMCEPS = 12"""
-        check_call(['HCopy', '-C', self.cfg, '-S', self.copy_scp])
+        check_call([HCopy, '-C', self.cfg, '-S', self.copy_scp])
         # write a CFG for what we just built
         print >> open(self.cfg, 'w'), """TARGETRATE = 50000.0
 TARGETKIND = USER
@@ -293,7 +293,7 @@ NUMCEPS = 12"""
                 if not os.path.exists(next_dir):
                     os.makedirs(next_dir)
                 
-                check_call( ['HHEd', '-A', 
+                check_call( [HHEd, '-A', 
                              '-H', os.path.join(self.cur_dir, MACROS),
                              '-H', os.path.join(self.cur_dir, HMMDEFS),
                              '-M', next_dir] + [hed_file] + [self.phonemes])
@@ -311,7 +311,7 @@ NUMCEPS = 12"""
         print time.strftime("%c")
         self.align_mlf = os.path.join(work_dir, 'mono_align.mlf')
 
-        check_call(['HVite', '-a', '-f', '-m', '-y', 'lab', '-o', 'SM', 
+        check_call([HVite, '-a', '-f', '-m', '-y', 'lab', '-o', 'SM', 
                     '-i', self.align_mlf, '-L', self.mono_lab_dir,
                     '-C', self.cfg, '-S', self.train_scp,
                     '-H', os.path.join(self.cur_dir, MACROS),
