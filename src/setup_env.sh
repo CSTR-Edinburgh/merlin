@@ -4,17 +4,15 @@ export PYTHONBIN="python"
 # To avoid python changing the sys.path variable, add an -S
 #export PYTHONBIN='python -S'
 
-# export PYTHONPATH=<some lab-specific python path here>:${PYTHONPATH}
-
-# Basic Theano flags
-MERLIN_THEANO_FLAGS="cuda.root=/opt/6.5.19,floatX=float32,on_unused_input=ignore"
-export MERLIN_THEANO_FLAGS
-	
 # Maybe the following variables need to be setup
 #export PYTHONPATH=/some/lab/specific/path:PYTHONPATH
 #export PATH=/path:PATH
 #export LD_LIBRARY_PATH=/anotherpath:LD_LIBRARY_PATH
 
+# Basic Theano flags
+MERLIN_THEANO_FLAGS="cuda.root=/opt/6.5.19,floatX=float32,on_unused_input=ignore"
+export MERLIN_THEANO_FLAGS
+	
 
 # Log the resulting setup =====================================================
 
@@ -36,9 +34,9 @@ echo "$LD_LIBRARY_PATH" |tr : '\n' |sed '/^$/d' |sed 's/^/    /'
 echo PYTHONPATH:
 echo "$PYTHONPATH" |tr : '\n' |sed '/^$/d' |sed 's/^/    /'
 echo PYTHONBIN: $PYTHONBIN
-#echo THEANO_FLAGS: $THEANO_FLAGS
-echo THEANO_FLAGS:
-echo "$THEANO_FLAGS" |tr , '\n' |sed '/^$/d' |sed 's/^/    /'
+#echo MERLIN_THEANO_FLAGS: $MERLIN_THEANO_FLAGS
+echo MERLIN_THEANO_FLAGS:
+echo "$MERLIN_THEANO_FLAGS" |tr , '\n' |sed '/^$/d' |sed 's/^/    /'
 
 echo " "
 
