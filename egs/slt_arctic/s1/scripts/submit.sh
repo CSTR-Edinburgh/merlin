@@ -19,6 +19,7 @@ if [ $gpu_id -gt -1 ]; then
     
 { # try  
         python $@
+		RETURNVAL=$?
         python ${src_dir}/gpu_lock.py --free $gpu_id
 } || { # catch   
         python ${src_dir}/gpu_lock.py --free $gpu_id
@@ -30,4 +31,6 @@ else
     export THEANO_FLAGS
     
     python $@
+	RETURNVAL=$?
 fi
+exit $RETURNVAL
