@@ -24,20 +24,25 @@ mkdir -p ${duration_dir}
 if [ "$voice_name" == "slt_arctic_demo" ]
 then
     data_dir=slt_arctic_demo_data
+    data_url=http://104.131.174.95/${data_dir}.zip
 elif [ "$voice_name" == "slt_arctic_full" ]
 then
     data_dir=slt_arctic_full_data
+    data_url=http://104.131.174.95/${data_dir}.zip
+elif [ "$voice_name" == "bdl_arctic_full" ]
+then
+    data_dir=bdl_arctic_full_data
+    data_url=https://github.com/aospan/merlin-tts/raw/master/${data_dir}.zip
 else
-    echo "The data for voice name ($voice_name) is not available...please use slt_arctic_demo or slt_arctic_full !!"
+    echo "The data for voice name ($voice_name) is not available...please use slt_arctic_demo, slt_arctic_full or bdl_arctic_full !!"
     exit 1
 fi
 
 if [[ ! -f ${data_dir}.zip ]]; then
     echo "downloading data....."
     rm -f ${data_dir}.zip
-    data_url=http://104.131.174.95/${data_dir}.zip
     if hash curl 2>/dev/null; then
-        curl -O $data_url
+        curl -L -O $data_url
     elif hash wget 2>/dev/null; then
         wget $data_url
     else
@@ -75,7 +80,7 @@ then
     echo "Train=50" >> $global_config_file 
     echo "Valid=5" >> $global_config_file 
     echo "Test=5" >> $global_config_file 
-elif [ "$voice_name" == "slt_arctic_full" ]
+elif [ "$voice_name" == "slt_arctic_full" ] || [ "$voice_name" == "bdl_arctic_full" ]
 then
     echo "FileIDList=file_id_list_full.scp" >> $global_config_file
     echo "Train=1000" >> $global_config_file 
