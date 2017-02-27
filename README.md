@@ -15,8 +15,8 @@ Getting started with Merlin
 
 As a first demo, please follow the scripts in `egs/slt_arctic`
 
-For detailed instruction on how to install Merlin and build SLT demo voice: 
-http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html
+Now, you can also follow Josh Meyer's [blog post] (http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html) 
+for detailed instructions on how to install Merlin and build SLT demo voice.
 
 Synthetic speech samples
 ------------------------
