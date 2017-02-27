@@ -10,7 +10,13 @@ systems including various flavors of Linux;
 
 To run the example system builds, see `egs/README.txt`
 
+Getting started with Merlin
+---------------------------
+
 As a first demo, please follow the scripts in `egs/slt_arctic`
+
+For detailed instruction on how to install Merlin and build SLT demo voice: 
+http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html
 
 Synthetic speech samples
 ------------------------
