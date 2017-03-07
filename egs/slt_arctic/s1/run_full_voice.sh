@@ -1,14 +1,30 @@
 #!/bin/bash
 
-if test "$#" -ne 0; then
-    echo "Usage: ./run_full_voice.sh"
+usage ()
+{
+    echo "Usage: ./run_full_voice.sh voice"
+    echo "  options:"
+    echo "  voice  Specify voice to use. Example:"
+    echo "      female voice: slt"
+    echo "      male voice: bdl"
+    echo "      Default: slt. If no voice specified then 'slt' will be used."
     exit 1
+}
+
+if [ "$#" -eq 0 ] || [ "$1" == "slt" ]
+then
+  voice=slt_arctic_full
+elif [ "$1" == "bdl" ]
+then
+  voice=bdl_arctic_full
+else
+  usage
 fi
 
 ### Step 1: setup directories and the training data files ###
-echo "Step 1: setting up experiments directory and the training data files..."
+echo "Step 1: setting up experiments directory and the training data files. Selected voice:$voice"
 global_config_file=conf/global_settings.cfg
-./scripts/setup.sh slt_arctic_full
+./scripts/setup.sh $voice
 ./scripts/prepare_config_files.sh $global_config_file
 ./scripts/prepare_config_files_for_synthesis.sh $global_config_file
 
