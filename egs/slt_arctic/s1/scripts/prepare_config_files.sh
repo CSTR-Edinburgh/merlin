@@ -53,7 +53,7 @@ elif [ "$Labels" == "phone_align" ]
 then
     $SED -i s#'dur\s*:.*'#'dur: 1'# $duration_config_file
 else
-    echo "These labels ($Lables) are not supported as of now...please use state_align or phone_align!!"
+    echo "These labels ($Labels) are not supported as of now...please use state_align or phone_align!!"
 fi
 
 
