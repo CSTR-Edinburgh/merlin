@@ -15,7 +15,7 @@ Getting started with Merlin
 
 As a first demo, please follow the scripts in `egs/slt_arctic`
 
-Now, you can also follow Josh Meyer's [blog post] (http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html) 
+Now, you can also follow Josh Meyer's [blog post](http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html)
 for detailed instructions on how to install Merlin and build SLT demo voice.
 
 Synthetic speech samples
@@ -44,5 +44,3 @@ Citation
 If you publish work based on Merlin, please cite: 
 
 Zhizheng Wu, Oliver Watts, Simon King, "Merlin: An Open Source Neural Network Speech Synthesis System" in Proc. 9th ISCA Speech Synthesis Workshop (SSW9), September 2016, Sunnyvale, CA, USA.
-
-Srikanth Ronanki, Zhizheng Wu, Oliver Watts, Simon King, "A Demonstration of the Merlin Open Source Neural Network Speech Synthesis System" in Proc. special demo session, 9th ISCA Speech Synthesis Workshop (SSW9), 2016, Sunnyvale, CA, USA.
