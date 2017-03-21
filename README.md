@@ -15,8 +15,7 @@ Getting started with Merlin
 
 As a first demo, please follow the scripts in `egs/slt_arctic`
 
-Now, you can also follow Josh Meyer's [blog post](http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html)
-for detailed instructions on how to install Merlin and build SLT demo voice.
+Now, you can also follow Josh Meyer's [blog post](http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html) for detailed instructions <br/> on how to install Merlin and build SLT demo voice.
 
 Synthetic speech samples
 ------------------------
@@ -27,7 +26,7 @@ Development pattern for contributors
 ------------------------------------
 
 1. [Create a personal fork](https://help.github.com/articles/fork-a-repo/)
-   of the [main Merlin repository] (https://github.com/CSTR-Edinburgh/merlin) in GitHub.
+   of the [main Merlin repository](https://github.com/CSTR-Edinburgh/merlin) in GitHub.
 2. Make your changes in a named branch different from `master`, e.g. you create
    a branch `my-new-feature`.
 3. [Generate a pull request](https://help.github.com/articles/creating-a-pull-request/)
