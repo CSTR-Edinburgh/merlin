@@ -1,8 +1,8 @@
 Create training labels for merlin with HTK tools
 ------------------------------------------------
 
-Step 0: Install [festival] (http://festvox.org/packed/festival/2.4/festival-2.4-release.tar.gz), 
-and [HTK] (http://htk.eng.cam.ac.uk/download.shtml).
+Step 0: Install [festival](http://festvox.org/packed/festival/2.4/festival-2.4-release.tar.gz), 
+and [HTK](http://htk.eng.cam.ac.uk/download.shtml).
 
 Step 1: Run setup.sh -- to download slt data and to create the config file. <br/>
 ./setup.sh
@@ -18,6 +18,6 @@ HTK Aligner
 -----------
 
 The steps to perform HTK alignment are adapted from HTS source code: <br/>
-[HMM-based Speech Synthesis System (HTS)] (http://hts.sp.nitech.ac.jp/)
+[HMM-based Speech Synthesis System (HTS)](http://hts.sp.nitech.ac.jp/)
 
 
