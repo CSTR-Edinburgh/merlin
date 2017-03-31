@@ -23,3 +23,16 @@ and you might want also CUDNN [optionnal]
     
 Computationnal efficiency is obviously greatly improved using GPU.
 It is also improved using the latest versions of theano.
+
+Some Linux Instructions:
+------------------------
+
+For Ubuntu: sudo apt-get install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev git libc6-dev-i386 glibc-devel.i686 csh
+
+For Fedora: sudo yum install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev git libc6-dev-i386 glibc-devel.i686 csh python-lxml libxslt-devel
+
+sudo env "PATH=$PATH" pip install Theano
+sudo env "PATH=$PATH" pip install matplotlib
+sudo env "PATH=$PATH" pip install bandmat
+sudo env "PATH=$PATH" pip install lxml
+
