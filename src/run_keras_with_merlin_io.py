@@ -207,7 +207,7 @@ if __name__ == "__main__":
      
     #### User configurable variables #### 
     
-    merlin_dir = "/afs/inf.ed.ac.uk/group/cstr/projects/blizzard_entries/blizzard2017/parametric_synthesis/merlin"
+    merlin_dir = "/afs/inf.ed.ac.uk/group/cstr/projects/merlin"
     exp_dir    = os.path.join(merlin_dir, "egs/slt_arctic/s1/experiments/slt_arctic_demo/acoustic_model/")
 
     inp_dim = 425
