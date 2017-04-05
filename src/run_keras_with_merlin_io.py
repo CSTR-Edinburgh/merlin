@@ -1,9 +1,3 @@
-'''
-Created on 8 Mar 2017
-
-@author: Srikanth Ronanki
-'''
-
 import os, sys 
 import regex as re
 import time
