@@ -486,8 +486,8 @@ class HTSLabelNormalisation(LabelNormalisation):
 
                         current_block_binary_array[i, self.dict_size+5] = float(phone_duration)   ## length of phone in frames
                         current_block_binary_array[i, self.dict_size+6] = float(frame_number) / float(phone_duration)   ## fraction of the phone made up by current state
-                        current_block_binary_array[i, self.dict_size+7] = float(phone_duration - i - state_duration_base) / float(phone_duration) ## fraction through phone (forwards)
-                        current_block_binary_array[i, self.dict_size+8] = float(state_duration_base + i + 1) / float(phone_duration)  ## fraction through phone (backwards)
+                        current_block_binary_array[i, self.dict_size+7] = float(phone_duration - i - state_duration_base) / float(phone_duration) ## fraction through phone (backwards)
+                        current_block_binary_array[i, self.dict_size+8] = float(state_duration_base + i + 1) / float(phone_duration)  ## fraction through phone (forwards)
                     
                     elif self.subphone_feats == 'state_only':
                         ## features which only distinguish state:
