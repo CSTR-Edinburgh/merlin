@@ -175,7 +175,7 @@ class configuration(object):
             ('in_sp_dir'    , os.path.join(self.work_dir, 'data/sp' )  , 'Paths', 'in_sp_dir'),
             ('in_seglf0_dir', os.path.join(self.work_dir, 'data/lf03') , 'Paths', 'in_seglf0_dir'),
 
-	    ## for glottHMM
+            ## for glottHMM
             ('in_F0_dir'   , os.path.join(self.work_dir, 'data/F0')  , 'Paths', 'in_F0_dir'),
             ('in_Gain_dir'   , os.path.join(self.work_dir, 'data/Gain')  , 'Paths', 'in_Gain_dir'),
             ('in_HNR_dir'   , os.path.join(self.work_dir, 'data/HNR')  , 'Paths', 'in_HNR_dir'),
@@ -236,7 +236,7 @@ class configuration(object):
             ('sequential_training'  , False                                           , 'Architecture', 'sequential_training'),
             ('dropout_rate'         , 0.0                                               , 'Architecture', 'dropout_rate'),
 
-	    ## some config variables for token projection DNN
+            ## some config variables for token projection DNN
             ('scheme'               , 'stagewise'                   , 'Architecture', 'scheme'),
             ('index_to_project'    , 0       , 'Architecture', 'index_to_project'),
             ('projection_insize'    , 10000        , 'Architecture', 'projection_insize'),
@@ -288,7 +288,7 @@ class configuration(object):
             ('do_MLPG'          , True              , 'Outputs', 'do_MLPG'),
 
 
-	    ## for GlottHMM
+            ## for GlottHMM
             ('F0_dim' ,1     ,'Outputs','F0'),
             ('dF0_dim',1 * 3 ,'Outputs','dF0'),
             ('Gain_dim' ,1     ,'Outputs','Gain'),
