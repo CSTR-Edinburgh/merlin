@@ -39,11 +39,14 @@
 
 
 import math
-import configparser
+import sys
+if sys.version_info.major >= 3:
+    import configparser
+else:
+    import ConfigParser as configparser
 import os
 import logging
 import io
-import sys
 import textwrap
 import datetime
 
@@ -866,6 +869,8 @@ class configuration(object):
 
             try:
                 # pass that string as a filehandle
+                if sys.version_info.major < 3:
+                    config_string = unicode(config_string, "utf-8")
                 fh = io.StringIO(config_string)
                 logging.config.fileConfig(fh)
                 fh.close()
