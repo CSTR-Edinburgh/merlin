@@ -183,8 +183,8 @@ import imp
 for fname in external_map_files:
     # not sure this will work second time around - may not be able to import under the same module name ??
     external_maps = imp.load_source('external_maps',fname)
-    for k,v in external_maps.maps.iteritems():
-        if maps.has_key(k):
+    for k,v in list(external_maps.maps.items()):
+        if k in maps:
             logger.warning('Redefined map %s and over-wrote the previous map with the same name' % k)
         maps[k] = v
 

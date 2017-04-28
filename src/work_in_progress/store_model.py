@@ -1,5 +1,5 @@
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -47,7 +47,7 @@ from io_funcs.binary_io import  BinaryIOCollection
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
  
 
 def store_network(nnets_file_name, outdir):
@@ -56,20 +56,20 @@ def store_network(nnets_file_name, outdir):
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
     
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
 
         
     names = [p.name for p in dnn_model.params]
     param_vals = [p.get_value(borrow=True) for p in dnn_model.params]
     shapes = [numpy.shape(p) for p in param_vals]
-    print cfg.hidden_layer_size    
+    print((cfg.hidden_layer_size))    
     layer_types = cfg.hidden_layer_type
     if cfg.output_activation == 'linear':
         layer_types.append('LINEAR')
     else:
         sys.exit('unsupported output activation')
     assert len(param_vals) == len(layer_types) * 2 ##  W and b for each layer
-    print names
+    print(names)
     
     
     p_ix = 0
@@ -79,7 +79,7 @@ def store_network(nnets_file_name, outdir):
         for part in ['W','b']:
             assert names[p_ix] == part
             fname = layer_name + part
-            print fname
+            print(fname)
             #numpy.savetxt(os.path.join(outdir, fname + '.txt'), param_vals[p_ix])
             numpy.save(os.path.join(outdir, fname + '.npy'), param_vals[p_ix])
             
@@ -99,8 +99,8 @@ def store_network(nnets_file_name, outdir):
     min_vect = lab_norm_data[:(labsize/2)]
     max_vect = lab_norm_data[(labsize/2):]
      
-    print min_vect
-    print max_vect
+    print(min_vect)
+    print(max_vect)
     
     fname = 'NORM_INPUT_MIN'
     numpy.save(os.path.join(outdir, fname + '.npy'), min_vect)
@@ -119,8 +119,8 @@ def store_network(nnets_file_name, outdir):
     mean_vect = out_norm_data[:(outsize/2)]
     std_vect = out_norm_data[(outsize/2):]
      
-    print mean_vect
-    print std_vect
+    print(mean_vect)
+    print(std_vect)
     
     fname = 'NORM_OUTPUT_MEAN'
     numpy.save(os.path.join(outdir, fname + '.npy'), mean_vect)
@@ -128,9 +128,9 @@ def store_network(nnets_file_name, outdir):
     numpy.save(os.path.join(outdir, fname + '.npy'), std_vect)
 
 
-    in_streams = cfg.in_dimension_dict.keys()
+    in_streams = list(cfg.in_dimension_dict.keys())
     indims = [str(cfg.in_dimension_dict[s]) for s in in_streams]
-    out_streams = cfg.out_dimension_dict.keys()
+    out_streams = list(cfg.out_dimension_dict.keys())
     outdims = [str(cfg.out_dimension_dict[s]) for s in out_streams]
 
     f = open(os.path.join(outdir, 'stream_info.txt'), 'w')
@@ -151,12 +151,12 @@ def main_function(cfg, outdir, model_pickle_file=None):
     if cfg.label_style == 'HTS':
         label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name)
         lab_dim = label_normaliser.dimension + cfg.appended_input_dim
-        print('Input label dimension is %d' % lab_dim)
+        print(('Input label dimension is %d' % lab_dim))
         suffix=str(lab_dim)
     elif cfg.label_style == 'HTS_duration':
         label_normaliser = HTSDurationLabelNormalisation(question_file_name=cfg.question_file_name)
         lab_dim = label_normaliser.dimension ## + cfg.appended_input_dim
-        print('Input label dimension is %d' % lab_dim)
+        print(('Input label dimension is %d' % lab_dim))
         suffix=str(lab_dim)                
     # no longer supported - use new "composed" style labels instead
     elif cfg.label_style == 'composed':

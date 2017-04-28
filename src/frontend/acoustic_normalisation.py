@@ -84,7 +84,7 @@ class CMPNormalisation(object):
 
         frame_number = data.size
         last_value = 0.0
-        for i in xrange(frame_number):
+        for i in range(frame_number):
             if data[i] <= 0.0:
                 j = i+1
                 for j in range(i+1, frame_number):
@@ -118,12 +118,12 @@ class CMPNormalisation(object):
         delta_vector = numpy.zeros((frame_number, 1))
 
         temp_vector[win_width:frame_number+win_width, ] = vector
-        for w in xrange(win_width):
+        for w in range(win_width):
             temp_vector[w, 0] = vector[0, 0]
             temp_vector[frame_number+win_width+w, 0] = vector[frame_number-1, 0]
 
-        for i in xrange(frame_number):
-            for w in xrange(win_length):
+        for i in range(frame_number):
+            for w in range(win_length):
                 delta_vector[i] += temp_vector[i+w, 0] * delta_win[w]
 
         return  delta_vector
@@ -139,7 +139,7 @@ class CMPNormalisation(object):
         file_number = len(in_file_list)
         logger.info('starting creation of %d files' % file_number)
 
-        for i in xrange(file_number):
+        for i in range(file_number):
             
             mgc_data, bap_data, lf0_data = self.load_cmp_file(in_file_list[i])
             ip_lf0, vuv_vector = self.interpolate_f0(lf0_data)

@@ -38,7 +38,7 @@
 ################################################################################
 
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -84,7 +84,7 @@ from utils.learn_rates import ExpDecreaseLearningRate
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
 
 
 def extract_file_id_list(file_list):
@@ -138,7 +138,7 @@ def visualize_dnn(dnn):
 
     layer_num = len(dnn.params) / 2     ## including input and output
 
-    for i in xrange(layer_num):
+    for i in range(layer_num):
         fig_name = 'Activation weights W' + str(i)
         fig_title = 'Activation weights of W' + str(i)
         xlabel = 'Neuron index of hidden layer ' + str(i)
@@ -299,8 +299,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
         corruption_level = 0.0
         ## in SDAE we do layer-wise pretraining using autoencoders
-        for i in xrange(dnn_model.n_layers):
-            for epoch in xrange(pretraining_epochs):
+        for i in range(dnn_model.n_layers):
+            for epoch in range(pretraining_epochs):
                 sub_start_time = time.clock()
 
                 pretrain_loss = []
@@ -310,7 +310,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
                     n_train_batches = pretrain_set_x.get_value().shape[0] / batch_size
 
-                    for batch_index in xrange(n_train_batches):
+                    for batch_index in range(n_train_batches):
                         pretrain_loss.append(pretraining_fn[i](index=batch_index,
                                                                corruption=corruption_level,
                                                                learning_rate=pretraining_lr))
@@ -356,7 +356,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
             logger.debug('this partition: %d frames (divided into %d batches of size %d)' %(train_set_x.get_value(borrow=True).shape[0], n_train_batches, batch_size) )
 
-            for minibatch_index in xrange(n_train_batches):
+            for minibatch_index in range(n_train_batches):
                 this_train_error = train_fn(minibatch_index, current_finetune_lr, current_momentum)
                 train_error.append(this_train_error)
                 
@@ -404,7 +404,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         previous_loss = this_validation_loss
 
     end_time = time.clock()
-    cPickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
+    pickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
             
     logger.info('overall  training time: %.2fm validation error %f' % ((end_time - start_time) / 60., best_validation_loss))
 
@@ -420,13 +420,13 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
 #    visualize_dnn(dbn)
 
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -454,11 +454,11 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -520,7 +520,7 @@ def main_function(cfg):
 
     in_file_list_dict = {}
 
-    for feature_name in cfg.in_dir_dict.keys():
+    for feature_name in list(cfg.in_dir_dict.keys()):
         in_file_list_dict[feature_name] = prepare_file_path_list(file_id_list, cfg.in_dir_dict[feature_name], cfg.file_extension_dict[feature_name], False)
 
     nn_cmp_file_list         = prepare_file_path_list(file_id_list, nn_cmp_dir, cfg.cmp_ext)
@@ -602,7 +602,7 @@ def main_function(cfg):
         # create all the lists of these, ready to pass to the label composer
 
         in_label_align_file_list = {}
-        for label_style, label_style_required in label_composer.label_styles.iteritems():
+        for label_style, label_style_required in list(label_composer.label_styles.items()):
             if label_style_required:
                 logger.info('labels of style %s are required - constructing file paths for them' % label_style)
                 if label_style == 'xpath':
@@ -617,7 +617,7 @@ def main_function(cfg):
             num_files=len(file_id_list)
             logger.info('the label styles required are %s' % label_composer.label_styles)
             
-            for i in xrange(num_files):
+            for i in range(num_files):
                 logger.info('making input label features for %4d of %4d' % (i+1,num_files))
 
                 # iterate through the required label styles and open each corresponding label file
@@ -625,7 +625,7 @@ def main_function(cfg):
                 # a dictionary of file descriptors, pointing at the required files
                 required_labels={}
                 
-                for label_style, label_style_required in label_composer.label_styles.iteritems():
+                for label_style, label_style_required in list(label_composer.label_styles.items()):
                     
                     # the files will be a parallel set of files for a single utterance
                     # e.g., the XML tree and an HTS label file
@@ -637,7 +637,7 @@ def main_function(cfg):
                 label_composer.make_labels(required_labels,out_file_name=binary_label_file_list[i],fill_missing_values=cfg.fill_missing_values,iterate_over_frames=cfg.iterate_over_frames)
                     
                 # now close all opened files
-                for fd in required_labels.itervalues():
+                for fd in list(required_labels.values()):
                     fd.close()
         
         
@@ -706,7 +706,7 @@ def main_function(cfg):
         os.makedirs(var_dir)
 
     var_file_dict = {}
-    for feature_name in cfg.out_dimension_dict.keys():
+    for feature_name in list(cfg.out_dimension_dict.keys()):
         var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
         
     ### normalise output acoustic data
@@ -747,7 +747,7 @@ def main_function(cfg):
         # logger.debug(' value was\n%s' % cmp_norm_info)
         
         feature_index = 0
-        for feature_name in cfg.out_dimension_dict.keys():
+        for feature_name in list(cfg.out_dimension_dict.keys()):
             feature_std_vector = numpy.array(global_std_vector[:,feature_index:feature_index+cfg.out_dimension_dict[feature_name]], 'float32')
 
             fid = open(var_file_dict[feature_name], 'w')
@@ -840,7 +840,7 @@ def main_function(cfg):
 
         bottleneck_size = min(hidden_layers_sizes)
         bottleneck_index = 0
-        for i in xrange(len(hidden_layers_sizes)):
+        for i in range(len(hidden_layers_sizes)):
             if hidden_layers_sizes[i] == bottleneck_size:
                 bottleneck_index = i
 
@@ -959,7 +959,7 @@ def main_function(cfg):
             untrimmed_test_labels = binary_label_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
 
 
-        if cfg.in_dimension_dict.has_key('mgc'):
+        if 'mgc' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_mgc_list, cfg.mgc_dim, \
@@ -973,7 +973,7 @@ def main_function(cfg):
             test_spectral_distortion  *= (10 /numpy.log(10)) * numpy.sqrt(2.0)    ##MCD
 
             
-        if cfg.in_dimension_dict.has_key('bap'):
+        if 'bap' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_bap_list, cfg.bap_dim, \
@@ -986,7 +986,7 @@ def main_function(cfg):
             valid_bap_mse = valid_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
             test_bap_mse  = test_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
                 
-        if cfg.in_dimension_dict.has_key('lf0'):
+        if 'lf0' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_lf0_list, cfg.lf0_dim, \
@@ -1079,7 +1079,7 @@ if __name__ == '__main__':
         cProfile.run('main_function(cfg)', 'mainstats')
 
         # create a stream for the profiler to write to
-        profiling_output = StringIO.StringIO()
+        profiling_output = io.StringIO()
         p = pstats.Stats('mainstats', stream=profiling_output)
 
         # print stats to that stream

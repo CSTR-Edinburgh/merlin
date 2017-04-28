@@ -37,7 +37,7 @@
 #  THIS SOFTWARE.
 ################################################################################
 
-import configuration
+from . import configuration
 
 # instantiate one object of this class
 cfg = configuration.configuration()

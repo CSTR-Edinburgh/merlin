@@ -61,7 +61,7 @@ class DeepRecurrentNetwork(object):
         
         rng = np.random.RandomState(123)
         
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = n_in
             else:

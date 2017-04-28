@@ -1,5 +1,5 @@
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -53,7 +53,7 @@ from utils.learn_rates import ExpDecreaseLearningRate
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
 
 
 def extract_file_id_list(file_list):
@@ -107,7 +107,7 @@ def visualize_dnn(dnn):
 
     layer_num = len(dnn.params) / 2     ## including input and output
 
-    for i in xrange(layer_num):
+    for i in range(layer_num):
         fig_name = 'Activation weights W' + str(i)
         fig_title = 'Activation weights of W' + str(i)
         xlabel = 'Neuron index of hidden layer ' + str(i)
@@ -129,13 +129,13 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
 #    visualize_dnn(dbn)
 
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -163,11 +163,11 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -296,7 +296,7 @@ def main_function(cfg, in_dir, out_dir):
         # create all the lists of these, ready to pass to the label composer
 
         in_label_align_file_list = {}
-        for label_style, label_style_required in label_composer.label_styles.iteritems():
+        for label_style, label_style_required in list(label_composer.label_styles.items()):
             if label_style_required:
                 logger.info('labels of style %s are required - constructing file paths for them' % label_style)
                 if label_style == 'xpath':
@@ -311,7 +311,7 @@ def main_function(cfg, in_dir, out_dir):
             num_files=len(file_id_list)
             logger.info('the label styles required are %s' % label_composer.label_styles)
         
-            for i in xrange(num_files):
+            for i in range(num_files):
                 logger.info('making input label features for %4d of %4d' % (i+1,num_files))
 
                 # iterate through the required label styles and open each corresponding label file
@@ -319,7 +319,7 @@ def main_function(cfg, in_dir, out_dir):
                 # a dictionary of file descriptors, pointing at the required files
                 required_labels={}
             
-                for label_style, label_style_required in label_composer.label_styles.iteritems():
+                for label_style, label_style_required in list(label_composer.label_styles.items()):
                 
                     # the files will be a parallel set of files for a single utterance
                     # e.g., the XML tree and an HTS label file
@@ -331,7 +331,7 @@ def main_function(cfg, in_dir, out_dir):
                 label_composer.make_labels(required_labels,out_file_name=binary_label_file_list[i],fill_missing_values=cfg.fill_missing_values,iterate_over_frames=cfg.iterate_over_frames)
                 
                 # now close all opened files
-                for fd in required_labels.itervalues():
+                for fd in list(required_labels.values()):
                     fd.close()
     
     
@@ -369,7 +369,7 @@ def main_function(cfg, in_dir, out_dir):
     ### retrieve acoustic normalisation information for normalising the features back
     var_dir   = os.path.join(data_dir, 'var')
     var_file_dict = {}
-    for feature_name in cfg.out_dimension_dict.keys():
+    for feature_name in list(cfg.out_dimension_dict.keys()):
         var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
         
         
@@ -456,11 +456,11 @@ def simple_scale_variance(indir, outdir, var_file_dict, out_dimension_dict, file
     static_variances = {}
  
     static_dimension_dict = {}
-    for (feature_name,size) in out_dimension_dict.items():
+    for (feature_name,size) in list(out_dimension_dict.items()):
         static_dimension_dict[feature_name] = size/3
 
     io_funcs = BinaryIOCollection()
-    for feature_name in var_file_dict.keys():
+    for feature_name in list(var_file_dict.keys()):
         var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
         static_var_values = var_values[:static_dimension_dict[feature_name], :]
         static_variances[feature_name] = static_var_values
@@ -507,11 +507,11 @@ def simple_scale_variance_CONTINUUM(indir, outdir, var_file_dict, out_dimension_
     static_variances = {}
  
     static_dimension_dict = {}
-    for (feature_name,size) in out_dimension_dict.items():
+    for (feature_name,size) in list(out_dimension_dict.items()):
         static_dimension_dict[feature_name] = size/3
 
     io_funcs = BinaryIOCollection()
-    for feature_name in var_file_dict.keys():
+    for feature_name in list(var_file_dict.keys()):
         var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
         static_var_values = var_values[:static_dimension_dict[feature_name], :]
         static_variances[feature_name] = static_var_values
@@ -526,7 +526,7 @@ def simple_scale_variance_CONTINUUM(indir, outdir, var_file_dict, out_dimension_
             for stream in all_streams:
                 infile = os.path.join(indir, uttname + '.' + stream)
                 extended_uttname = uttname + '_gv' + str(gv_weight)
-                print extended_uttname
+                print(extended_uttname)
                 outfile = os.path.join(outdir, extended_uttname + '.' + stream)
                 if not os.path.isfile(infile):
                     sys.exit(infile + ' does not exist')
@@ -604,13 +604,13 @@ def generate_wav_glottHMM(gen_dir, gen_file_id_list):
 
             stem_name = os.path.join(gen_dir, uttname + '.txt')
             comm = '%s %s %s %s %s'%(exports, synthesis, stem_name, general_glott_conf, user_glott_conf)
-            print comm
+            print(comm)
             os.system(comm)
 
 
             
         else:
-            print 'missing stream(s) for utterance ' + uttname
+            print(('missing stream(s) for utterance ' + uttname))
         
 
 
@@ -632,7 +632,7 @@ if __name__ == '__main__':
 
 
     if len(sys.argv) != 4:
-        print 'usage: run_dnn.sh config_file_name in_dir out_dir'
+        print('usage: run_dnn.sh config_file_name in_dir out_dir')
         #logger.critical('usage: run_dnn.sh config_file_name utt_dir')
         sys.exit(1)
 

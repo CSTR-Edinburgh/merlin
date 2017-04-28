@@ -39,10 +39,10 @@ def generate_context_feature(in_data_dir1, in_data_dir2, out_data_dir, dimension
         features1, frame_number1 = load_binary_file(file_path, dimension1)
         features2, frame_number2 = load_binary_file(os.path.join(in_data_dir2, filename), dimension2) 
         if frame_number1 != frame_number2:
-            print dimension2
-            print filename
-            print   "%s %d != %d" %(filename, frame_number1, frame_number2)
-            print features1.shape, features2.shape
+            print(dimension2)
+            print(filename)
+            print(("%s %d != %d" %(filename, frame_number1, frame_number2)))
+            print((features1.shape, features2.shape))
             os.exit(1)
 
         context_features = numpy.zeros((frame_number1, dimension1+dimension2))
@@ -50,7 +50,7 @@ def generate_context_feature(in_data_dir1, in_data_dir2, out_data_dir, dimension
         context_features[0:frame_number1, 0:dimension1] = features1
         context_features[0:frame_number2, dimension1:dimension1+dimension2] = features2
         
-        print   filename, features1.shape, features2.shape, context_features.shape
+        print((filename, features1.shape, features2.shape, context_features.shape))
         
         context_filename = out_data_dir + '/' + filename
 

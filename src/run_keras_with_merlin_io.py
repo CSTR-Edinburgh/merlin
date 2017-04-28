@@ -45,9 +45,9 @@ class kerasModels(object):
         self.loss_function = loss_function
         self.optimizer     = optimizer
 
-        print "output_type   : "+self.output_type
-        print "loss function : "+self.loss_function
-        print "optimizer     : "+self.optimizer
+        print(("output_type   : "+self.output_type))
+        print(("loss function : "+self.loss_function))
+        print(("optimizer     : "+self.optimizer))
 
     def define_baseline_model(self):
         seed = 12345
@@ -57,7 +57,7 @@ class kerasModels(object):
         self.model = Sequential()
 
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
@@ -88,7 +88,7 @@ class kerasModels(object):
         self.model = Sequential()
 
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
@@ -118,7 +118,7 @@ class kerasModels(object):
 
     def compile_model(self):
         self.model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
-        print "model compiled successfully!!"
+        print("model compiled successfully!!")
 
 def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, sequential_training=True): 
     io_funcs = BinaryIOCollection()
@@ -144,7 +144,7 @@ def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, seq
         base_file_name = os.path.basename(inp_file_name).split(".")[0]
         
         if abs(inp_frame_number-out_frame_number)>5:
-            print 'the number of frames in input and output features are different: %d vs %d (%s)' %(inp_frame_number, out_frame_number, base_file_name)
+            print(('the number of frames in input and output features are different: %d vs %d (%s)' %(inp_frame_number, out_frame_number, base_file_name)))
             sys.exit(0)
         else:
             frame_number = min(inp_frame_number, out_frame_number)
@@ -253,10 +253,10 @@ if __name__ == "__main__":
     ### set to True if data to be shuffled ###
     shuffle_data        = True
     
-    print 'preparing train_x, train_y from input and output feature files...'
+    print('preparing train_x, train_y from input and output feature files...')
     train_x, train_y, train_flen = read_data_from_file_list(inp_train_file_list, out_train_file_list, inp_dim, out_dim, sequential_training=sequential_training)
      
-    print 'preparing test_x, test_y from input and output feature files...'
+    print('preparing test_x, test_y from input and output feature files...')
     test_x, test_y, test_flen = read_data_from_file_list(inp_test_file_list, out_test_file_list, inp_dim, out_dim)
      
     #### define Model, train and evaluate ####
@@ -295,7 +295,7 @@ if __name__ == "__main__":
                       %(combined_model_arch, int(shuffle_data),  
                          inp_dim, out_dim, train_file_number, batch_size, num_epochs)
     
-    print 'model file    : '+nnets_file_name    
+    print(('model file    : '+nnets_file_name))    
     
     json_model_file = os.path.join(model_dir, nnets_file_name+'.json')
     h5_model_file   = os.path.join(model_dir, nnets_file_name+'.h5')
@@ -340,12 +340,12 @@ if __name__ == "__main__":
             ### Train recurrent model ###
             if batch_size==1:
                 ### train each sentence as a batch ###
-                train_index_list = range(train_file_number)
+                train_index_list = list(range(train_file_number))
                 if shuffle_data:
                     random.seed(271638)
                     random.shuffle(train_index_list)        
-                for epoch_num in xrange(num_epochs):
-                    print 'Epoch: %d/%d ' %(epoch_num+1, num_epochs)
+                for epoch_num in range(num_epochs):
+                    print(('Epoch: %d/%d ' %(epoch_num+1, num_epochs)))
                     utt_count = -1
                     for utt_index in train_index_list:
                         temp_train_x = train_x[train_id_list[utt_index]]
@@ -360,19 +360,19 @@ if __name__ == "__main__":
                     sys.stdout.write("\n")
             else:
                 ### if batch size more than 1 ###
-                train_count_list = train_flen.keys()
+                train_count_list = list(train_flen.keys())
                 if shuffle_data:
                     random.seed(271638)
                     random.shuffle(train_count_list)
-                for epoch_num in xrange(num_epochs):
-                    print 'Epoch: %d/%d ' %(epoch_num+1, num_epochs)
+                for epoch_num in range(num_epochs):
+                    print(('Epoch: %d/%d ' %(epoch_num+1, num_epochs)))
                     utt_count = -1
                     for frame_number in train_count_list:
                         batch_file_list = train_flen[frame_number]
                         num_of_files    = len(batch_file_list)
                         temp_train_x    = np.zeros((num_of_files, frame_number, inp_dim))
                         temp_train_y    = np.zeros((num_of_files, frame_number, out_dim))
-                        for file_index in xrange(num_of_files):
+                        for file_index in range(num_of_files):
                             temp_train_x[file_index, ] = train_x[batch_file_list[file_index]]
                             temp_train_y[file_index, ] = train_y[batch_file_list[file_index]]
                         model.fit(temp_train_x, temp_train_y, batch_size=batch_size, epochs=1, verbose=0)
@@ -394,9 +394,9 @@ if __name__ == "__main__":
     if TestModel: 
         #### calculate predictions ####
         
-        print "generating acoustic features on held-out test data..."
+        print("generating acoustic features on held-out test data...")
         if not sequential_training:
-            for utt_index in xrange(test_file_number):
+            for utt_index in range(test_file_number):
                 temp_test_x = test_x[test_id_list[utt_index]]
                 temp_test_y = test_y[test_id_list[utt_index]]
                 
@@ -409,7 +409,7 @@ if __name__ == "__main__":
             
             sys.stdout.write("\n")
         else:
-            for utt_index in xrange(test_file_number):
+            for utt_index in range(test_file_number):
                 temp_test_x = test_x[test_id_list[utt_index]]
                 temp_test_y = test_y[test_id_list[utt_index]]
                 temp_test_x = np.reshape(temp_test_x, (1, temp_test_x.shape[0], inp_dim))
@@ -425,4 +425,4 @@ if __name__ == "__main__":
             sys.stdout.write("\n")
         
     (m, s) = divmod(int(time.time() - start_time), 60) 
-    print("--- Job completion time: %d min. %d sec ---" % (m, s)) 
+    print(("--- Job completion time: %d min. %d sec ---" % (m, s))) 

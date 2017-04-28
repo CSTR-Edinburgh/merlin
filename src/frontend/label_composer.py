@@ -108,21 +108,21 @@ class LabelComposer(object):
         for feature_specification in self.configuration.labels:
             #osw# self.logger.debug('looking at feature %s' % feature_specification )
             # feature is a dictionary specifying how to construct this part of the input feature vector
-            if feature_specification.has_key('xpath'):
+            if 'xpath' in feature_specification:
                 # xpath and hts are mutually exclusive label styles
-                assert not feature_specification.has_key('hts')
+                assert 'hts' not in feature_specification
 
                 # if there is a mapper, then we will use that to convert the features to numbers
                 # we need to look at the mapper to deduce the dimensionality of vectors that it will produce
-                if feature_specification.has_key('mapper'):
+                if 'mapper' in feature_specification:
 
                     # get an arbitrary item as the reference and measure its dimensionality
                     try:
-                        l = len(feature_specification['mapper'].itervalues().next())
+                        l = len(next(iter(list(feature_specification['mapper'].values()))))
                     except:
                         logger.critical('Empty mapper for feature %s' % feature_specification)
                         
-                    for k,v in feature_specification['mapper'].iteritems():
+                    for k,v in list(feature_specification['mapper'].items()):
                         # make sure all other entries have the same dimension
                         try:
                             assert len(v) == l
@@ -141,8 +141,8 @@ class LabelComposer(object):
                 self.label_styles['xpath'] = True
                 
                     
-            if feature_specification.has_key('hts'):
-                assert not feature_specification.has_key('xpath')
+            if 'hts' in feature_specification:
+                assert 'xpath' not in feature_specification
                 self.label_styles['hts'] = False # will become True once implemented
                 # not yet implemented !
                 self.logger.warning('HTS features not implemented - ignoring them!')
@@ -170,7 +170,7 @@ class LabelComposer(object):
         
         for feature_specification in self.configuration.labels:
             
-            if feature_specification.has_key('xpath'):
+            if 'xpath' in feature_specification:
                 #osw# self.logger.debug('precompiling xpath %s' % feature_specification['xpath'] )
                 compiled_xpath = etree.XPath(feature_specification['xpath'])
                 ## overwrite the original string:
@@ -222,9 +222,9 @@ class LabelComposer(object):
                 #osw# self.logger.debug('append frame features')
                         
             # which label file should we use?
-            if feature_specification.has_key('xpath'):
+            if 'xpath' in feature_specification:
                 # xpath and hts are mutually exclusive label styles
-                assert not feature_specification.has_key('hts')
+                assert 'hts' not in feature_specification
                 #osw# self.logger.debug(' feature style: xpath ; XPATH: %s' % feature_specification['xpath']  )
             
                 # actually make the features from this open file and the current XPATH
@@ -237,7 +237,7 @@ class LabelComposer(object):
 
                 try:
                     xpath_list.append(feature_specification['xpath'])
-                    if feature_specification.has_key('mapper'):
+                    if 'mapper' in feature_specification:
                         mapper_list.append(feature_specification['mapper'])
                     else:
                         mapper_list.append(None)
@@ -246,8 +246,8 @@ class LabelComposer(object):
                     raise
                     
                     
-            if feature_specification.has_key('hts'):
-                assert not feature_specification.has_key('xpath')
+            if 'hts' in feature_specification:
+                assert 'xpath' not in feature_specification
                 # not yet implemented !
                 self.logger.warning('HTS features not implemented - ignoring them!')
                 #these_labels=None
@@ -311,11 +311,11 @@ if __name__ == '__main__':
     label_composer = LabelComposer()
     label_composer.load_label_configuration('configuration/labelconfigfile.conf')
     
-    print 'Loaded configuration, which is:'
-    print label_composer.configuration.labels
+    print('Loaded configuration, which is:')
+    print((label_composer.configuration.labels))
 
     d=label_composer.compute_label_dimension()
-    print "label dimension will be",d
+    print(("label dimension will be",d))
     
     # not written test code for actual label processing - too complex and relies on config files
     

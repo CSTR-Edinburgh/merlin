@@ -43,7 +43,7 @@
 This script assumes c-version STRAIGHT which is not available to public. Please use your 
 own vocoder to replace this script. 
 '''
-import sys, os, subprocess, glob, commands
+import sys, os, subprocess, glob, subprocess
 #from utils import GlobalCfg
 
 from io_funcs.binary_io import  BinaryIOCollection
@@ -141,7 +141,7 @@ def generate_wav(gen_dir, file_id_list, cfg):
 
     ## to be moved
     pf_coef = cfg.pf_coef
-    if isinstance(cfg.fw_alpha, basestring):
+    if isinstance(cfg.fw_alpha, str):
         if cfg.fw_alpha=='Bark':
             fw_coef = bark_alpha(cfg.sr)
         elif cfg.fw_alpha=='ERB':

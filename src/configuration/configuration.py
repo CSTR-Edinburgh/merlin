@@ -39,10 +39,10 @@
 
 
 import math
-import ConfigParser
+import configparser
 import os
 import logging
-import StringIO
+import io
 import sys
 import textwrap
 import datetime
@@ -116,7 +116,7 @@ class configuration(object):
 
         # load the config file
         try:
-            configparser = ConfigParser.ConfigParser()
+            configparser = configparser.ConfigParser()
             configparser.readfp(open(configFile))
             logger.debug('successfully read and parsed user configuration file %s' % configFile)
         except:
@@ -131,7 +131,7 @@ class configuration(object):
             try:
                 self.work_dir = configparser.get('Paths', 'work')
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 if self.work_dir == None:
                     logger.critical('Paths:work has no value!')
                     raise Exception
@@ -418,7 +418,7 @@ class configuration(object):
                 value = configparser.get(section,option)
                 user_or_default='user'
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 # use default value, if there is one
                 if (default == None) or \
                    (default == '')   or \
@@ -683,7 +683,7 @@ class configuration(object):
 
         self.multistream_outs = []
         if self.multistream_switch:
-            for feature_name in self.out_dimension_dict.keys():
+            for feature_name in list(self.out_dimension_dict.keys()):
                 self.multistream_outs.append(self.out_dimension_dict[feature_name])
 
 #                stream_lr_ratio = 0.5
@@ -773,7 +773,7 @@ class configuration(object):
 
 
         #To be recorded in the logging file for reference
-        for param_name in self.hyper_params.keys():
+        for param_name in list(self.hyper_params.keys()):
             logger.info('%s : %s' %(param_name, str(self.hyper_params[param_name])))
 
                 # input files
@@ -845,7 +845,7 @@ class configuration(object):
             # inject the config lines for the file handler, now that we know the name of the file it will write to
 
             if not os.path.exists(self.log_path):
-                os.makedirs(self.log_path, 0755)
+                os.makedirs(self.log_path, 0o755)
             log_file_name = '%s_%s_%d_%d_%d_%d_%f_%s.log' %(self.combined_model_name, self.combined_feature_name, self.train_file_number,
                                                                       self.cmp_dim, len(self.hidden_layer_size),
                                                                       self.hidden_layer_size[-1], self.learning_rate,
@@ -866,7 +866,7 @@ class configuration(object):
 
             try:
                 # pass that string as a filehandle
-                fh = StringIO.StringIO(config_string)
+                fh = io.StringIO(config_string)
                 logging.config.fileConfig(fh)
                 fh.close()
                 logger.info("logging is now fully configured")

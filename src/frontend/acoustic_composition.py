@@ -40,7 +40,7 @@
 from io_funcs.binary_io import BinaryIOCollection
 import numpy
 import logging
-from acoustic_base import AcousticBase
+from .acoustic_base import AcousticBase
 import os
 #io_funcs.
 
@@ -67,7 +67,7 @@ class   AcousticComposition(AcousticBase):
 
         utt_number = len(in_file_list)
 
-        for i in xrange(utt_number):
+        for i in range(utt_number):
             in_file_name = in_file_list[i]
             in_data_stream_name = in_file_name.split('.')[-1]
             in_feature_dim = in_dimension_dict[in_data_stream_name]
@@ -96,15 +96,15 @@ class   AcousticComposition(AcousticBase):
 
         stream_start_index = {}
         stream_dim_index = 0
-        for stream_name in out_dimension_dict.keys():
-            if not stream_start_index.has_key(stream_name):
+        for stream_name in list(out_dimension_dict.keys()):
+            if stream_name not in stream_start_index:
                 stream_start_index[stream_name] = stream_dim_index
 
             stream_dim_index += out_dimension_dict[stream_name]
                 
         io_funcs = BinaryIOCollection()
 
-        for i in xrange(self.file_number):
+        for i in range(self.file_number):
             out_file_name = out_file_list[i]
 
             #if os.path.isfile(out_file_name):
@@ -117,7 +117,7 @@ class   AcousticComposition(AcousticBase):
             out_frame_number = 0
 
 
-            for k in xrange(self.data_stream_number):
+            for k in range(self.data_stream_number):
                 data_stream_name = self.data_stream_list[k]
 
                 in_file_name = in_file_list_dict[data_stream_name][i]
@@ -173,7 +173,7 @@ class   AcousticComposition(AcousticBase):
         dimension_index = 0
         recorded_vuv = False
         vuv_dimension = None
-        for feature_name in out_dimension_dict.keys():
+        for feature_name in list(out_dimension_dict.keys()):
             if feature_name != 'vuv':
                 stream_start_index[feature_name] = dimension_index
             else:

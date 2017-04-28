@@ -47,10 +47,10 @@ import os, re, numpy
 import logging
 
 if FAST_MLPG:
-    from mlpg_fast import MLParameterGenerationFast as MLParameterGeneration
+    from .mlpg_fast import MLParameterGenerationFast as MLParameterGeneration
 #    pass
 else:
-    from mlpg import MLParameterGeneration
+    from .mlpg import MLParameterGeneration
 
 class   ParameterGeneration(object):
 
@@ -72,11 +72,11 @@ class   ParameterGeneration(object):
 
         state_number = 5  ## hard coding, try removing in future?
 
-        if len(out_dimension_dict.keys())>1:
+        if len(list(out_dimension_dict.keys()))>1:
             logger.critical("we don't support any additional features along with duration as of now.")
             sys.exit(1)
         else:
-            feature_name = out_dimension_dict.keys()[0]
+            feature_name = list(out_dimension_dict.keys())[0]
         
         io_funcs = BinaryIOCollection()
         
@@ -116,7 +116,7 @@ class   ParameterGeneration(object):
         recorded_vuv = False
         vuv_dimension = None
 
-        for feature_name in out_dimension_dict.keys():
+        for feature_name in list(out_dimension_dict.keys()):
 #            if feature_name != 'vuv':
             stream_start_index[feature_name] = dimension_index
 #            else:
@@ -166,10 +166,10 @@ class   ParameterGeneration(object):
                 logger.debug(' feature dimensions: %d by %d' %(gen_features.shape[0], gen_features.shape[1]))
 
                 if feature_name in ['lf0', 'F0']:
-                    if stream_start_index.has_key('vuv'):
+                    if 'vuv' in stream_start_index:
                         vuv_feature = features[:, stream_start_index['vuv']:stream_start_index['vuv']+1]
 
-                        for i in xrange(frame_number):
+                        for i in range(frame_number):
                             if vuv_feature[i, 0] < 0.5:
                                 gen_features[i, 0] = self.inf_float
 
@@ -205,7 +205,7 @@ class   ParameterGeneration(object):
     def load_covariance(self, var_file_dict, out_dimension_dict):
 
         io_funcs = BinaryIOCollection()
-        for feature_name in var_file_dict.keys():
+        for feature_name in list(var_file_dict.keys()):
             var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
 
             var_values = numpy.reshape(var_values, (out_dimension_dict[feature_name], 1))
