@@ -66,9 +66,9 @@ class   MeanVarianceNorm(FeatureNormBase):
             logger.critical('The input and output file numbers are not the same! %d vs %d' %(len(in_file_list), len(out_file_list)))
             raise
 
-        if self.mean_vector == None:
+        if self.mean_vector is None:
             self.mean_vector = self.compute_mean(in_file_list, 0, self.feature_dimension)
-        if self.std_vector  == None:
+        if self.std_vector  is None:
             self.std_vector = self.compute_std(in_file_list, self.mean_vector, 0, self.feature_dimension)
         
         io_funcs = BinaryIOCollection()
