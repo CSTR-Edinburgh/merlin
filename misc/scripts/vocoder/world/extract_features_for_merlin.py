@@ -99,5 +99,4 @@ for file in wav_files:
                                             os.path.join(bap_dir,file_id+".bapd"),\
                                             os.path.join(bap_dir,file_id+'.bap'))
         os.system(sptk_x2x_df_cmd2)
-      
-
+    
