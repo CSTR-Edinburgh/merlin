@@ -80,7 +80,7 @@ def run_process(args,log=True):
         # bufsize=-1 enables buffering and may improve performance compared to the unbuffered case
         p = subprocess.Popen(args, bufsize=-1, shell=True, 
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                        close_fds=True)
+                        close_fds=True, env=os.environ)
         # better to use communicate() than read() and write() - this avoids deadlocks
         (stdoutdata, stderrdata) = p.communicate()
 
