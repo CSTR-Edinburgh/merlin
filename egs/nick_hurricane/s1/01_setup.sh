@@ -60,6 +60,8 @@ if [[ ! -d ${data_dir} ]] || [[ -n "$do_unzip" ]]; then
     mv ${data_dir}/merlin_baseline_practice/duration_data/ ${duration_dir}/data
     mv ${data_dir}/merlin_baseline_practice/acoustic_data/ ${acoustic_dir}/data
     mv ${data_dir}/merlin_baseline_practice/test_data/ ${synthesis_dir}
+    mv ${data_dir}/questions/questions-combilex_*.hed ${merlin_dir}/misc/questions/
+    mv ${data_dir}/straight ${merlin_dir}/tools/bin/
 fi
 echo "data is ready!"
 
