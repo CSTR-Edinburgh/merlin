@@ -41,16 +41,16 @@ from models.seq2seq import VanillaSequenceEncoder, DistributedSequenceEncoder
 
 import logging
 
-class DeepRecurrentNetwork(object): 
+class DeepRecurrentNetwork(object):
     """
     This class is to assemble various neural network architectures. From basic feedforward neural network to bidirectional gated recurrent neural networks and hybrid architecture. **Hybrid** means a combination of feedforward and recurrent architecture.
-    
+
     """
 
 
     def __init__(self, n_in, hidden_layer_size, n_out, L1_reg, L2_reg, hidden_layer_type, output_type='LINEAR', network_type='DNN', dropout_rate=0.0):
         """ This function initialises a neural network
-        
+
         :param n_in: Dimensionality of input features
         :type in: Integer
         :param hidden_layer_size: The layer size for each hidden layer
@@ -63,46 +63,46 @@ class DeepRecurrentNetwork(object):
         :param output_type: the activation type of the output layer, by default is 'LINEAR', linear regression.
         :param dropout_rate: probability of dropout, a float number between 0 and 1.
         """
-    
+
         logger = logging.getLogger("DNN initialization")
-        
+
         self.n_in = int(n_in)
         self.n_out = int(n_out)
-        
+
         self.n_layers = len(hidden_layer_size)
-        
+
         self.dropout_rate = dropout_rate
         self.is_train = T.iscalar('is_train')
-                        
+
 
         assert len(hidden_layer_size) == len(hidden_layer_type)
-        
+
         self.x = T.matrix('x')
         self.y = T.matrix('y')
 
         if network_type == "S2S":
             self.d = T.ivector('d')
             self.f = T.matrix('f')
-        
+
         self.L1_reg = L1_reg
         self.L2_reg = L2_reg
-        
+
         self.rnn_layers = []
         self.params = []
         self.delta_params = []
-        
+
         rng = np.random.RandomState(123)
-        
+
         BLSTM_variants   = ['BLSTM', 'BSLSTM', 'BLSTME']
         Encoder_variants = ['RNNE', 'LSTME', 'BLSTME', 'SLSTME']
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = n_in
             else:
                 input_size = hidden_layer_size[i-1]
                 if hidden_layer_type[i-1] in BLSTM_variants:
                     input_size = hidden_layer_size[i-1]*2
-                
+
             if i == 0:
                 layer_input = self.x
             else:
@@ -121,7 +121,7 @@ class DeepRecurrentNetwork(object):
                 else:
                     logger.critical("This network type: %s is not supported right now! \n Please use one of the following: DNN, RNN, S2S\n" %(network_type))
                     sys.exit(1)
-                    
+
             if hidden_layer_type[i] == 'SLSTM':
                 hidden_layer = SimplifiedLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
             elif hidden_layer_type[i] == 'SGRU':
@@ -163,14 +163,14 @@ class DeepRecurrentNetwork(object):
             else:
                 logger.critical("This hidden layer type: %s is not supported right now! \n Please use one of the following: SLSTM, BSLSTM, TANH, SIGMOID\n" %(hidden_layer_type[i]))
                 sys.exit(1)
-            
+
             self.rnn_layers.append(hidden_layer)
             self.params.extend(hidden_layer.params)
 
         input_size = hidden_layer_size[-1]
         if hidden_layer_type[-1]  == 'BSLSTM' or hidden_layer_type[-1]  == 'BLSTM':
             input_size = hidden_layer_size[-1]*2
-        
+
         if hidden_layer_type[-1] == "RNND" or hidden_layer_type[-1] == "LSTMD":
             self.final_layer = self.rnn_layers[-1]
         else:
@@ -181,34 +181,34 @@ class DeepRecurrentNetwork(object):
             else:
                 logger.critical("This output layer type: %s is not supported right now! \n Please use one of the following: LINEAR, SIGMOID\n" %(output_type))
                 sys.exit(1)
-                
+
             self.params.extend(self.final_layer.params)
 
-   
+
         self.updates = {}
         for param in self.params:
             self.updates[param] = theano.shared(value = np.zeros(param.get_value(borrow = True).shape,
                                                 dtype = theano.config.floatX), name = 'updates')
-        
+
         self.finetune_cost = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
         self.errors = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
 
-#        self.L2_sqr = (self.W_hy ** 2).sum() 
+#        self.L2_sqr = (self.W_hy ** 2).sum()
 
     def build_finetune_functions(self, train_shared_xy, valid_shared_xy):
         """ This function is to build finetune functions and to update gradients
-        
-        :param train_shared_xy: theano shared variable for input and output training data 
+
+        :param train_shared_xy: theano shared variable for input and output training data
         :type train_shared_xy: tuple of shared variable
         :param valid_shared_xy: theano shared variable for input and output development data
         :type valid_shared_xy: tuple of shared variable
         :returns: finetune functions for training and development
-        
+
         """
 
         (train_set_x, train_set_y) = train_shared_xy
         (valid_set_x, valid_set_y) = valid_shared_xy
-            
+
         lr = T.scalar('lr', dtype = theano.config.floatX)
         mom = T.scalar('mom', dtype = theano.config.floatX)  # momentum
 #        index = T.scalar('index', dtype='int32')
@@ -217,11 +217,11 @@ class DeepRecurrentNetwork(object):
         cost = self.finetune_cost #+ self.L2_reg * self.L2_sqr
 
         gparams = T.grad(cost, self.params)
-        
-        
+
+
         # zip just concatenate two lists
         updates = OrderedDict()
-        
+
         for param, gparam in zip(self.params, gparams):
             weight_update = self.updates[param]
             upd = mom * weight_update - lr * gparam
@@ -238,7 +238,7 @@ class DeepRecurrentNetwork(object):
 
         valid_model = theano.function(inputs = [],
                                       outputs = self.errors,
-                                      givens = {self.x: valid_set_x, 
+                                      givens = {self.x: valid_set_x,
                                                 self.y: valid_set_y,
                                                 self.is_train: np.cast['int32'](0)}, on_unused_input='ignore')
 
@@ -246,13 +246,13 @@ class DeepRecurrentNetwork(object):
 
     def build_finetune_functions_S2S(self, train_shared_xyd, valid_shared_xyd):
         """ This function is to build finetune functions and to update gradients
-        
-        :param train_shared_xy: theano shared variable for input and output training data 
+
+        :param train_shared_xy: theano shared variable for input and output training data
         :type train_shared_xy: tuple of shared variable
         :param valid_shared_xy: theano shared variable for input and output development data
         :type valid_shared_xy: tuple of shared variable
         :returns: finetune functions for training and development
-        
+
         """
 
         (train_set_x, train_set_y, train_set_d) = train_shared_xyd
@@ -275,10 +275,10 @@ class DeepRecurrentNetwork(object):
             updates[weight_update] = upd
             updates[param] = param + upd
 
-        train_model = theano.function(inputs = [lr, mom],  
+        train_model = theano.function(inputs = [lr, mom],
                                       outputs = self.errors,
                                       updates = updates,
-                                      givens = {self.x: train_set_x, 
+                                      givens = {self.x: train_set_x,
                                                 self.y: train_set_y,
                                                 self.d: train_set_d,
                                                 self.is_train: np.cast['int32'](1)}, on_unused_input='ignore')
@@ -290,18 +290,18 @@ class DeepRecurrentNetwork(object):
                                                 self.y: valid_set_y,
                                                 self.d: valid_set_d,
                                                 self.is_train: np.cast['int32'](0)}, on_unused_input='ignore')
- 
+
         return  train_model, valid_model
 
     def build_finetune_functions_S2SPF(self, train_shared_xydf, valid_shared_xydf):
         """ This function is to build finetune functions and to update gradients
-        
-        :param train_shared_xy: theano shared variable for input and output training data 
+
+        :param train_shared_xy: theano shared variable for input and output training data
         :type train_shared_xy: tuple of shared variable
         :param valid_shared_xy: theano shared variable for input and output development data
         :type valid_shared_xy: tuple of shared variable
         :returns: finetune functions for training and development
-        
+
         """
 
         (train_set_x, train_set_y, train_set_d, train_set_f) = train_shared_xydf
@@ -324,10 +324,10 @@ class DeepRecurrentNetwork(object):
             updates[weight_update] = upd
             updates[param] = param + upd
 
-        train_model = theano.function(inputs = [lr, mom],  
+        train_model = theano.function(inputs = [lr, mom],
                                       outputs = self.errors,
                                       updates = updates,
-                                      givens = {self.x: train_set_x, 
+                                      givens = {self.x: train_set_x,
                                                 self.y: train_set_y,
                                                 self.d: train_set_d,
                                                 self.f: train_set_f,
@@ -341,18 +341,18 @@ class DeepRecurrentNetwork(object):
                                                 self.d: valid_set_d,
                                                 self.f: valid_set_f,
                                                 self.is_train: np.cast['int32'](0)}, on_unused_input='ignore')
- 
+
         return  train_model, valid_model
 
     def parameter_prediction(self, test_set_x):  #, batch_size
         """ This function is to predict the output of NN
-        
+
         :param test_set_x: input features for a testing sentence
         :type test_set_x: python array variable
         :returns: predicted features
-        
+
         """
-    
+
 
         n_test_set_x = test_set_x.shape[0]
 
@@ -361,17 +361,17 @@ class DeepRecurrentNetwork(object):
 
         predict_parameter = test_out()
 
-        return predict_parameter    
+        return predict_parameter
 
-    def parameter_prediction_S2S(self, test_set_x, test_set_d):  
+    def parameter_prediction_S2S(self, test_set_x, test_set_d):
         """ This function is to predict the output of NN
-        
+
         :param test_set_x: input features for a testing sentence
         :param test_set_d: phone durations for a testing sentence
         :type test_set_x: python array variable
         :type test_set_d: python array variable
         :returns: predicted features
-        
+
         """
 
         n_test_set_x = test_set_x.shape[0]
@@ -383,15 +383,15 @@ class DeepRecurrentNetwork(object):
 
         return predict_parameter
 
-    def parameter_prediction_S2SPF(self, test_set_x, test_set_d, test_set_f):  
+    def parameter_prediction_S2SPF(self, test_set_x, test_set_d, test_set_f):
         """ This function is to predict the output of NN
-        
+
         :param test_set_x: input features for a testing sentence
         :param test_set_d: phone durations for a testing sentence
         :type test_set_x: python array variable
         :type test_set_d: python array variable
         :returns: predicted features
-        
+
         """
 
         n_test_set_x  = test_set_x.shape[0]
