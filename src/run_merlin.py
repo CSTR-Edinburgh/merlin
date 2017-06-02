@@ -707,9 +707,7 @@ def main_function(cfg):
                                 
         else: ## back off to previous method using HTS labels:
             remover = SilenceRemover(n_cmp = cfg.cmp_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
-            remover.remove_silence(nn_cmp_file_list[0:cfg.train_file_number+cfg.valid_file_number], 
-                                   in_label_align_file_list[0:cfg.train_file_number+cfg.valid_file_number], 
-                                   nn_cmp_file_list[0:cfg.train_file_number+cfg.valid_file_number]) # save to itself
+            remover.remove_silence(nn_cmp_file_list, in_label_align_file_list, nn_cmp_file_list) # save to itself
 
     ### save acoustic normalisation information for normalising the features back
     var_dir   = os.path.join(data_dir, 'var')
@@ -730,8 +728,7 @@ def main_function(cfg):
             global_mean_vector = normaliser.compute_mean(nn_cmp_file_list[0:cfg.train_file_number], 0, cfg.cmp_dim)
             global_std_vector = normaliser.compute_std(nn_cmp_file_list[0:cfg.train_file_number], global_mean_vector, 0, cfg.cmp_dim)
 
-            normaliser.feature_normalisation(nn_cmp_file_list[0:cfg.train_file_number+cfg.valid_file_number], 
-                                             nn_cmp_norm_file_list[0:cfg.train_file_number+cfg.valid_file_number])
+            normaliser.feature_normalisation(nn_cmp_file_list, nn_cmp_norm_file_list)
             cmp_norm_info = numpy.concatenate((global_mean_vector, global_std_vector), axis=0)
 
         elif cfg.output_feature_normalisation == 'MINMAX':        
