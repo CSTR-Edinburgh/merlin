@@ -681,7 +681,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         return  lab_binary_vector
         
     def pattern_matching_binary(self, label):
-        
+      
         dict_size = len(self.discrete_dict)
         lab_binary_vector = numpy.zeros((1, dict_size))
         
@@ -690,13 +690,13 @@ class HTSLabelNormalisation(LabelNormalisation):
             binary_flag = 0
             for iq in xrange(len(current_question_list)):
                 current_compiled = current_question_list[iq]
-                
+               
                 ms = current_compiled.search(label)
                 if ms is not None:
                     binary_flag = 1
                     break
             lab_binary_vector[0, i] = binary_flag
-            
+          
         return   lab_binary_vector
         
 
@@ -753,6 +753,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         continuous_qs_index = 0
         binary_dict = {}
         continuous_dict = {}
+        LL=re.compile(re.escape('LL-'))
         
         for line in fid.readlines():
             line = line.replace('\n', '')
@@ -777,7 +778,8 @@ class HTSLabelNormalisation(LabelNormalisation):
                     re_list = []
                     for temp_question in question_list:
                         processed_question = self.wildcards2regex(temp_question)
-#                        print   processed_question
+                        if LL.search(question_key):
+                            processed_question = '^'+processed_question
                         re_list.append(re.compile(processed_question))
                         
                     binary_dict[str(binary_qs_index)] = re_list
@@ -809,7 +811,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         question = re.escape(question)
         ## convert remaining HTK wildcards * and ? to equivalent regex:
         question = question.replace('\\*', '.*')
-        question = question.replace('\\?', '.')
+        #question = question.replace('\\?', '.?')
 
         if convert_number_pattern:
             question = question.replace('\\(\\\\d\\+\\)', '(\d+)')
