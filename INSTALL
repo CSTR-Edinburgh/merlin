@@ -36,3 +36,5 @@ sudo env "PATH=$PATH" pip install matplotlib
 sudo env "PATH=$PATH" pip install bandmat
 sudo env "PATH=$PATH" pip install lxml
 
+If you are not a sudo user, this [post](https://cstr-edinburgh.github.io/install-merlin/) may help you install Merlin.
+
