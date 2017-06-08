@@ -259,7 +259,7 @@ def generate_wav(gen_dir, file_id_list, cfg):
                 run_process('{bndap2ap} {bap} > {ap}' 
                              .format(bndap2ap=STRAIGHT['BNDAP2AP'], bap=files['bap'], ap=files['ap']))
 
-            run_process('{synfft} -f {sr} -spec -fftl {fl} -shift {shift} -sigp 0.0 -cornf 400 -float -apfile {ap} {f0a} {sp} {wav}'
+            run_process('{synfft} -f {sr} -spec -fftl {fl} -shift {shift} -sigp 0.0 -cornf 3500 -float -apfile {ap} {f0a} {sp} {wav}'
                         .format(synfft=STRAIGHT['SYNTHESIS_FFT'], sr=cfg.sr, fl=cfg.fl, shift=cfg.shift, ap=files['ap'], f0a=files['f0']+'.a', sp=files['sp'], wav=files['wav']))
 
             run_process('rm -f {sp} {f0} {f0a} {ap}'
