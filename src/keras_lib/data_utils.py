@@ -71,6 +71,48 @@ def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, seq
     
     return temp_set_x, temp_set_y, file_length_dict
 
+def read_test_data_from_file_list(inp_file_list, inp_dim, sequential_training=True): 
+    io_funcs = BinaryIOCollection()
+
+    num_of_utt = len(inp_file_list)
+
+    file_length_dict = {'framenum2utt':{}, 'utt2framenum':{}}
+
+    if sequential_training:
+        temp_set_x = {}
+    else:
+        temp_set_x = np.empty((FRAME_BUFFER_SIZE, inp_dim))
+     
+    ### read file by file ###
+    current_index = 0
+    for i in xrange(num_of_utt):    
+        inp_file_name = inp_file_list[i]
+        inp_features, frame_number = io_funcs.load_binary_file_frame(inp_file_name, inp_dim)
+
+        base_file_name = os.path.basename(inp_file_name).split(".")[0]
+
+        if sequential_training:
+            temp_set_x[base_file_name] = inp_features
+        else:
+            temp_set_x[current_index:current_index+frame_number, ] = inp_features[0:frame_number]
+            current_index += frame_number
+        
+        if frame_number not in file_length_dict['framenum2utt']:
+            file_length_dict['framenum2utt'][frame_number] = [base_file_name]
+        else:
+            file_length_dict['framenum2utt'][frame_number].append(base_file_name)
+
+        file_length_dict['utt2framenum'][base_file_name] = frame_number
+    
+        drawProgressBar(i+1, num_of_utt)
+        
+    sys.stdout.write("\n")
+        
+    if not sequential_training:
+        temp_set_x = temp_set_x[0:current_index, ]
+    
+    return temp_set_x, file_length_dict
+
 def transform_data_to_3d_matrix(data, seq_length=200, max_length=0, merge_size=1, shuffle_data = True, shuffle_type = 1, padding="right"):
     num_of_utt = len(data)
     feat_dim   = data[data.keys()[0]].shape[1]
