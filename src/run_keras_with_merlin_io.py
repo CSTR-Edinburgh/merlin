@@ -203,7 +203,7 @@ def main():
 
         #### load the data ####
         print 'preparing test_x from input feature files...'
-        test_x, test_y, test_flen = data_utils.read_data_from_file_list(inp_test_file_list, out_test_file_list, inp_dim, out_dim)
+        test_x, test_flen = data_utils.read_test_data_from_file_list(inp_test_file_list, inp_dim)
      
         #### norm the data ####
         data_utils.norm_data(test_x, inp_scaler)
