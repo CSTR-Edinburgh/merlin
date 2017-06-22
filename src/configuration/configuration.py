@@ -139,6 +139,17 @@ class configuration(object):
         # look for those items that are user-configurable, and get their values
         # sptk_bindir= ....
 
+        # default place for some data
+        self.data_dir    = os.path.join(self.work_dir, 'data')
+        self.keras_dir   = os.path.join(self.work_dir, 'keras')
+
+        self.gen_dir     = os.path.join(self.keras_dir, 'gen')
+        self.model_dir   = os.path.join(self.keras_dir, 'models')
+        self.stats_dir   = os.path.join(self.keras_dir, 'stats')
+
+        self.inter_data_dir = os.path.join(self.work_dir, 'inter_module')
+        self.def_inp_dir    = os.path.join(self.inter_data_dir, 'nn_no_silence_lab_norm_425')
+        self.def_out_dir    = os.path.join(self.inter_data_dir, 'nn_norm_mgc_lf0_vuv_bap_187')
 
 
         # a list instead of a dict because OrderedDict is not available until 2.7
@@ -160,6 +171,14 @@ class configuration(object):
             ('data_dir', '', 'Paths','data'),
             ('plot_dir', '', 'Paths','plot'),
 
+            ('inp_feat_dir', self.def_inp_dir, 'Paths', 'inp_feat'),
+            ('out_feat_dir', self.def_out_dir, 'Paths', 'out_feat'),
+
+            ('model_dir', self.model_dir, 'Paths', 'models'),
+            ('stats_dir', self.stats_dir, 'Paths', 'stats'),
+            ('gen_dir'  ,   self.gen_dir, 'Paths', 'gen'),
+            ('pred_feat_dir',self.gen_dir, 'Paths', 'pred_feat'),
+            
             ('plot',      False, 'Utility', 'plot'),
             ('profile',   False, 'Utility', 'profile'),
 
@@ -175,6 +194,16 @@ class configuration(object):
             ('in_sp_dir'    , os.path.join(self.work_dir, 'data/sp' )  , 'Paths', 'in_sp_dir'),
             ('in_seglf0_dir', os.path.join(self.work_dir, 'data/lf03') , 'Paths', 'in_seglf0_dir'),
 
+            # Input-Output
+            ('inp_dim', 425, 'Input-Output', 'inp_dim'),
+            ('out_dim', 187, 'Input-Output', 'out_dim'),
+           
+            ('inp_file_ext', '.lab', 'Input-Output', 'inp_file_ext'),
+            ('out_file_ext', '.cmp', 'Input-Output', 'out_file_ext'),
+
+            ('inp_norm', 'MINMAX', 'Input-Output', 'inp_norm'),
+            ('out_norm', 'MINMAX', 'Input-Output', 'out_norm'),
+            
 	    ## for glottHMM
             ('in_F0_dir'   , os.path.join(self.work_dir, 'data/F0')  , 'Paths', 'in_F0_dir'),
             ('in_Gain_dir'   , os.path.join(self.work_dir, 'data/Gain')  , 'Paths', 'in_Gain_dir'),
@@ -235,6 +264,7 @@ class configuration(object):
             ('output_layer_type'    , 'LINEAR'                                          , 'Architecture', 'output_layer_type'),
             ('sequential_training'  , False                                           , 'Architecture', 'sequential_training'),
             ('dropout_rate'         , 0.0                                               , 'Architecture', 'dropout_rate'),
+            ('switch_to_keras'      , False                                           , 'Architecture', 'switch_to_keras'),
 
 	    ## some config variables for token projection DNN
             ('scheme'               , 'stagewise'                   , 'Architecture', 'scheme'),
@@ -245,6 +275,28 @@ class configuration(object):
             ('projection_weights_output_dir'    , 'some_path', 'Architecture', 'projection_weights_output_dir'),
             ('layers_with_projection_input'    , [0], 'Architecture', 'layers_with_projection_input'),
             ('projection_learning_rate_scaling'    , 1.0, 'Architecture', 'projection_learning_rate_scaling'),
+
+            ('num_of_epochs',   1, 'Architecture', 'training_epochs'),
+
+            ('optimizer'        ,   'adam', 'Architecture', 'optimizer'),
+            ('loss_function'    ,    'mse', 'Architecture', 'loss_function'),
+            
+            # RNN
+            ('stateful'           , False, 'Architecture', 'stateful'),
+            ('use_high_batch_size', False, 'Architecture', 'use_high_batch_size'),
+            
+            ('training_algo',   1, 'Architecture', 'training_algo'),
+            ('merge_size'   ,   1, 'Architecture', 'merge_size'),
+            ('seq_length'   , 200, 'Architecture', 'seq_length'),
+            ('bucket_range' , 100, 'Architecture', 'bucket_range'),
+            
+            # Data
+            ('shuffle_data', True, 'Data', 'shuffle_data'),
+
+            # Keras Processes
+            ('NORMDATA'  , False, 'Processes', 'NORMDATA'),
+            ('TRAINMODEL', False, 'Processes', 'TRAINMODEL'),
+            ('TESTMODEL' , False, 'Processes', 'TESTMODEL'),
 
 
             ('learning_rate'        , 0.0002                          , 'Architecture', 'learning_rate'),
@@ -314,48 +366,6 @@ class configuration(object):
 
             ('output_features' , ['mgc','lf0', 'vuv', 'bap'], 'Streams', 'output_features'),
             ('gen_wav_features', ['mgc', 'bap', 'lf0']      , 'Streams', 'gen_wav_features'),
-
-#            ('stream_mgc_hidden_size'   ,  192 , 'Streams', 'stream_mgc_hidden_size'),
-#            ('stream_lf0_hidden_size'   ,  32  , 'Streams', 'stream_lf0_hidden_size'),
-#            ('stream_vuv_hidden_size'   ,  32  , 'Streams', 'stream_vuv_hidden_size'),
-#            ('stream_bap_hidden_size'   ,  128 , 'Streams', 'stream_bap_hidden_size'),
-#            ('stream_stepw_hidden_size' ,  64  , 'Streams', 'stream_stepw_hidden_size'),
-#            ('stream_seglf0_hidden_size',  64  , 'Streams', 'stream_seglf0_hidden_size'),
-#            ('stream_cmp_hidden_size'   ,  256 , 'Streams', 'stream_cmp_hidden_size'),  #when multi-stream is disabled, use this to indicate the final hidden layer size
-                                                                                        #if this is also not provided, use the top common hidden layer size
-
-            ## Glott HMM -- dummy values -- haven't used private streams:--
-#            ('stream_F0_hidden_size'   ,  192 , 'Streams', 'stream_F0_hidden_size'),
-#            ('stream_Gain_hidden_size'   ,  192 , 'Streams', 'stream_Gain_hidden_size'),
-#            ('stream_HNR_hidden_size'   ,  192 , 'Streams', 'stream_HNR_hidden_size'),
-#            ('stream_LSF_hidden_size'   ,  192 , 'Streams', 'stream_LSF_hidden_size'),
-#            ('stream_LSFsource_hidden_size'   ,  192 , 'Streams', 'stream_LSFsource_hidden_size'),
-
-            ## joint dur -- dummy values -- haven't used private streams:--
-#            ('stream_dur_hidden_size'   ,  192 , 'Streams', 'stream_dur_hidden_size'),
-
-#            ('stream_sp_hidden_size'    , 1024, 'Streams', 'stream_sp_hidden_size'),
-
-#            ('stream_weight_mgc'   , 1.0, 'Streams', 'stream_weight_mgc'),
-#            ('stream_weight_lf0'   , 3.0, 'Streams', 'stream_weight_lf0'),
-#            ('stream_weight_vuv'   , 1.0, 'Streams', 'stream_weight_vuv'),
-#            ('stream_weight_bap'   , 1.0, 'Streams', 'stream_weight_bap'),
-#            ('stream_weight_stepw' , 0.0, 'Streams', 'stream_weight_stepw'),
-#            ('stream_weight_seglf0', 1.0, 'Streams', 'stream_weight_seglf0'),
-#            ('stream_weight_sp'    , 1.0, 'Streams', 'stream_weight_sp'),
-
-
-            ## Glott HMM - unused?
-#            ('stream_weight_F0'   , 1.0, 'Streams', 'stream_weight_F0'),
-#            ('stream_weight_Gain'   , 1.0, 'Streams', 'stream_weight_Gain'),
-#            ('stream_weight_HNR'   , 1.0, 'Streams', 'stream_weight_HNR'),
-#            ('stream_weight_LSF'   , 1.0, 'Streams', 'stream_weight_LSF'),
-#            ('stream_weight_LSFsource'   , 1.0, 'Streams', 'stream_weight_LSFsource'),
-
-            ## dur - unused?
-#            ('stream_weight_dur'   , 1.0, 'Streams', 'stream_weight_dur'),
-#            ('stream_lf0_lr'       , 0.5, 'Streams', 'stream_lf0_lr'),
-#            ('stream_vuv_lr'       , 0.5, 'Streams', 'stream_vuv_lr'),
 
             ('vocoder_type'     ,'STRAIGHT'            ,'Waveform'  , 'vocoder_type'),
             ('sr'               ,48000                 ,'Waveform'  , 'samplerate'),
@@ -485,11 +495,7 @@ class configuration(object):
             'MC2B'   : os.path.join(self.sptk_bindir,'mc2b'),
             'B2MC'  : os.path.join(self.sptk_bindir,'b2mc')
             }
-#        self.NND = {
-#            'FEATN'  : os.path.join(self.nndata_bindir,'FeatureNormalization'),
-#            'LF0IP'  : os.path.join(self.nndata_bindir,'F0Interpolation'),
-#            'F0VUV'  : os.path.join(self.nndata_bindir,'F0VUVComposition')
-#            }
+        
         self.STRAIGHT = {
             'SYNTHESIS_FFT' : os.path.join(self.straight_bindir, 'synthesis_fft'),
             'BNDAP2AP'      : os.path.join(self.straight_bindir, 'bndap2ap'),
@@ -502,6 +508,71 @@ class configuration(object):
 
         # STILL TO DO - test that all the above tools exist and are executable
 
+        if self.switch_to_keras:
+            ## create directories if not exists
+            if not os.path.exists(self.model_dir):
+                os.makedirs(self.model_dir)
+
+            if not os.path.exists(self.stats_dir):
+                os.makedirs(self.stats_dir)
+
+            if not os.path.exists(self.gen_dir):
+                os.makedirs(self.gen_dir)
+            
+            # input-output normalization stat files
+            self.inp_stats_file = os.path.join(self.stats_dir, "input_%d_%s_%d.norm" %(int(self.train_file_number), self.inp_norm, self.inp_dim))
+            self.out_stats_file = os.path.join(self.stats_dir, "output_%d_%s_%d.norm" %(int(self.train_file_number), self.out_norm, self.out_dim))
+            
+            # define model file name
+            if self.sequential_training:
+                self.combined_model_arch = 'RNN'+str(self.training_algo)
+            else:
+                self.combined_model_arch = 'DNN'
+
+            self.combined_model_arch += '_'+str(len(self.hidden_layer_size))
+            self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_size))
+            self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_type))
+        
+            self.nnets_file_name = '%s_%d_train_%d_%d_%d_%d_%d_model' \
+                              %(self.combined_model_arch, int(self.shuffle_data),  
+                                 self.inp_dim, self.out_dim, self.train_file_number, self.batch_size, self.num_of_epochs)
+        
+            logger.info('model file: %s' % (self.nnets_file_name)) 
+
+            # model files
+            self.json_model_file = os.path.join(self.model_dir, self.nnets_file_name+'.json')
+            self.h5_model_file   = os.path.join(self.model_dir, self.nnets_file_name+'.h5')
+
+            # predicted features directory
+            self.pred_feat_dir = os.path.join(self.gen_dir, self.nnets_file_name)
+            if not os.path.exists(self.pred_feat_dir):
+                os.makedirs(self.pred_feat_dir)
+          
+            # string.lower for some architecture values
+            self.output_layer_type = self.output_layer_type.lower()
+            self.optimizer         = self.optimizer.lower()
+            self.loss_function     = self.loss_function.lower()
+            for i in range(len(self.hidden_layer_type)):
+                self.hidden_layer_type[i] = self.hidden_layer_type[i].lower()
+            
+            # set sequential training True if using LSTMs
+            if 'lstm' in self.hidden_layer_type:
+                self.sequential_training = True
+            
+            # set/limit batch size to 25
+            if self.sequential_training and self.batch_size>50:
+                if not self.use_high_batch_size:
+                    logger.info('reducing the batch size from %s to 25' % (self.batch_size))
+                    self.batch_size = 25 ## num. of sentences in this case
+            
+            # rnn params
+            self.rnn_params = {}
+            self.rnn_params['merge_size']   = self.merge_size
+            self.rnn_params['seq_length']   = self.seq_length
+            self.rnn_params['bucket_range'] = self.bucket_range
+            self.rnn_params['stateful']     = self.stateful  
+
+        
 
 
 
@@ -747,12 +818,6 @@ class configuration(object):
         self.hyper_params['hidden_layer_size']   = self.hidden_layer_size
         self.hyper_params['warmup_epoch']          = self.warmup_epoch
         self.hyper_params['use_rprop']             = self.use_rprop
-
-#        self.hyper_params['private_hidden_sizes']  = self.private_hidden_sizes
-#        self.hyper_params['stream_weights']        = self.stream_weights
-#        self.hyper_params['private_l2_reg']        = self.private_l2_reg
-#        self.hyper_params['stream_lr_weights']     = self.stream_lr_weights
-#        self.hyper_params['use_private_hidden']    = self.use_private_hidden
 
         self.hyper_params['model_type']            = self.model_type
         self.hyper_params['hidden_layer_type']     = self.hidden_layer_type

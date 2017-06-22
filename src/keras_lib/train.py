@@ -1,3 +1,42 @@
+################################################################################
+#           The Neural Network (NN) based Speech Synthesis System
+#                https://github.com/CSTR-Edinburgh/merlin
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
+#                      Copyright (c) 2014-2015
+#                        All Rights Reserved.
+#
+# The system as a whole and most of the files in it are distributed
+# under the following copyright and conditions
+#
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
+#  the following conditions:
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+#  THIS SOFTWARE.
+################################################################################
+
 import os, sys
 import random
 import numpy as np
@@ -9,16 +48,16 @@ from keras_lib import data_utils
 
 class TrainKerasModels(kerasModels):
     
-    def __init__(self, n_in, hidden_layer_size, n_out, hidden_layer_type, output_type='linear', dropout_rate=0.0, loss_function='mse', optimizer='adam'):
+    def __init__(self, n_in, hidden_layer_size, n_out, hidden_layer_type, output_type='linear', dropout_rate=0.0, loss_function='mse', optimizer='adam', rnn_params=None):
         
         kerasModels.__init__(self, n_in, hidden_layer_size, n_out, hidden_layer_type, output_type, dropout_rate, loss_function, optimizer)
         
         #### TODO: Find a good way to pass below params ####
-        self.merge_size  = 4400
-        self.seq_length  = 200 
-        self.bucket_range = 100
+        self.merge_size   = rnn_params['merge_size']
+        self.seq_length   = rnn_params['seq_length']
+        self.bucket_range = rnn_params['bucket_range']
        
-        self.stateful = False
+        self.stateful = rnn_params['stateful']
        
         pass;
     
@@ -27,20 +66,12 @@ class TrainKerasModels(kerasModels):
     
     def train_sequence_model(self, train_x, train_y, train_flen, batch_size=1, num_of_epochs=10, shuffle_data=True, training_algo=1):
         if batch_size == 1: 
-            self.train_recurrent_model_batchsize_one(train_x, train_y, num_of_epochs, shuffle_data, training_algo)
+            self.train_recurrent_model_batchsize_one(train_x, train_y, num_of_epochs, shuffle_data)
         else:
             self.train_recurrent_model(train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data, training_algo)
 
-    def train_recurrent_model_batchsize_one(self, train_x, train_y, num_of_epochs, shuffle_data, training_algo):
+    def train_recurrent_model_batchsize_one(self, train_x, train_y, num_of_epochs, shuffle_data):
         ### if batch size is equal to 1 ###
-        if training_algo == 1:
-            self.train_batchsize_one_model(train_x, train_y, num_of_epochs, shuffle_data)
-        elif training_algo == 2:
-            new_train_x, new_train_y = data_utils.merge_data(train_x, train_y, self.merge_size)    
-            self.train_batchsize_one_model(new_train_x, new_train_y, num_of_epochs, shuffle_data)
-        
-    def train_batchsize_one_model(self, train_x, train_y, num_of_epochs=10, shuffle_data=True):
-        ### train each sentence as a batch ###
         train_idx_list = train_x.keys()
         if shuffle_data:
             random.seed(271638)
@@ -48,7 +79,7 @@ class TrainKerasModels(kerasModels):
         
         train_file_number = len(train_idx_list)
         for epoch_num in xrange(num_of_epochs):
-            print 'Epoch: %d/%d ' %(epoch_num+1, num_of_epochs)
+            print('Epoch: %d/%d ' %(epoch_num+1, num_of_epochs))
             file_num = 0
             for file_name in train_idx_list:
                 temp_train_x = train_x[file_name]
@@ -71,11 +102,11 @@ class TrainKerasModels(kerasModels):
         elif training_algo == 3:
             self.train_bucket_model_without_padding(train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data)
         else:
-            print "Chose training algo. for batch size more than 1:"
-            print "1) Truncated Model"
-            print "2) bucket Model (with padding)"
-            print "3) bucket Model (without padding)"
-            sys.exit(0)
+            print("Chose training algo. for batch size more than 1:")
+            print("1) Truncated Model")
+            print("2) bucket Model (with padding)")
+            print("3) bucket Model (without padding)")
+            sys.exit(1)
 
     def train_truncated_model(self, train_x, train_y, batch_size, num_of_epochs, shuffle_data):
         ### Method 1 ###
@@ -86,12 +117,12 @@ class TrainKerasModels(kerasModels):
         print("Output shape: "+str(temp_train_y.shape))
                
         if self.stateful:
-            temp_train_x, temp_train_y = get_stateful_data(temp_train_x, temp_train_y, batch_size)
+            temp_train_x, temp_train_y = data_utils.get_stateful_data(temp_train_x, temp_train_y, batch_size)
                     
         self.model.fit(temp_train_x, temp_train_y, batch_size=batch_size, epochs=num_of_epochs, shuffle=False, verbose=1)
     
     def train_bucket_model_with_padding(self, train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data):
-        ### Method 3 ###
+        ### Method 2 ###
         train_fnum_list  = np.array(train_flen['framenum2utt'].keys())
         train_range_list = range(min(train_fnum_list), max(train_fnum_list), self.bucket_range)
         if shuffle_data:
@@ -100,7 +131,7 @@ class TrainKerasModels(kerasModels):
         
         train_file_number = len(train_x)
         for epoch_num in xrange(num_of_epochs):
-            print 'Epoch: %d/%d ' %(epoch_num+1, num_of_epochs)
+            print('Epoch: %d/%d ' %(epoch_num+1, num_of_epochs))
             file_num = 0
             for frame_num in train_range_list:
                 min_seq_length = frame_num
@@ -121,7 +152,7 @@ class TrainKerasModels(kerasModels):
             sys.stdout.write("\n")
 
     def train_bucket_model_without_padding(self, train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data):
-        ### Method 4 ###
+        ### Method 3 ###
         train_count_list = train_flen['framenum2utt'].keys()
         if shuffle_data:
             random.seed(271638)
@@ -129,7 +160,7 @@ class TrainKerasModels(kerasModels):
         
         train_file_number = len(train_x)
         for epoch_num in xrange(num_of_epochs):
-            print 'Epoch: %d/%d ' %(epoch_num+1, num_of_epochs)
+            print('Epoch: %d/%d ' %(epoch_num+1, num_of_epochs))
             file_num = 0
             for sequence_length in train_count_list:
                 train_idx_list = train_flen['framenum2utt'][sequence_length]
@@ -152,7 +183,7 @@ class TrainKerasModels(kerasModels):
         test_id_list.sort()
 
         test_file_number = len(test_id_list) 
-        print "generating acoustic features on held-out test data..."
+        print("generating features on held-out test data...")
         for utt_index in xrange(test_file_number):
             gen_test_file_name = gen_test_file_list[utt_index]
             temp_test_x        = test_x[test_id_list[utt_index]]
@@ -174,14 +205,3 @@ class TrainKerasModels(kerasModels):
 
         sys.stdout.write("\n")
        
-    def synth_wav(self, bin_file, gen_test_file_list, gen_wav_file_list):
-        #### synthesize audio files ####
-        test_file_number = len(gen_test_file_list) 
-        for utt_index in xrange(test_file_number):
-            gen_feat_file = gen_test_file_list[utt_index]
-            gen_wav_file  = gen_wav_file_list[utt_index]
-            cmd = "%s %s %s" %(bin_file, gen_feat_file, gen_wav_file)
-            os.system(cmd)
-            data_utils.drawProgressBar(utt_index+1, test_file_number)
-
-        sys.stdout.write("\n")        

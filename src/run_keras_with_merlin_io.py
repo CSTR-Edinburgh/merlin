@@ -1,219 +1,241 @@
-'''
-Created on 8 Mar 2017
+################################################################################
+#           The Neural Network (NN) based Speech Synthesis System
+#                https://github.com/CSTR-Edinburgh/merlin
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
+#                      Copyright (c) 2014-2015
+#                        All Rights Reserved.
+#
+# The system as a whole and most of the files in it are distributed
+# under the following copyright and conditions
+#
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
+#  the following conditions:
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+#  THIS SOFTWARE.
+################################################################################
 
-@author: Srikanth Ronanki
-'''
-
-import os 
+import os
+import sys
 import time
 
-from keras_lib.train import TrainKerasModels
+from keras_lib import configuration
 from keras_lib import data_utils
+from keras_lib.train import TrainKerasModels
 
-def main():
+class KerasClass(object):
+
+    def __init__(self, cfg):
   
-    start_time = time.time()
-     
-    ###################################################
-    ########## User configurable variables ############ 
-    ###################################################
+        ###################################################
+        ########## User configurable variables ############ 
+        ###################################################
 
-    merlin_dir = "/group/project/cstr1/srikanth/test/merlin"
-    exp_dir    = os.path.join(merlin_dir, "egs/slt_arctic/s1/experiments/slt_arctic_demo/acoustic_model/")
+        inp_feat_dir  = cfg.inp_feat_dir
+        out_feat_dir  = cfg.out_feat_dir
+        pred_feat_dir = cfg.pred_feat_dir
+        
+        inp_file_ext = cfg.inp_file_ext
+        out_file_ext = cfg.out_file_ext
 
-    inp_dim = 425
-    out_dim = 187
+        ### Input-Output ###
 
-    data_dir     = os.path.join(exp_dir, "data")
-    inp_feat_dir = os.path.join(data_dir, 'nn_no_silence_lab_norm_'+str(inp_dim))
-    out_feat_dir = os.path.join(data_dir, 'nn_norm_mgc_lf0_vuv_bap_'+str(out_dim))
-    
-    inp_file_ext = '.lab'
-    out_file_ext = '.cmp'
+        self.inp_dim = cfg.inp_dim
+        self.out_dim = cfg.out_dim
 
-    model_dir    = os.path.join(exp_dir, 'keras_models')
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir) 
+        self.inp_norm = cfg.inp_norm
+        self.out_norm = cfg.out_norm
 
-    inp_norm = "MINMAX"
-    out_norm = "MINMAX"
+        self.inp_stats_file = cfg.inp_stats_file
+        self.out_stats_file = cfg.out_stats_file
 
-    stats_dir    = os.path.join(exp_dir, 'keras_stats')
-    if not os.path.exists(stats_dir):
-        os.makedirs(stats_dir) 
+        self.inp_scaler = None
+        self.out_scaler = None
+            
+        #### define model params ####
 
-    #### Main switch variables ####
- 
-    NormData   = False
-    TrainModel = True
-    TestModel  = True
+        self.hidden_layer_type = cfg.hidden_layer_type
+        self.hidden_layer_size = cfg.hidden_layer_size
+          
+        self.sequential_training = cfg.sequential_training
 
-    demo_mode = True
+        self.stateful      = cfg.stateful
+        self.batch_size    = cfg.batch_size
+        self.seq_length    = cfg.seq_length
 
-    if demo_mode:
-        train_file_number =  50
-        valid_file_number =   5
-        test_file_number  =   5
-    else:
-        train_file_number = 1000
-        valid_file_number =   66
-        test_file_number  =   66
-    
-    #### Train, valid and test file lists #### 
-    
-    file_id_scp  = os.path.join(data_dir, 'file_id_list_demo.scp')
-    file_id_list = data_utils.read_file_list(file_id_scp)
+        self.training_algo = cfg.training_algo
+        self.shuffle_data  = cfg.shuffle_data
 
-    train_id_list = file_id_list[0:train_file_number]
-    valid_id_list = file_id_list[train_file_number:train_file_number+valid_file_number]
-    test_id_list  = file_id_list[train_file_number+valid_file_number:train_file_number+valid_file_number+test_file_number]
-    
-    inp_train_file_list = data_utils.prepare_file_path_list(train_id_list, inp_feat_dir, inp_file_ext)
-    out_train_file_list = data_utils.prepare_file_path_list(train_id_list, out_feat_dir, out_file_ext)
-    
-    inp_test_file_list = data_utils.prepare_file_path_list(test_id_list, inp_feat_dir, inp_file_ext)
-    out_test_file_list = data_utils.prepare_file_path_list(test_id_list, out_feat_dir, out_file_ext)
-  
-    ### set to True if training recurrent models ###
-    sequential_training = False
-    stateful = False
-    
-    ### set to True if data to be shuffled ###
-    shuffle_data = True
-    
-    #### define Model, train and evaluate ####
-    if sequential_training:
-        if demo_mode:
-            hidden_layer_type = ['tanh','lstm']
-            hidden_layer_size = [ 512  , 512  ]
-        else:
-            hidden_layer_type = ['tanh','tanh','tanh','tanh','lstm','lstm']
-            hidden_layer_size = [ 1024  ,1024  , 1024  , 1024  , 512  , 512  ]
+        self.output_layer_type = cfg.output_layer_type
+        self.loss_function     = cfg.loss_function
+        self.optimizer         = cfg.optimizer
        
-        ### batch size: sentences
-        batch_size    = 25
-        training_algo = 1
-    else:
-        hidden_layer_type = ['tanh','tanh','tanh','tanh','tanh','tanh']
-        hidden_layer_size = [ 1024 , 1024 , 1024 , 1024 , 1024 , 1024 ]
+        self.rnn_params    = cfg.rnn_params
+        self.dropout_rate  = cfg.dropout_rate
+        self.num_of_epochs = cfg.num_of_epochs
+
+        self.json_model_file = cfg.json_model_file
+        self.h5_model_file   = cfg.h5_model_file
         
-        ### batch size: frames
-        batch_size = 256
+        ### define train, valid, test ###
 
-    optimizer     = 'adam'
-    output_type   = 'linear'
-    loss_function = 'mse'
-    
-    num_of_epochs = 25
-    dropout_rate  = 0.0
-
-    if sequential_training:
-        combined_model_arch = 'RNN'+str(training_algo)
-    else:
-        combined_model_arch = 'DNN'
-
-    combined_model_arch += '_'+str(len(hidden_layer_size))
-    combined_model_arch += '_'+'_'.join(map(str, hidden_layer_size))
-    combined_model_arch += '_'+'_'.join(map(str, hidden_layer_type))
-    
-    nnets_file_name = '%s_%d_train_%d_%d_%d_%d_%d_model' \
-                      %(combined_model_arch, int(shuffle_data),  
-                         inp_dim, out_dim, train_file_number, batch_size, num_of_epochs)
-    
-    print 'model file    : '+nnets_file_name    
-    
-    json_model_file = os.path.join(model_dir, nnets_file_name+'.json')
-    h5_model_file   = os.path.join(model_dir, nnets_file_name+'.h5')
-
-    inp_stats_file = os.path.join(stats_dir, "input_%d_%s_%d.norm" %(int(train_file_number), inp_norm, inp_dim))
-    out_stats_file = os.path.join(stats_dir, "output_%d_%s_%d.norm" %(int(train_file_number), out_norm, out_dim))
-    
-    inp_scaler = None
-    out_scaler = None
+        train_file_number = cfg.train_file_number
+        valid_file_number = cfg.valid_file_number
+        test_file_number  = cfg.test_file_number
         
-    gen_dir       = os.path.join(exp_dir, 'gen')
-    pred_feat_dir = os.path.join(gen_dir, nnets_file_name)
-    if not os.path.exists(pred_feat_dir):
-        os.makedirs(pred_feat_dir)
-         
-    gen_test_file_list = data_utils.prepare_file_path_list(test_id_list, pred_feat_dir, out_file_ext)
-    gen_wav_file_list  = data_utils.prepare_file_path_list(test_id_list, pred_feat_dir, '.wav')
- 
-    ###################################################
-    ########## End of user-defined variables ##########
-    ###################################################
+        file_id_scp  = cfg.file_id_scp
+        
+        #### main processess ####
 
-    #### Define keras models class ####
-    keras_models = TrainKerasModels(inp_dim, hidden_layer_size, out_dim, hidden_layer_type, output_type, dropout_rate, loss_function, optimizer)
-    
-    if NormData:
+        self.NORMDATA   = cfg.NORMDATA
+        self.TRAINMODEL = cfg.TRAINMODEL
+        self.TESTMODEL  = cfg.TESTMODEL
+             
+        ###################################################
+        ####### End of user-defined conf variables ########
+        ###################################################
+
+        #### Create train, valid and test file lists #### 
+        file_id_list = data_utils.read_file_list(file_id_scp)
+
+        train_id_list = file_id_list[0: train_file_number]
+        valid_id_list = file_id_list[train_file_number: train_file_number + valid_file_number + test_file_number]
+        test_id_list  = file_id_list[train_file_number + valid_file_number: train_file_number + valid_file_number + test_file_number]
+        
+        self.inp_train_file_list = data_utils.prepare_file_path_list(train_id_list, inp_feat_dir, inp_file_ext)
+        self.out_train_file_list = data_utils.prepare_file_path_list(train_id_list, out_feat_dir, out_file_ext)
+       
+        self.inp_test_file_list = data_utils.prepare_file_path_list(valid_id_list, inp_feat_dir, inp_file_ext)
+        self.out_test_file_list = data_utils.prepare_file_path_list(valid_id_list, out_feat_dir, out_file_ext)
+      
+        self.gen_test_file_list  = data_utils.prepare_file_path_list(valid_id_list, pred_feat_dir, out_file_ext)
+
+        #### Define keras models class ####
+        self.keras_models = TrainKerasModels(self.inp_dim, self.hidden_layer_size, self.out_dim, self.hidden_layer_type, 
+                                                output_type=self.output_layer_type, dropout_rate=self.dropout_rate, 
+                                                loss_function=self.loss_function, optimizer=self.optimizer, 
+                                                rnn_params=self.rnn_params)
+        
+    def normlize_data(self):
         ### normalize train data ###
-        if os.path.isfile(inp_stats_file):    
-            inp_scaler = data_utils.load_norm_stats(inp_stats_file, inp_dim, method=inp_norm)
+        if os.path.isfile(self.inp_stats_file) and os.path.isfile(self.out_stats_file):    
+            self.inp_scaler = data_utils.load_norm_stats(self.inp_stats_file, self.inp_dim, method=self.inp_norm)
+            self.out_scaler = data_utils.load_norm_stats(self.out_stats_file, self.out_dim, method=self.out_norm)
         else:
-            print 'preparing train_x from input feature files...'
-            train_x, train_flen_x = data_utils.read_data_from_file_list(inp_train_file_list, inp_dim, False)
+            print('preparing train_x, train_y from input and output feature files...')
+            train_x, train_y, train_flen = data_utils.read_data_from_file_list(self.inp_train_file_list, self.out_train_file_list, 
+                                                                            self.inp_dim, self.out_dim, sequential_training=self.sequential_training)
             
-            print 'computing norm stats for train_x...'
-            inp_scaler = data_utils.compute_norm_stats(train_x, inp_stats_file, method=inp_norm)
+            print('computing norm stats for train_x...')
+            inp_scaler = data_utils.compute_norm_stats(train_x, self.inp_stats_file, method=self.inp_norm)
             
-        if os.path.isfile(out_stats_file):    
-            out_scaler = data_utils.load_norm_stats(out_stats_file, out_dim, method=out_norm)
-        else:    
-            print 'preparing train_y from output feature files...'
-            train_y, train_flen_y = data_utils.read_data_from_file_list(out_train_file_list, out_dim, False)
-            
-            print 'computing norm stats for train_y...'
-            out_scaler = data_utils.compute_norm_stats(train_y, out_stats_file, method=out_norm)
+            print('computing norm stats for train_y...')
+            out_scaler = data_utils.compute_norm_stats(train_y, self.out_stats_file, method=self.out_norm)
 
         
-    if TrainModel:
+    def train_keras_model(self):
         #### define the model ####
-        if not sequential_training:
-            keras_models.define_feedforward_model()
-        elif stateful:
-            keras_models.define_stateful_model()
+        if not self.sequential_training:
+            self.keras_models.define_feedforward_model()
+        elif self.stateful:
+            self.keras_models.define_stateful_model(batch_size=self.batch_size, seq_length=self.seq_length)
         else:
-            keras_models.define_sequence_model()
+            self.keras_models.define_sequence_model()
         
         #### load the data ####
         print('preparing train_x, train_y from input and output feature files...')
-        train_x, train_y, train_flen = data_utils.read_data_from_file_list(inp_train_file_list, out_train_file_list, inp_dim, out_dim, sequential_training=sequential_training)
+        train_x, train_y, train_flen = data_utils.read_data_from_file_list(self.inp_train_file_list, self.out_train_file_list, 
+                                                                            self.inp_dim, self.out_dim, sequential_training=self.sequential_training)
 
-        #### norm the data ####
-        print('normalising the data...')
-        data_utils.norm_data(train_x, inp_scaler, sequential_training=sequential_training)
-        data_utils.norm_data(train_y, out_scaler, sequential_training=sequential_training)
+        #### normalize the data ####
+        data_utils.norm_data(train_x, self.inp_scaler, sequential_training=self.sequential_training)
+        data_utils.norm_data(train_y, self.out_scaler, sequential_training=self.sequential_training)
         
         #### train the model ####
-        if not sequential_training:
+        print('training...')
+        if not self.sequential_training:
             ### Train feedforward model ###
-            keras_models.train_feedforward_model(train_x, train_y, batch_size=batch_size, num_of_epochs=num_of_epochs, shuffle_data=shuffle_data) 
+            self.keras_models.train_feedforward_model(train_x, train_y, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs, shuffle_data=self.shuffle_data) 
         else:
             ### Train recurrent model ###
-            keras_models.train_sequence_model(train_x, train_y, train_flen, batch_size=batch_size, num_of_epochs=num_of_epochs, 
-                                                                                        shuffle_data=shuffle_data, training_algo=training_algo) 
+            print('training algorithm: %d' % (self.training_algo))
+            self.keras_models.train_sequence_model(train_x, train_y, train_flen, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs, 
+                                                                                        shuffle_data=self.shuffle_data, training_algo=self.training_algo) 
 
         #### store the model ####
-        keras_models.save_model(json_model_file, h5_model_file)
+        self.keras_models.save_model(self.json_model_file, self.h5_model_file)
    
-    if TestModel: 
+    def test_keras_model(self):
         #### load the model ####
-        keras_models.load_model(json_model_file, h5_model_file)
+        self.keras_models.load_model(self.json_model_file, self.h5_model_file)
 
         #### load the data ####
-        print 'preparing test_x from input feature files...'
-        test_x, test_flen = data_utils.read_test_data_from_file_list(inp_test_file_list, inp_dim)
+        print('preparing test_x from input feature files...')
+        test_x, test_flen = data_utils.read_test_data_from_file_list(self.inp_test_file_list, self.inp_dim)
      
-        #### norm the data ####
-        data_utils.norm_data(test_x, inp_scaler)
+        #### normalize the data ####
+        data_utils.norm_data(test_x, self.inp_scaler)
         
         #### compute predictions ####
-        keras_models.predict(test_x, out_scaler, gen_test_file_list, sequential_training)
+        self.keras_models.predict(test_x, self.out_scaler, self.gen_test_file_list, self.sequential_training)
+
+    def main_function(self):
+        ### Implement each module ###
+        if self.NORMDATA:
+            self.normlize_data()
+
+        if self.TRAINMODEL:
+            self.train_keras_model()
+        
+        if self.TESTMODEL: 
+            self.test_keras_model()
+
+if __name__ == "__main__":
+    
+    if len(sys.argv) != 2:
+        print('usage: python run_keras_with_merlin_io.py [config file name]')
+        sys.exit(1)
+
+    # create a configuration instance
+    # and get a short name for this instance
+    cfg = configuration.configuration()
+    
+    config_file = sys.argv[1]
+
+    config_file = os.path.abspath(config_file)
+    cfg.configure(config_file)
+    
+    print("--- Job started ---")
+    start_time = time.time()
+    
+    # main function
+    keras_instance = KerasClass(cfg)
+    keras_instance.main_function()
 
     (m, s) = divmod(int(time.time() - start_time), 60) 
     print("--- Job completion time: %d min. %d sec ---" % (m, s)) 
 
+    sys.exit(0)
 
-if __name__ == "__main__":
-    main()

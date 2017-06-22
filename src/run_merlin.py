@@ -1,3 +1,41 @@
+################################################################################
+#           The Neural Network (NN) based Speech Synthesis System
+#                https://github.com/CSTR-Edinburgh/merlin
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
+#                      Copyright (c) 2014-2015
+#                        All Rights Reserved.
+#
+# The system as a whole and most of the files in it are distributed
+# under the following copyright and conditions
+#
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
+#  the following conditions:
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+#  THIS SOFTWARE.
+################################################################################
 
 import cPickle
 import gzip
@@ -30,10 +68,6 @@ from frontend.mean_variance_norm import MeanVarianceNorm
 from frontend.label_composer import LabelComposer
 from frontend.label_modifier import HTSLabelModification
 from frontend.merge_features import MergeFeat
-#from frontend.mlpg_fast import MLParameterGenerationFast
-
-#from frontend.mlpg_fast_layer import MLParameterGenerationFastLayer
-
 
 import configuration
 from models.deep_rnn import DeepRecurrentNetwork
@@ -44,9 +78,9 @@ from utils.learn_rates import ExpDecreaseLearningRate
 
 from io_funcs.binary_io import  BinaryIOCollection
 
-#import matplotlib.pyplot as plt
+from run_keras_with_merlin_io import KerasClass
+
 # our custom logging class that can also plot
-#from logplot.logging_plotting import LoggerPlotter, MultipleTimeSeriesPlot, SingleWeightMatrixPlot
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
@@ -192,8 +226,6 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     sequential_training = hyper_params['sequential_training']
     dropout_rate = hyper_params['dropout_rate']
 
-#    sequential_training = True
-
     buffer_size = int(buffer_size / batch_size) * batch_size
 
     ###################
@@ -218,7 +250,6 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
     ##temporally we use the training set as pretrain_set_x.
     ##we need to support any data for pretraining
-#    pretrain_set_x = train_set_x
 
     # numpy random generator
     numpy_rng = numpy.random.RandomState(123)
@@ -251,10 +282,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     early_stop = 0
     epoch = 0
     
-#    finetune_lr = 0.000125
     previous_finetune_lr = finetune_lr
-    
-    print   finetune_lr
+    print(finetune_lr)
     
     while (epoch < training_epochs):
         epoch = epoch + 1
@@ -275,8 +304,6 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         while (not train_data_reader.is_finish()):
 
             shared_train_set_xy, temp_train_set_x, temp_train_set_y = train_data_reader.load_one_partition()
-#            train_set_x.set_value(numpy.asarray(temp_train_set_x, dtype=theano.config.floatX), borrow=True)
-#            train_set_y.set_value(numpy.asarray(temp_train_set_y, dtype=theano.config.floatX), borrow=True)
 
             # if sequential training, the batch size will be the number of frames in an utterance
             if sequential_training == True:
@@ -326,12 +353,9 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
             best_dnn_model = dnn_model
             best_validation_loss = this_validation_loss
-#            logger.debug('validation loss decreased, so saving model')
             
         if this_validation_loss >= previous_loss:
             logger.debug('validation loss increased')
-
-#            dbn = best_dnn_model
             early_stop += 1
 
         if epoch > 15 and early_stop > early_stop_epoch:
@@ -344,7 +368,6 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         previous_loss = this_validation_loss
 
     end_time = time.time()
-#    cPickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
             
     logger.info('overall  training time: %.2fm validation error %f' % ((end_time - start_time) / 60., best_validation_loss))
 
@@ -473,9 +496,14 @@ def main_function(cfg):
     total_file_number = len(file_id_list)
     
     data_dir = cfg.data_dir
+    
+    inter_data_dir = os.path.join(cfg.work_dir, 'inter_module')
+    if not os.path.exists(inter_data_dir):
+        os.makedirs(inter_data_dir)
 
-    nn_cmp_dir       = os.path.join(data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
-    nn_cmp_norm_dir   = os.path.join(data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
+
+    nn_cmp_dir       = os.path.join(inter_data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
+    nn_cmp_norm_dir   = os.path.join(inter_data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
     
     model_dir = os.path.join(cfg.work_dir, 'nnets_model')
     gen_dir   = os.path.join(cfg.work_dir, 'gen')    
@@ -489,7 +517,7 @@ def main_function(cfg):
     nn_cmp_norm_file_list    = prepare_file_path_list(file_id_list, nn_cmp_norm_dir, cfg.cmp_ext)
 
     ###normalisation information
-    norm_info_file = os.path.join(data_dir, 'norm_info' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim) + '_' + cfg.output_feature_normalisation + '.dat')
+    norm_info_file = os.path.join(inter_data_dir, 'norm_info' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim) + '_' + cfg.output_feature_normalisation + '.dat')
 	
     ### normalise input full context label
     # currently supporting two different forms of lingustic features
@@ -504,21 +532,17 @@ def main_function(cfg):
     suffix=str(lab_dim)
 
     if cfg.process_labels_in_work_dir:
-        label_data_dir = cfg.work_dir
-    else:
-        label_data_dir = data_dir
+        inter_data_dir = cfg.work_dir
 
     # the number can be removed
-    binary_label_dir      = os.path.join(label_data_dir, 'binary_label_'+str(label_normaliser.dimension))
-    nn_label_dir          = os.path.join(label_data_dir, 'nn_no_silence_lab_'+suffix)
-    nn_label_norm_dir     = os.path.join(label_data_dir, 'nn_no_silence_lab_norm_'+suffix)
+    binary_label_dir      = os.path.join(inter_data_dir, 'binary_label_'+str(label_normaliser.dimension))
+    nn_label_dir          = os.path.join(inter_data_dir, 'nn_no_silence_lab_'+suffix)
+    nn_label_norm_dir     = os.path.join(inter_data_dir, 'nn_no_silence_lab_norm_'+suffix)
 
     in_label_align_file_list = prepare_file_path_list(file_id_list, cfg.in_label_align_dir, cfg.lab_ext, False)
     binary_label_file_list   = prepare_file_path_list(file_id_list, binary_label_dir, cfg.lab_ext)
     nn_label_file_list       = prepare_file_path_list(file_id_list, nn_label_dir, cfg.lab_ext)
     nn_label_norm_file_list  = prepare_file_path_list(file_id_list, nn_label_norm_dir, cfg.lab_ext)
-    dur_file_list            = prepare_file_path_list(file_id_list, cfg.in_dur_dir, cfg.dur_ext)
-    lf0_file_list            = prepare_file_path_list(file_id_list, cfg.in_lf0_dir, cfg.lf0_ext)
     
     # to do - sanity check the label dimension here?
     
@@ -526,7 +550,7 @@ def main_function(cfg):
     
     min_max_normaliser = None
     label_norm_file = 'label_norm_%s_%d.dat' %(cfg.label_style, lab_dim)
-    label_norm_file = os.path.join(label_data_dir, label_norm_file)
+    label_norm_file = os.path.join(inter_data_dir, label_norm_file)
    
     if cfg.GenTestList:
         try:
@@ -548,7 +572,7 @@ def main_function(cfg):
         label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list, label_type=cfg.label_type)
         
         if cfg.additional_features:
-            out_feat_dir  = os.path.join(data_dir, 'binary_label_'+suffix)
+            out_feat_dir  = os.path.join(inter_data_dir, 'binary_label_'+suffix)
             out_feat_file_list = prepare_file_path_list(file_id_list, out_feat_dir, cfg.lab_ext)
             in_dim = label_normaliser.dimension
             for new_feature, new_feature_dim in cfg.additional_features.iteritems():
@@ -595,6 +619,7 @@ def main_function(cfg):
     	logger.info('creating duration (output) features')
         label_type = cfg.label_type
         feature_type = cfg.dur_feature_type
+        dur_file_list = prepare_file_path_list(file_id_list, cfg.in_dur_dir, cfg.dur_ext)
         label_normaliser.prepare_dur_data(in_label_align_file_list, dur_file_list, label_type, feature_type)
 
 
@@ -606,6 +631,7 @@ def main_function(cfg):
         
         acoustic_worker = AcousticComposition(delta_win = delta_win, acc_win = acc_win)
         if 'dur' in cfg.in_dir_dict.keys() and cfg.AcousticModel:
+            lf0_file_list = prepare_file_path_list(file_id_list, cfg.in_lf0_dir, cfg.lf0_ext)
             acoustic_worker.make_equal_frames(dur_file_list, lf0_file_list, cfg.in_dimension_dict)
         acoustic_worker.prepare_nn_data(in_file_list_dict, nn_cmp_file_list, cfg.in_dimension_dict, cfg.out_dimension_dict)
 
@@ -627,7 +653,7 @@ def main_function(cfg):
             remover.remove_silence(nn_cmp_file_list, in_label_align_file_list, nn_cmp_file_list) # save to itself
 
     ### save acoustic normalisation information for normalising the features back
-    var_dir   = os.path.join(data_dir, 'var')
+    var_dir   = os.path.join(inter_data_dir, 'var')
     if not os.path.exists(var_dir):
         os.makedirs(var_dir)
 
@@ -708,7 +734,23 @@ def main_function(cfg):
     nnets_file_name = '%s/%s_%s_%d_%s_%d.%d.train.%d.%f.rnn.model' \
                       %(model_dir, cfg.combined_model_name, cfg.combined_feature_name, int(cfg.multistream_switch), 
                         combined_model_arch, lab_dim, cfg.cmp_dim, cfg.train_file_number, cfg.hyper_params['learning_rate'])
+    temp_dir_name = '%s_%s_%d_%d_%d_%d_%d_%d_%d' \
+                    %(cfg.combined_model_name, cfg.combined_feature_name, int(cfg.do_post_filtering), \
+                      cfg.train_file_number, lab_dim, cfg.cmp_dim, \
+                      len(hidden_layer_size), hidden_layer_size[0], hidden_layer_size[-1])
+    gen_dir = os.path.join(gen_dir, temp_dir_name)
 
+    if cfg.switch_to_keras:
+        ### set configuration variables ###
+        cfg.inp_dim = lab_dim  
+        cfg.out_dim = cfg.cmp_dim
+
+        cfg.inp_feat_dir  = nn_label_norm_dir 
+        cfg.out_feat_dir  = nn_cmp_norm_dir 
+        cfg.pred_feat_dir = gen_dir
+
+        ### call kerasclass and use an instance ###
+        keras_instance = KerasClass(cfg)
 
     ### DNN model training
     if cfg.TRAINDNN:
@@ -737,7 +779,10 @@ def main_function(cfg):
                 raise
 
         try:
-            train_DNN(train_xy_file_list = (train_x_file_list, train_y_file_list), \
+            if cfg.switch_to_keras:
+                keras_instance.train_keras_model()
+            else:
+                train_DNN(train_xy_file_list = (train_x_file_list, train_y_file_list), \
                       valid_xy_file_list = (valid_x_file_list, valid_y_file_list), \
                       nnets_file_name = nnets_file_name, \
                       n_ins = lab_dim, n_outs = cfg.cmp_dim, ms_outs = cfg.multistream_outs, \
@@ -755,9 +800,7 @@ def main_function(cfg):
     
     
     if cfg.GENBNFEA:
-        '''
-        Please only tune on this step when you want to generate bottleneck features from DNN
-        '''
+        # Please only tune on this step when you want to generate bottleneck features from DNN
         temp_dir_name = '%s_%s_%d_%d_%d_%d_%s_hidden' \
                         %(cfg.model_type, cfg.combined_feature_name, \
                           cfg.train_file_number, lab_dim, cfg.cmp_dim, \
@@ -791,20 +834,14 @@ def main_function(cfg):
         dnn_hidden_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list, bottleneck_index)
             
     ### generate parameters from DNN
-    temp_dir_name = '%s_%s_%d_%d_%d_%d_%d_%d_%d' \
-                    %(cfg.combined_model_name, cfg.combined_feature_name, int(cfg.do_post_filtering), \
-                      cfg.train_file_number, lab_dim, cfg.cmp_dim, \
-                      len(hidden_layer_size), hidden_layer_size[0], hidden_layer_size[-1])
-    gen_dir = os.path.join(gen_dir, temp_dir_name)
-
     gen_file_id_list = file_id_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
     test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
 
     if cfg.GenTestList:
         gen_file_id_list = test_id_list
         test_x_file_list = nn_label_norm_file_list
-        ### comment the below line if you don't want the files in a separate folder
-        gen_dir = cfg.test_synth_dir
+        if cfg.test_synth_dir is not None:
+            gen_dir = cfg.test_synth_dir
 
     if cfg.DNNGEN:
     	logger.info('generating from DNN')
@@ -821,7 +858,11 @@ def main_function(cfg):
                 raise
 
         gen_file_list = prepare_file_path_list(gen_file_id_list, gen_dir, cfg.cmp_ext)
-        dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
+    
+        if cfg.switch_to_keras:
+            keras_instance.test_keras_model()
+        else:
+            dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
 
     	logger.debug('denormalising generated output using method %s' % cfg.output_feature_normalisation)
 
@@ -878,7 +919,7 @@ def main_function(cfg):
     if cfg.CALMCD and cfg.DurationModel:
     	logger.info('calculating MCD')
 
-        ref_data_dir = os.path.join(data_dir, 'ref_data')
+        ref_data_dir = os.path.join(inter_data_dir, 'ref_data')
 
         ref_dur_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.dur_ext)
 
@@ -908,7 +949,7 @@ def main_function(cfg):
     if cfg.CALMCD and cfg.AcousticModel:
     	logger.info('calculating MCD')
 
-        ref_data_dir = os.path.join(data_dir, 'ref_data')
+        ref_data_dir = os.path.join(inter_data_dir, 'ref_data')
 
         ref_mgc_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.mgc_ext)
         ref_bap_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.bap_ext)
@@ -1081,8 +1122,4 @@ if __name__ == '__main__':
     else:
         main_function(cfg)
         
-#    if gnp._boardId is not None:
-#        import gpu_lock
-#        gpu_lock.free_lock(gnp._boardId)
-
     sys.exit(0)
