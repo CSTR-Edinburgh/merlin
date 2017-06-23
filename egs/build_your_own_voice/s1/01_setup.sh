@@ -1,7 +1,10 @@
 #!/bin/bash
 
 if test "$#" -ne 1; then
-    echo "Usage: ./01_setup.sh <voice_name>"
+    echo "################################"
+    echo "Usage:"
+    echo "./01_setup.sh <voice_name>"
+    echo "################################"
     exit 1
 fi
 
@@ -21,6 +24,8 @@ mkdir -p ${experiments_dir}
 mkdir -p ${voice_dir}
 mkdir -p ${acoustic_dir}
 mkdir -p ${duration_dir}
+mkdir -p ${acoustic_dir}/data
+mkdir -p ${duration_dir}/data
 
 mkdir -p ${data_dir}
 mkdir -p ${data_dir}/wav
@@ -32,15 +37,16 @@ global_config_file=conf/global_settings.cfg
 echo "MerlinDir=${merlin_dir}" >  $global_config_file
 echo "WorkDir=${current_working_dir}" >>  $global_config_file
 echo "Voice=${voice_name}" >> $global_config_file
-echo "Labels=phone_align" >> $global_config_file
+echo "Labels=state_align" >> $global_config_file
 echo "QuestionFile=questions-radio_dnn_416.hed" >> $global_config_file
 echo "Vocoder=WORLD" >> $global_config_file
 echo "SamplingFreq=16000" >> $global_config_file
+echo "SilencePhone=['*-sil+*']" >> $global_config_file
 
 echo "FileIDList=file_id_list_full.scp" >> $global_config_file
-echo "Train=50" >> $global_config_file 
-echo "Valid=5" >> $global_config_file 
-echo "Test=5" >> $global_config_file 
+echo "Train=1000" >> $global_config_file 
+echo "Valid=50" >> $global_config_file 
+echo "Test=50" >> $global_config_file 
 
 echo "Merlin default voice settings configured in $global_config_file"
 echo "setup done...!"

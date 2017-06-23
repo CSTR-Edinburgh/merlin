@@ -140,9 +140,10 @@ class configuration(object):
         # sptk_bindir= ....
 
         # default place for some data
-        self.data_dir    = os.path.join(self.work_dir, 'data')
-        self.keras_dir   = os.path.join(self.work_dir, 'keras')
+        self.data_dir       = os.path.join(self.work_dir, 'data')
+        self.inter_data_dir = os.path.join(self.work_dir, 'inter_module')
 
+        self.keras_dir   = os.path.join(self.work_dir, 'keras')
         self.gen_dir     = os.path.join(self.keras_dir, 'gen')
         self.model_dir   = os.path.join(self.keras_dir, 'models')
         self.stats_dir   = os.path.join(self.keras_dir, 'stats')
@@ -168,7 +169,8 @@ class configuration(object):
         user_options = [
 
             ('work_dir', self.work_dir, 'Paths','work'),
-            ('data_dir', '', 'Paths','data'),
+            ('data_dir', self.data_dir, 'Paths','data'),
+            ('inter_data_dir', self.inter_data_dir, 'Paths','inter_data'),
             ('plot_dir', '', 'Paths','plot'),
 
             ('inp_feat_dir', self.def_inp_dir, 'Paths', 'inp_feat'),
@@ -564,7 +566,11 @@ class configuration(object):
                 if not self.use_high_batch_size:
                     logger.info('reducing the batch size from %s to 25' % (self.batch_size))
                     self.batch_size = 25 ## num. of sentences in this case
-            
+           
+            # set default seq length for duration model
+            if self.DurationModel and self.training_algo == 1 and self.seq_length>50:
+                self.seq_length = 20
+
             # rnn params
             self.rnn_params = {}
             self.rnn_params['merge_size']   = self.merge_size

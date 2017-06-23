@@ -1,14 +1,17 @@
 #!/bin/bash
 
 if test "$#" -ne 0; then
-    echo "Usage: ./02_prepare_data.sh"
+    echo "################################"
+    echo "Usage:"
+    echo "./02_prepare_data.sh"
+    echo "################################"
     exit 1
 fi
 
 PrintUsage () {
     echo "Please first run setup!!"
     echo "To run:"
-    echo "Step 1: ./01_setup.sh give_your_voice_name"
+    echo "Step 1: ./01_setup.sh <choose_a_voice_name>"
 }
 PrintUsageOne () {
     echo ""
@@ -34,7 +37,6 @@ else
 fi
 
 ### define few variables here
-#data_dir=${WorkDir}/database
 data_dir=database
 
 wav_dir=${data_dir}/wav

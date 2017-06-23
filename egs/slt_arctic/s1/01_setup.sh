@@ -1,9 +1,23 @@
 #!/bin/bash
 
 if test "$#" -ne 1; then
-    echo "Usage: ./scripts/setup.sh <voice_directory_name>"
+    echo "################################"
+    echo "Usage:"
+    echo "Chose any of the below datasets"
+    echo "To run on short data:"
+    echo "./01_setup.sh slt_arctic_demo"
+    echo "./01_setup.sh awb_arctic_demo"
+    echo "              (or)          " 
+    echo "To run on full data:"
+    echo "./01_setup.sh slt_arctic_full"
+    echo "./01_setup.sh awb_arctic_full"
+    echo "./01_setup.sh bdl_arctic_full"
+    echo "################################"
     exit 1
 fi
+
+### Step 1: setup directories and the training data files ###
+echo "Step 1:"
 
 current_working_dir=$(pwd)
 merlin_dir=$(dirname $(dirname $(dirname $current_working_dir)))
@@ -28,6 +42,14 @@ then
 elif [ "$voice_name" == "slt_arctic_full" ]
 then
     data_dir=slt_arctic_full_data
+    data_url=http://104.131.174.95/${data_dir}.zip
+elif [ "$voice_name" == "awb_arctic_demo" ]
+then
+    data_dir=awb_arctic_demo_data
+    data_url=http://104.131.174.95/${data_dir}.zip
+elif [ "$voice_name" == "awb_arctic_full" ]
+then
+    data_dir=awb_arctic_full_data
     data_url=http://104.131.174.95/${data_dir}.zip
 elif [ "$voice_name" == "bdl_arctic_full" ]
 then
@@ -74,13 +96,13 @@ echo "QuestionFile=questions-radio_dnn_416.hed" >> $global_config_file
 echo "Vocoder=WORLD" >> $global_config_file
 echo "SamplingFreq=16000" >> $global_config_file
 
-if [ "$voice_name" == "slt_arctic_demo" ]
+if [[ "$voice_name" == *"demo"* ]]
 then
     echo "FileIDList=file_id_list_demo.scp" >> $global_config_file
     echo "Train=50" >> $global_config_file 
     echo "Valid=5" >> $global_config_file 
     echo "Test=5" >> $global_config_file 
-elif [ "$voice_name" == "slt_arctic_full" ] || [ "$voice_name" == "bdl_arctic_full" ]
+elif [[ "$voice_name" == *"full"* ]] 
 then
     echo "FileIDList=file_id_list_full.scp" >> $global_config_file
     echo "Train=1000" >> $global_config_file 

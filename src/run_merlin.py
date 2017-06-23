@@ -480,6 +480,10 @@ def main_function(cfg):
     # but for now we need to do it manually
     plotlogger.set_plot_path(cfg.plot_dir)
     
+    # create plot dir if set to True
+    if not os.path.exists(cfg.plot_dir) and cfg.plot:
+        os.makedirs(cfg.plot_dir)
+    
     #### parameter setting########
     hidden_layer_size = cfg.hyper_params['hidden_layer_size']
     
@@ -497,7 +501,7 @@ def main_function(cfg):
     
     data_dir = cfg.data_dir
     
-    inter_data_dir = os.path.join(cfg.work_dir, 'inter_module')
+    inter_data_dir = cfg.inter_data_dir
     if not os.path.exists(inter_data_dir):
         os.makedirs(inter_data_dir)
 
@@ -562,9 +566,15 @@ def main_function(cfg):
             raise
 
         in_label_align_file_list = prepare_file_path_list(test_id_list, cfg.in_label_align_dir, cfg.lab_ext, False)
-        binary_label_file_list   = prepare_file_path_list(test_id_list, binary_label_dir, cfg.lab_ext)
-        nn_label_file_list       = prepare_file_path_list(test_id_list, nn_label_dir, cfg.lab_ext)
-        nn_label_norm_file_list  = prepare_file_path_list(test_id_list, nn_label_norm_dir, cfg.lab_ext)
+        
+        if cfg.AcousticModel and cfg.test_synth_dir is not None:
+            binary_label_file_list   = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
+            nn_label_file_list       = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
+            nn_label_norm_file_list  = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
+        else: 
+            binary_label_file_list   = prepare_file_path_list(test_id_list, binary_label_dir, cfg.lab_ext)
+            nn_label_file_list       = prepare_file_path_list(test_id_list, nn_label_dir, cfg.lab_ext)
+            nn_label_norm_file_list  = prepare_file_path_list(test_id_list, nn_label_norm_dir, cfg.lab_ext)
 
     if cfg.NORMLAB:
         # simple HTS labels 

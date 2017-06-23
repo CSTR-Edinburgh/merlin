@@ -1,14 +1,19 @@
 #!/bin/bash
 
 if test "$#" -ne 1; then
+    echo "################################"
     echo "Usage:"
     echo "To run on short data:"
-    echo "./setup.sh nick_hurricane_demo"
-    echo "                  (or)                " 
+    echo "./01_setup.sh nick_hurricane_demo"
+    echo "              (or)          " 
     echo "To run on full data:"
-    echo "./setup.sh nick_hurricane_full"
+    echo "./01_setup.sh nick_hurricane_full"
+    echo "################################"
     exit 1
 fi
+
+### Step 1: setup directories and the training data files ###
+echo "Step 1:"
 
 current_working_dir=$(pwd)
 merlin_dir=$(dirname $(dirname $(dirname $current_working_dir)))
