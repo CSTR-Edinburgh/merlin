@@ -1,24 +1,35 @@
 import os
+import sys
+import shutil
+import glob
+
+if len(sys.argv)!=5:
+    print("Usage: ")
+    print("python extract_features_for_merlin.py <path_to_merlin_dir> <path_to_wav_dir> <path_to_feat_dir> <sampling frequency>")
+    sys.exit(1)
 
 # top merlin directory
-merlin_dir="/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin"
-
-# tools directory
-world=merlin_dir+"/tools/bin/WORLD"
-sptk=merlin_dir+"/tools/bin/SPTK-3.9"
+merlin_dir = sys.argv[1]
 
 # input audio directory
-wav_dir=merlin_dir+"/egs/slt_arctic/s1/slt_arctic_full_data/wav"
+wav_dir = sys.argv[2]
 
 # Output features directory
-out_dir=merlin_dir+"/egs/slt_arctic/s1/slt_arctic_full_data/feat"
+out_dir = sys.argv[3]
 
-sp_dir=os.path.join(out_dir,'sp')
-mgc_dir=os.path.join(out_dir,'mgc')
-ap_dir=os.path.join(out_dir,'ap')
-bap_dir=os.path.join(out_dir,'bap')
-f0_dir= os.path.join(out_dir,'f0')
-lf0_dir= os.path.join(out_dir,'lf0')
+# initializations
+fs = int(sys.argv[4])
+
+# tools directory
+world = os.path.join(merlin_dir, "tools/bin/WORLD")
+sptk  = os.path.join(merlin_dir, "tools/bin/SPTK-3.9")
+
+sp_dir  = os.path.join(out_dir, 'sp' )
+mgc_dir = os.path.join(out_dir, 'mgc')
+ap_dir  = os.path.join(out_dir, 'ap' )
+bap_dir = os.path.join(out_dir, 'bap')
+f0_dir  = os.path.join(out_dir, 'f0' )
+lf0_dir = os.path.join(out_dir, 'lf0')
 
 if not os.path.exists(out_dir):
     os.mkdir(out_dir)
@@ -38,16 +49,16 @@ if not os.path.exists(f0_dir):
 if not os.path.exists(lf0_dir):
     os.mkdir(lf0_dir)
 
-# initializations
-fs=16000
-
 if fs == 16000:
     nFFTHalf = 1024
     alpha = 0.58
 
-if fs == 16000:
+if fs == 48000:
     nFFTHalf = 2048
     alpha = 0.77
+
+#bap order depends on sampling freq.
+mcsize=59
 
 wav_files = []
 def get_wav_filelist(wav_dir):
@@ -59,12 +70,11 @@ def get_wav_filelist(wav_dir):
             wav_files.append(get_wav_filelist(whole_filepath))
 
 get_wav_filelist(wav_dir)
-#bap order depends on sampling freq.
-mcsize=59
 
 for file in wav_files:
     if file is not None:
         file_id = os.path.basename(file).split(".")[0]
+        print('\n'+file_id)
         ### WORLD ANALYSIS -- extract vocoder parameters ###
         ### extract f0, sp, ap ###
         world_analysis_cmd = "%s %s %s %s %s" %(os.path.join(world,'analysis'), \
@@ -99,4 +109,10 @@ for file in wav_files:
                                             os.path.join(bap_dir,file_id+".bapd"),\
                                             os.path.join(bap_dir,file_id+'.bap'))
         os.system(sptk_x2x_df_cmd2)
-    
+
+shutil.rmtree(sp_dir, ignore_errors=True)
+shutil.rmtree(f0_dir, ignore_errors=True)
+for zippath in glob.iglob(os.path.join(bap_dir, '*.bapd')):
+    os.remove(zippath)
+
+print("You should have your features ready in: "+out_dir)    

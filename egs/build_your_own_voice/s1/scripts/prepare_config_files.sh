@@ -42,7 +42,7 @@ $SED -i s#'file_id_list:.*'#'file_id_list: %(data)s/'${FileIDList}# $duration_co
 
 # [Labels]
 
-$SED -i s#'silence_pattern:.*'#'silence_pattern: '${SilencePhone}# $duration_config_file
+$SED -i s#"silence_pattern:.*"#"silence_pattern: ['*-"${SilencePhone}"+*']"# $duration_config_file
 $SED -i s#'label_type:.*'#'label_type: '${Labels}# $duration_config_file
 $SED -i s#'label_align:.*'#'label_align: %(TOPLEVEL)s/experiments/'${Voice}'/duration_model/data/label_'${Labels}# $duration_config_file
 $SED -i s#'question_file_name:.*'#'question_file_name: %(Merlin)s/misc/questions/'${QuestionFile}# $duration_config_file
@@ -99,7 +99,7 @@ $SED -i s#'file_id_list:.*'#'file_id_list: %(data)s/'${FileIDList}# $acoustic_co
 
 # [Labels]
 
-$SED -i s#'silence_pattern:.*'#'silence_pattern: '${SilencePhone}# $acoustic_config_file
+$SED -i s#"silence_pattern:.*"#"silence_pattern: ['*-"${SilencePhone}"+*']"# $acoustic_config_file
 $SED -i s#'label_type:.*'#'label_type: '${Labels}# $acoustic_config_file
 $SED -i s#'label_align:.*'#'label_align: %(TOPLEVEL)s/experiments/'${Voice}'/acoustic_model/data/label_'${Labels}# $acoustic_config_file
 $SED -i s#'question_file_name:.*'#'question_file_name: %(Merlin)s/misc/questions/'${QuestionFile}# $acoustic_config_file

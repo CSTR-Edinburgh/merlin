@@ -3,7 +3,7 @@
 if test "$#" -ne 1; then
     echo "################################"
     echo "Usage:"
-    echo "./03_prepare_conf_files.sh <path_to_global_conf_file>"
+    echo "./04_prepare_conf_files.sh <path_to_global_conf_file>"
     echo ""
     echo "default path to global conf file: conf/global_settings.cfg"
     echo "Config files will be prepared based on settings in global conf file"
@@ -14,8 +14,8 @@ fi
 global_config_file=$1
 
 
-### Step 3: prepare config files for acoustic, duration models and for synthesis ###
-echo "Step 3:"
+### Step 4: prepare config files for acoustic, duration models and for synthesis ###
+echo "Step 4:"
 
 echo "preparing config files for acoustic, duration models..."
 ./scripts/prepare_config_files.sh $global_config_file

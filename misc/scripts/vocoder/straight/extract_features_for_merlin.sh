@@ -1,17 +1,26 @@
 #!/bin/sh
 
+if test "$#" -ne 1; then
+    echo "Usage: "
+    echo "bash extract_features_for_merlin.sh <path_to_merlin_dir> <path_to_wav_dir> <path_to_feat_dir> <sampling frequency>"
+    exit 1
+fi
+
 # top merlin directory
-merlin_dir="/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin"
+merlin_dir=$1
+
+# input audio directory
+wav_dir=$2
+
+# Output features directory
+out_dir=$3
+
+# initializations
+fs=$4
 
 # tools directory
 straight="${merlin_dir}/tools/bin/straight"
 sptk="${merlin_dir}/tools/bin/SPTK-3.9"
-
-# input audio directory
-wav_dir="${merlin_dir}/egs/slt_arctic/s1/slt_arctic_full_data/wav"
-
-# Output features directory
-out_dir="${merlin_dir}/egs/slt_arctic/s1/slt_arctic_full_data/feat"
 
 raw_dir="${out_dir}/raw"
 sp_dir="${out_dir}/sp"
@@ -29,9 +38,6 @@ mkdir -p $ap_dir
 mkdir -p $bap_dir
 mkdir -p $f0_dir
 mkdir -p $lf0_dir
-
-# initializations
-fs=16000
 
 if [ "$fs" -eq 16000 ]
 then
