@@ -56,7 +56,7 @@ import theano
 
 from utils.providers import ListDataProvider
 
-from frontend.label_normalisation import HTSLabelNormalisation, XMLLabelNormalisation
+from frontend.label_normalisation import HTSLabelNormalisation
 from frontend.silence_remover import SilenceRemover
 from frontend.silence_remover import trim_silence
 from frontend.min_max_norm import MinMaxNormalisation
@@ -348,8 +348,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
             plotlogger.save_plot('training convergence',title='Progress of training and validation error',xlabel='epochs',ylabel='error')
 
         if this_validation_loss < best_validation_loss:
-            if epoch > 5:
-                cPickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
+            cPickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
 
             best_dnn_model = dnn_model
             best_validation_loss = this_validation_loss
