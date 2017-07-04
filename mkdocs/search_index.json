@@ -1,0 +1,169 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "Merlin: The Neural Network (NN) based Speech Synthesis System\n\n\nThis repository contains the Neural Network (NN) based Speech Synthesis System\n\ndeveloped at the Centre for Speech Technology Research (CSTR), University of \nEdinburgh. \n\n\nMerlin is a toolkit for building Deep Neural Network models for statistical parametric speech synthesis. \nIt must be used in combination with a front-end text processor (e.g., Festival) and a vocoder (e.g., STRAIGHT or WORLD).\n\n\nThe system is written in Python and relies on the Theano numerical computation library.\n\n\nMerlin comes with recipes (in the spirit of the \nKaldi\n automatic speech recognition toolkit) to show you how to build state-of-the art systems.\n\n\nMerlin is free software, distributed under an Apache License Version 2.0, allowing unrestricted commercial and non-commercial use alike.\n\n\nRead the documentation at \nmerlin.io\n.\n\n\nMerlin is compatible with: \nPython 2.7\n.\n\n\nInstallation\n\n\nMerlin uses the following dependencies:\n\n\n\n\nnumpy, scipy\n\n\nmatplotlib\n\n\nbandmat\n\n\ntheano\n\n\nsklearn, keras (optional, required if you use keras models)\n\n\n\n\nTo install Merlin, \ncd\n merlin and run the below steps:\n\n\n\n\nInstall some tools in Merlin\n\n\n\n\nbash tools/compile_tools.sh\n\n\n\n\n\n\nInstall python dependencies\n\n\n\n\npip install -r requirements.txt\n\n\n\n\nFor detailed instructions, to build the toolkit: see \nINSTALL\n.\n\nThese instructions are valid for UNIX\nsystems including various flavors of Linux;\n\n\nGetting started with Merlin\n\n\nTo run the example system builds, see \negs/README.txt\n\n\nAs a first demo, please follow the scripts in \negs/slt_arctic\n\n\nNow, you can also follow Josh Meyer \nblog post\n for detailed instructions \n on how to install Merlin and build SLT demo voice.\n\n\nTo build your own voice, follow the scripts in \negs/build_your_own_voice\n\n\nSynthetic speech samples\n\n\nListen to \nsynthetic speech samples\n from our demo voice.\n\n\nDevelopment pattern for contributors\n\n\n\n\nCreate a personal fork\n\nof the \nmain Merlin repository\n in GitHub.\n\n\nMake your changes in a named branch different from \nmaster\n, e.g. you create\na branch \nmy-new-feature\n.\n\n\nGenerate a pull request\n\nthrough the Web interface of GitHub.\n\n\n\n\nContact Us\n\n\nPost your questions, suggestions, and discussions to \nGitHub Issues\n.\n\n\nCitation\n\n\nIf you publish work based on Merlin, please cite: \n\n\nZhizheng Wu, Oliver Watts, Simon King, \"\nMerlin: An Open Source Neural Network Speech Synthesis System\n\" in Proc. 9th ISCA Speech Synthesis Workshop (SSW9), September 2016, Sunnyvale, CA, USA.", 
+            "title": "Home"
+        }, 
+        {
+            "location": "/#merlin-the-neural-network-nn-based-speech-synthesis-system", 
+            "text": "This repository contains the Neural Network (NN) based Speech Synthesis System \ndeveloped at the Centre for Speech Technology Research (CSTR), University of \nEdinburgh.   Merlin is a toolkit for building Deep Neural Network models for statistical parametric speech synthesis. \nIt must be used in combination with a front-end text processor (e.g., Festival) and a vocoder (e.g., STRAIGHT or WORLD).  The system is written in Python and relies on the Theano numerical computation library.  Merlin comes with recipes (in the spirit of the  Kaldi  automatic speech recognition toolkit) to show you how to build state-of-the art systems.  Merlin is free software, distributed under an Apache License Version 2.0, allowing unrestricted commercial and non-commercial use alike.  Read the documentation at  merlin.io .  Merlin is compatible with:  Python 2.7 .", 
+            "title": "Merlin: The Neural Network (NN) based Speech Synthesis System"
+        }, 
+        {
+            "location": "/#installation", 
+            "text": "Merlin uses the following dependencies:   numpy, scipy  matplotlib  bandmat  theano  sklearn, keras (optional, required if you use keras models)   To install Merlin,  cd  merlin and run the below steps:   Install some tools in Merlin   bash tools/compile_tools.sh   Install python dependencies   pip install -r requirements.txt  For detailed instructions, to build the toolkit: see  INSTALL . \nThese instructions are valid for UNIX\nsystems including various flavors of Linux;", 
+            "title": "Installation"
+        }, 
+        {
+            "location": "/#getting-started-with-merlin", 
+            "text": "To run the example system builds, see  egs/README.txt  As a first demo, please follow the scripts in  egs/slt_arctic  Now, you can also follow Josh Meyer  blog post  for detailed instructions   on how to install Merlin and build SLT demo voice.  To build your own voice, follow the scripts in  egs/build_your_own_voice", 
+            "title": "Getting started with Merlin"
+        }, 
+        {
+            "location": "/#synthetic-speech-samples", 
+            "text": "Listen to  synthetic speech samples  from our demo voice.", 
+            "title": "Synthetic speech samples"
+        }, 
+        {
+            "location": "/#development-pattern-for-contributors", 
+            "text": "Create a personal fork \nof the  main Merlin repository  in GitHub.  Make your changes in a named branch different from  master , e.g. you create\na branch  my-new-feature .  Generate a pull request \nthrough the Web interface of GitHub.", 
+            "title": "Development pattern for contributors"
+        }, 
+        {
+            "location": "/#contact-us", 
+            "text": "Post your questions, suggestions, and discussions to  GitHub Issues .", 
+            "title": "Contact Us"
+        }, 
+        {
+            "location": "/#citation", 
+            "text": "If you publish work based on Merlin, please cite:   Zhizheng Wu, Oliver Watts, Simon King, \" Merlin: An Open Source Neural Network Speech Synthesis System \" in Proc. 9th ISCA Speech Synthesis Workshop (SSW9), September 2016, Sunnyvale, CA, USA.", 
+            "title": "Citation"
+        }, 
+        {
+            "location": "/slt-arctic-voice/", 
+            "text": "Arctic voices\n\n\nThe CMU_ARCTIC databases were constructed at the Language Technologies Institute at \nCarnegie Mellon University as phonetically balanced, \nUS English single speaker databases designed for unit selection speech synthesis research.\n\n\nThe databases consist of around 1150 utterances carefully selected from out-of-copyright texts from Project Gutenberg. \nThe databses include US English male (bdl), female (slt) speakers (both experinced voice talent) and few other accented speakers.\n\n\nTo run one of these voices, \ncd egs/slt_arctic/s1\n and follow the below steps:\n\n\nSetting up\n\n\nThe first step is to run setup as it creates directories and downloads the required training data files.\n\n\nTo see the list of available voices, run:\n\n\n./01_setup.sh\n\n\n\n\nThe next steps demonstrate on how to setup slt arctic voice. \n\n\n\n\nTo run on short data(about 50 utterances for training)\n\n\n\n\n./01_setup.sh slt_arctic_demo\n\n\n\n\n\n\nTo run on full data(about 1000 sentences for training)\n\n\n\n\n./01_setup.sh slt_arctic_full\n\n\n\n\nIt also creates a global config file: \nconf/global_settings.cfg\n, where default settings are stored.\n\n\nPrepare config files\n\n\nAt this point, we have to prepare two config files to train DNN models\n- Acoustic Model\n- Duration Model\n\n\nTo prepare config files:\n\n\n./02_prepare_conf_files.sh conf/global_settings.cfg\n\n\n\n\nFour config files will be generated: two for training, and two for testing. \n\n\nTrain duration model\n\n\nTo train duration model:\n\n\n./03_train_duration_model.sh \npath_to_duration_conf_file\n\n\n\n\n\nTrain acoustic model\n\n\nTo train acoustic model:\n\n\n./04_train_acoustic_model.sh \npath_to_acoustic_conf_file\n\n\n\n\n\nSynthesize speech\n\n\nTo synthesize speech:\n\n\n./05_run_merlin.sh \npath_to_test_dur_conf_file\n \npath_to_test_synth_conf_file", 
+            "title": "Arctic voices"
+        }, 
+        {
+            "location": "/slt-arctic-voice/#arctic-voices", 
+            "text": "The CMU_ARCTIC databases were constructed at the Language Technologies Institute at \nCarnegie Mellon University as phonetically balanced, \nUS English single speaker databases designed for unit selection speech synthesis research.  The databases consist of around 1150 utterances carefully selected from out-of-copyright texts from Project Gutenberg. \nThe databses include US English male (bdl), female (slt) speakers (both experinced voice talent) and few other accented speakers.  To run one of these voices,  cd egs/slt_arctic/s1  and follow the below steps:", 
+            "title": "Arctic voices"
+        }, 
+        {
+            "location": "/slt-arctic-voice/#setting-up", 
+            "text": "The first step is to run setup as it creates directories and downloads the required training data files.  To see the list of available voices, run:  ./01_setup.sh  The next steps demonstrate on how to setup slt arctic voice.    To run on short data(about 50 utterances for training)   ./01_setup.sh slt_arctic_demo   To run on full data(about 1000 sentences for training)   ./01_setup.sh slt_arctic_full  It also creates a global config file:  conf/global_settings.cfg , where default settings are stored.", 
+            "title": "Setting up"
+        }, 
+        {
+            "location": "/slt-arctic-voice/#prepare-config-files", 
+            "text": "At this point, we have to prepare two config files to train DNN models\n- Acoustic Model\n- Duration Model  To prepare config files:  ./02_prepare_conf_files.sh conf/global_settings.cfg  Four config files will be generated: two for training, and two for testing.", 
+            "title": "Prepare config files"
+        }, 
+        {
+            "location": "/slt-arctic-voice/#train-duration-model", 
+            "text": "To train duration model:  ./03_train_duration_model.sh  path_to_duration_conf_file", 
+            "title": "Train duration model"
+        }, 
+        {
+            "location": "/slt-arctic-voice/#train-acoustic-model", 
+            "text": "To train acoustic model:  ./04_train_acoustic_model.sh  path_to_acoustic_conf_file", 
+            "title": "Train acoustic model"
+        }, 
+        {
+            "location": "/slt-arctic-voice/#synthesize-speech", 
+            "text": "To synthesize speech:  ./05_run_merlin.sh  path_to_test_dur_conf_file   path_to_test_synth_conf_file", 
+            "title": "Synthesize speech"
+        }, 
+        {
+            "location": "/build-own-voice/", 
+            "text": "Build your own voice\n\n\nTo build your own voice, \ncd egs/build_your_own_voice/s1\n and follow the below steps:\n\n\nSetting up\n\n\nThe first step is to run setup as it creates directories and some text files for testing.\n\n\nThe next steps demonstrate on how to setup voice. \n\n\n./01_setup.sh my_voice\n\n\n\n\nIt also creates a global config file: \nconf/global_settings.cfg\n, where default settings are stored.\nYou need to modify these params as per your own data.\n\n\nPrepare labels\n\n\nTo prepare labels\n\n\n./02_prepare_labels.sh \npath_to_wav_dir\n \npath_to_text_dir\n \npath_to_labels_dir\n\n\n\n\n\nPrepare acoustic features\n\n\nTo prepare acoustic features\n\n\n./03_prepare_acoustic_features.sh \npath_to_wav_dir\n \npath_to_feat_dir\n\n\n\n\n\nPrepare config files\n\n\nAt this point, we have to prepare two config files to train DNN models\n- Acoustic Model\n- Duration Model\n\n\nTo prepare config files:\n\n\n./04_prepare_conf_files.sh conf/global_settings.cfg\n\n\n\n\nFour config files will be generated: two for training, and two for testing. \n\n\nTrain duration model\n\n\nTo train duration model:\n\n\n./05_train_duration_model.sh \npath_to_duration_conf_file\n\n\n\n\n\nTrain acoustic model\n\n\nTo train acoustic model:\n\n\n./06_train_acoustic_model.sh \npath_to_acoustic_conf_file\n\n\n\n\n\nSynthesize speech\n\n\nTo synthesize speech:\n\n\n./07_run_merlin.sh \npath_to_text_dir\n \npath_to_test_dur_conf_file\n \npath_to_test_synth_conf_file", 
+            "title": "Build your own voice"
+        }, 
+        {
+            "location": "/build-own-voice/#build-your-own-voice", 
+            "text": "To build your own voice,  cd egs/build_your_own_voice/s1  and follow the below steps:", 
+            "title": "Build your own voice"
+        }, 
+        {
+            "location": "/build-own-voice/#setting-up", 
+            "text": "The first step is to run setup as it creates directories and some text files for testing.  The next steps demonstrate on how to setup voice.   ./01_setup.sh my_voice  It also creates a global config file:  conf/global_settings.cfg , where default settings are stored.\nYou need to modify these params as per your own data.", 
+            "title": "Setting up"
+        }, 
+        {
+            "location": "/build-own-voice/#prepare-labels", 
+            "text": "To prepare labels  ./02_prepare_labels.sh  path_to_wav_dir   path_to_text_dir   path_to_labels_dir", 
+            "title": "Prepare labels"
+        }, 
+        {
+            "location": "/build-own-voice/#prepare-acoustic-features", 
+            "text": "To prepare acoustic features  ./03_prepare_acoustic_features.sh  path_to_wav_dir   path_to_feat_dir", 
+            "title": "Prepare acoustic features"
+        }, 
+        {
+            "location": "/build-own-voice/#prepare-config-files", 
+            "text": "At this point, we have to prepare two config files to train DNN models\n- Acoustic Model\n- Duration Model  To prepare config files:  ./04_prepare_conf_files.sh conf/global_settings.cfg  Four config files will be generated: two for training, and two for testing.", 
+            "title": "Prepare config files"
+        }, 
+        {
+            "location": "/build-own-voice/#train-duration-model", 
+            "text": "To train duration model:  ./05_train_duration_model.sh  path_to_duration_conf_file", 
+            "title": "Train duration model"
+        }, 
+        {
+            "location": "/build-own-voice/#train-acoustic-model", 
+            "text": "To train acoustic model:  ./06_train_acoustic_model.sh  path_to_acoustic_conf_file", 
+            "title": "Train acoustic model"
+        }, 
+        {
+            "location": "/build-own-voice/#synthesize-speech", 
+            "text": "To synthesize speech:  ./07_run_merlin.sh  path_to_text_dir   path_to_test_dur_conf_file   path_to_test_synth_conf_file", 
+            "title": "Synthesize speech"
+        }, 
+        {
+            "location": "/architectures/", 
+            "text": "coming soon...", 
+            "title": "Architectures"
+        }, 
+        {
+            "location": "/vocoders/", 
+            "text": "coming soon...", 
+            "title": "Vocoders"
+        }, 
+        {
+            "location": "/switch-to-keras/", 
+            "text": "coming soon...", 
+            "title": "Switch to keras models"
+        }, 
+        {
+            "location": "/hybrid-speech-synthesis/", 
+            "text": "Merlin guided unit selection synthesis\n\n\ncoming soon...", 
+            "title": "Hybrid speech synthesis"
+        }, 
+        {
+            "location": "/hybrid-speech-synthesis/#merlin-guided-unit-selection-synthesis", 
+            "text": "coming soon...", 
+            "title": "Merlin guided unit selection synthesis"
+        }, 
+        {
+            "location": "/voice-conversion/", 
+            "text": "Parallel voice conversion\n\n\ncoming soon...", 
+            "title": "Voice conversion"
+        }, 
+        {
+            "location": "/voice-conversion/#parallel-voice-conversion", 
+            "text": "coming soon...", 
+            "title": "Parallel voice conversion"
+        }, 
+        {
+            "location": "/speaker-adaptation/", 
+            "text": "DNN-based speaker adaptation\n\n\ncoming soon...", 
+            "title": "Speaker adaptation"
+        }, 
+        {
+            "location": "/speaker-adaptation/#dnn-based-speaker-adaptation", 
+            "text": "coming soon...", 
+            "title": "DNN-based speaker adaptation"
+        }
+    ]
+}

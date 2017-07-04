@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+    <url>
+     <loc>/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+        
+    <url>
+     <loc>/slt-arctic-voice/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/build-own-voice/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>/architectures/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/vocoders/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/switch-to-keras/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+    <url>
+     <loc>/hybrid-speech-synthesis/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>/voice-conversion/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
+     <loc>/speaker-adaptation/</loc>
+     <lastmod>2017-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+</urlset>
