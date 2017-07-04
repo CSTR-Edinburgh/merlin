@@ -22,10 +22,10 @@ test_synth_config_file=$2
 echo "Step 5:" 
 
 echo "synthesizing durations..."
-./scripts/submit.sh ${MerlinDir}/src/run_merlin.py $test_dur_config_file
+./scripts/${cuda_cmd} "experiments/slt_arctic_demo/test_synthesis/_synth_dur.log" "./scripts/submit.sh" "${MerlinDir}/src/run_merlin.py" "$test_dur_config_file"
 
 echo "synthesizing speech..."
-./scripts/submit.sh ${MerlinDir}/src/run_merlin.py $test_synth_config_file
+./scripts/${cuda_cmd} "experiments/slt_arctic_demo/test_synthesis/_synth_speech.log" "./scripts/submit.sh" "${MerlinDir}/src/run_merlin.py" "$test_synth_config_file"
 
 echo "deleting intermediate synthesis files..."
 ./scripts/remove_intermediate_files.sh $global_config_file

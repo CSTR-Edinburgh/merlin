@@ -1,9 +1,12 @@
 #!/bin/bash -e
 
+source cmd.sh
+
 if test "$#" -ne 0; then
     echo "Usage: ./run_demo.sh"
     exit 1
 fi
+
 
 ### Step 1: setup directories and the training data files ###
 ./01_setup.sh slt_arctic_demo

@@ -18,6 +18,6 @@ duration_conf_file=$1
 ### Step 3: train duration model ###
 echo "Step 3:"
 echo "training duration model..."
-./scripts/submit.sh ${MerlinDir}/src/run_merlin.py $duration_conf_file
+./scripts/${cuda_cmd} "experiments/slt_arctic_demo/duration_model/log/_train.log" "./scripts/submit.sh" "${MerlinDir}/src/run_merlin.py" "${duration_conf_file}"
 
 
