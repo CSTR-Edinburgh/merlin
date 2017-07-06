@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="None">
+  <meta name="description" content="Documentation for Merlin, Neural Network based speech synthesis.">
   
   <link rel="shortcut icon" href="./img/favicon.ico">
-  <title>Home - Merlin</title>
+  <title>Home - Merlin Documentation</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="./css/theme.css" type="text/css" />
@@ -35,7 +35,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="." class="icon icon-home"> Merlin</a>
+        <a href="." class="icon icon-home"> Merlin Documentation</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -82,11 +82,11 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="slt-arctic-voice/">Arctic voices</a>
+    <a class="" href="getting-started/slt-arctic-voice/">Arctic voices</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="build-own-voice/">Build your own voice</a>
+    <a class="" href="getting-started/build-own-voice/">Build your own voice</a>
                 </li>
     </ul>
 	    </li>
@@ -97,15 +97,15 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="architectures/">Architectures</a>
+    <a class="" href="improve-voice-quality/architectures/">Architectures</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="vocoders/">Vocoders</a>
+    <a class="" href="improve-voice-quality/vocoders/">Vocoders</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="switch-to-keras/">Switch to keras models</a>
+    <a class="" href="improve-voice-quality/switch-to-keras/">Switch to keras models</a>
                 </li>
     </ul>
 	    </li>
@@ -135,7 +135,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href=".">Merlin</a>
+        <a href=".">Merlin Documentation</a>
       </nav>
 
       
@@ -149,6 +149,9 @@
     
     <li>Home</li>
     <li class="wy-breadcrumbs-aside">
+      
+        <a href="http://github.com/CSTR-Edinburgh/merlin"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -166,7 +169,7 @@ It must be used in combination with a front-end text processor (e.g., Festival) 
 <p>The system is written in Python and relies on the Theano numerical computation library.</p>
 <p>Merlin comes with recipes (in the spirit of the <a href="https://github.com/kaldi-asr/kaldi">Kaldi</a> automatic speech recognition toolkit) to show you how to build state-of-the art systems.</p>
 <p>Merlin is free software, distributed under an Apache License Version 2.0, allowing unrestricted commercial and non-commercial use alike.</p>
-<p>Read the documentation at <a href="https://cstr-edinburgh.github.io/merlin/">merlin.io</a>.</p>
+<p>Read the documentation at <a href="https://cstr-edinburgh.github.io/merlin/">cstr-edinburgh.github.io/merlin</a>.</p>
 <p>Merlin is compatible with: <strong>Python 2.7</strong>.</p>
 <h2 id="installation">Installation</h2>
 <p>Merlin uses the following dependencies:</p>
@@ -197,9 +200,13 @@ systems including various flavors of Linux;</p>
 <p>To run the example system builds, see <code>egs/README.txt</code></p>
 <p>As a first demo, please follow the scripts in <code>egs/slt_arctic</code></p>
 <p>Now, you can also follow Josh Meyer <a href="http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html">blog post</a> for detailed instructions <br/> on how to install Merlin and build SLT demo voice.</p>
-<p>To build your own voice, follow the scripts in <code>egs/build_your_own_voice</code></p>
+<p>For a more in-depth tutorial about building voices with Merlin, you can check out:</p>
+<ul>
+<li><a href="https://cstr-edinburgh.github.io/merlin/slt-arctic-voice">Arctic voices</a></li>
+<li><a href="https://cstr-edinburgh.github.io/merlin/build-own-voice">Build your own voice</a></li>
+</ul>
 <h2 id="synthetic-speech-samples">Synthetic speech samples</h2>
-<p>Listen to <a href="https://cstr-edinburgh.github.io/merlin/demo.html">synthetic speech samples</a> from our demo voice.</p>
+<p>Listen to <a target="_blank" href="https://cstr-edinburgh.github.io/merlin/demo.html">synthetic speech samples</a> from our SLT arctic voice.</p>
 <h2 id="development-pattern-for-contributors">Development pattern for contributors</h2>
 <ol>
 <li><a href="https://help.github.com/articles/fork-a-repo/">Create a personal fork</a>
@@ -221,7 +228,7 @@ through the Web interface of GitHub.</li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="slt-arctic-voice/" class="btn btn-neutral float-right" title="Arctic voices">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="getting-started/slt-arctic-voice/" class="btn btn-neutral float-right" title="Arctic voices">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -247,9 +254,11 @@ through the Web interface of GitHub.</li>
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
+          <a href="http://github.com/CSTR-Edinburgh/merlin" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span style="margin-left: 15px"><a href="slt-arctic-voice/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+        <span style="margin-left: 15px"><a href="getting-started/slt-arctic-voice/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -260,5 +269,5 @@ through the Web interface of GitHub.</li>
 
 <!--
 MkDocs version : 0.16.3
-Build Date UTC : 2017-07-04 17:07:56
+Build Date UTC : 2017-07-06 16:13:31
 -->
