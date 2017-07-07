@@ -1,5 +1,8 @@
 #!/bin/bash
 
+tools_dir=$(dirname $0)
+cd $tools_dir
+
 # 1. Get and compile SPTK
 
 echo "downloading SPTK-3.9..."

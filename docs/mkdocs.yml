@@ -1,0 +1,20 @@
+site_name: Merlin Documentation
+theme: readthedocs
+docs_dir: templates
+repo_url: http://github.com/CSTR-Edinburgh/merlin
+site_url: http://cstr-edinburgh.github.io/merlin
+site_description: 'Documentation for Merlin, Neural Network based speech synthesis.'
+
+pages:
+- Home: index.md
+- Getting started:
+  - Arctic voices: getting-started/slt-arctic-voice.md
+  - Build your own voice: getting-started/build-own-voice.md
+- Improving the quality of voice: 
+  - Architectures: improve-voice-quality/architectures.md
+  - Vocoders: improve-voice-quality/vocoders.md
+  - Switch to keras models: improve-voice-quality/switch-to-keras.md
+- Hybrid speech synthesis: hybrid-speech-synthesis.md
+- Voice conversion: voice-conversion.md
+- Speaker adaptation: speaker-adaptation.md
+
