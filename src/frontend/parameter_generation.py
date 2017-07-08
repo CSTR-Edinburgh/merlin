@@ -158,7 +158,7 @@ class   ParameterGeneration(object):
                 if do_MLPG == False:
                     gen_features = current_features
                 else:
-                    gen_features = mlpg_algo.generation(current_features, var, out_dimension_dict[feature_name]/3)
+                    gen_features = mlpg_algo.generation(current_features, var, out_dimension_dict[feature_name]//3)
 #                else:
 #                    self.logger.critical("the dimensions do not match for MLPG: %d vs %d" %(var.shape[1], out_dimension_dict[feature_name]))
 #                    raise

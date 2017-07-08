@@ -287,9 +287,6 @@ class ColouredFormatter(logging.Formatter):
     COLOUR_SEQ = "\033[1;%dm"
     BOLD_SEQ = "\033[1m"
 
-    def __init__(self, fmt=None, datefmt=None):
-        logging.Formatter.__init__(self, fmt, datefmt)
-
     def format(self, record):
         if record.levelname in self.COLOURS:
             # pad to fixed width - currently hardwired, should make this dynamic

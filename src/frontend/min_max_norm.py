@@ -81,8 +81,8 @@ class MinMaxNormalisation(object):
         io_funcs = BinaryIOCollection()
         min_max_vector, frame_number = io_funcs.load_binary_file_frame(label_norm_file, 1)
         min_max_vector = numpy.reshape(min_max_vector, (-1, ))
-        self.min_vector = min_max_vector[0:frame_number/2]
-        self.max_vector = min_max_vector[frame_number/2:]
+        self.min_vector = min_max_vector[0:frame_number//2]
+        self.max_vector = min_max_vector[frame_number//2:]
 
         logger.info('Loaded min max values from the trained data for feature dimension of %d' % self.feature_dimension)
 
@@ -133,7 +133,7 @@ class MinMaxNormalisation(object):
         for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
 
-            frame_number = features.size / self.feature_dimension
+            frame_number = features.size // self.feature_dimension
             fea_min_matrix = numpy.tile(self.min_vector, (frame_number, 1))
             target_min_matrix = numpy.tile(self.target_min_value, (frame_number, self.feature_dimension))
 
@@ -179,8 +179,7 @@ class MinMaxNormalisation(object):
         for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
 
-            frame_number = features.size / self.feature_dimension
-#            print   frame_number
+            frame_number = features.size // self.feature_dimension
             fea_min_matrix = numpy.tile(self.min_vector, (frame_number, 1))
             target_min_matrix = numpy.tile(self.target_min_value, (frame_number, self.feature_dimension))
 
@@ -197,7 +196,7 @@ class MinMaxNormalisation(object):
         file_number = len(in_file_list)
         for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
-            current_frame_number = features.size / self.feature_dimension
+            current_frame_number = features.size // self.feature_dimension
 
             mean_matrix = numpy.tile(mean_vector, (current_frame_number, 1))
             std_matrix = numpy.tile(std_vector, (current_frame_number, 1))
@@ -216,7 +215,7 @@ class MinMaxNormalisation(object):
         io_funcs = BinaryIOCollection()
         for file_name in file_list:
             features = io_funcs.load_binary_file(file_name, self.feature_dimension)
-            current_frame_number = features.size / self.feature_dimension
+            current_frame_number = features.size // self.feature_dimension
             mean_vector += numpy.reshape(numpy.sum(features, axis=0), (1, self.feature_dimension))
             all_frame_number += current_frame_number
 
@@ -241,7 +240,7 @@ class MinMaxNormalisation(object):
         io_funcs = BinaryIOCollection()
         for file_name in file_list:
             features = io_funcs.load_binary_file(file_name, self.feature_dimension)
-            current_frame_number = features.size / self.feature_dimension
+            current_frame_number = features.size // self.feature_dimension
             mean_matrix = numpy.tile(mean_vector, (current_frame_number, 1))
 
             std_vector += numpy.reshape(numpy.sum((features - mean_matrix) ** 2, axis=0), (1, self.feature_dimension))

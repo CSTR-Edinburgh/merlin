@@ -309,7 +309,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
             if sequential_training == True:
                 batch_size = temp_train_set_x.shape[0]
 
-            n_train_batches = temp_train_set_x.shape[0] / batch_size
+            n_train_batches = temp_train_set_x.shape[0] // batch_size
             for index in range(n_train_batches):
                 ## send a batch to the shared variable, rather than pass the batch size and batch index to the finetune function
                 train_set_x.set_value(numpy.asarray(temp_train_set_x[index*batch_size:(index + 1)*batch_size], dtype=theano.config.floatX), borrow=True)
@@ -391,7 +391,7 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
         fid_lab.close()
-        features = features[:(n_ins * (features.size / n_ins))]
+        features = features[:(n_ins * (features.size // n_ins))]
         test_set_x = features.reshape((-1, n_ins))
 
         predicted_parameter = dnn_model.parameter_prediction(test_set_x)
@@ -421,7 +421,7 @@ def dnn_generation_lstm(valid_file_list, nnets_file_name, n_ins, n_outs, out_fil
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
         fid_lab.close()
-        features = features[:(n_ins * (features.size / n_ins))]
+        features = features[:(n_ins * (features.size // n_ins))]
         test_set_x = features.reshape((-1, n_ins))
 
         predicted_parameter = dnn_model.parameter_prediction_lstm(test_set_x)
@@ -450,7 +450,7 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
         fid_lab.close()
-        features = features[:(n_ins * (features.size / n_ins))]
+        features = features[:(n_ins * (features.size // n_ins))]
         features = features.reshape((-1, n_ins))
         temp_set_x = features.tolist()
         test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX))
@@ -1090,10 +1090,12 @@ if __name__ == '__main__':
     if ret==0:
         logger.info('  Git is available in the working directory:')
         git_describe = subprocess.Popen(['git', 'describe', '--tags', '--always'], stdout=subprocess.PIPE).communicate()[0][:-1]
-        logger.info('    Merlin version: '+git_describe)
+        logger.info('    Merlin version: {}'.format(git_describe))
         git_branch = subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE).communicate()[0][:-1]
-        logger.info('    branch: '+git_branch)
+        logger.info('    branch: {}'.format(git_branch))
         git_diff = subprocess.Popen(['git', 'diff', '--name-status'], stdout=subprocess.PIPE).communicate()[0]
+        if sys.version_info.major >= 3:
+            git_diff = git_diff.decode('utf-8')
         git_diff = git_diff.replace('\t',' ').split('\n')
         logger.info('    diff to Merlin version:')
         for filediff in git_diff:

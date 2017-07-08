@@ -39,7 +39,11 @@
 
 
 import math
-import configparser
+import sys
+if sys.version_info.major >= 3:
+    import configparser
+else:
+    import ConfigParser as configparser
 import os
 import logging
 import io
@@ -116,8 +120,8 @@ class configuration(object):
 
         # load the config file
         try:
-            configparser = configparser.ConfigParser()
-            configparser.readfp(open(configFile))
+            cfgparser = configparser.ConfigParser()
+            cfgparser.readfp(open(configFile))
             logger.debug('successfully read and parsed user configuration file %s' % configFile)
         except:
             logger.fatal('error reading user configuration file %s' % configFile)
@@ -129,7 +133,7 @@ class configuration(object):
 
         if self.work_dir == None:
             try:
-                self.work_dir = configparser.get('Paths', 'work')
+                self.work_dir = cfgparser.get('Paths', 'work')
 
             except (configparser.NoSectionError, configparser.NoOptionError):
                 if self.work_dir == None:
@@ -427,7 +431,7 @@ class configuration(object):
 
             try:
                 # first, look for a user-set value for this variable in the config file
-                value = configparser.get(section,option)
+                value = cfgparser.get(section,option)
                 user_or_default='user'
 
             except (configparser.NoSectionError, configparser.NoOptionError):
@@ -937,6 +941,8 @@ class configuration(object):
 
             try:
                 # pass that string as a filehandle
+                if sys.version_info.major < 3:
+                    config_string = unicode(config_string, "utf-8")
                 fh = io.StringIO(config_string)
                 logging.config.fileConfig(fh)
                 fh.close()
