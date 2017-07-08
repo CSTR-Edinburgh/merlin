@@ -1,7 +1,7 @@
 ###THEANO_FLAGS='cuda.root=/opt/cuda-5.0.35,mode=FAST_RUN,device=gpu0,floatX=float32,exception_verbosity=high' python dnn.py
 """
 """
-import cPickle
+import pickle
 import os
 import sys
 import time
@@ -36,7 +36,7 @@ class DNN(object):
         self.mW_params = []
         self.mb_params = []
         
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0: 
                 input_size = n_ins
             else:
@@ -77,7 +77,7 @@ class DNN(object):
         self.b_grads.append(current_b_grad)
 
         propagate_error = gnp.dot(observation_error, self.W_params[self.n_layers].T) # final layer is linear output, gradient is one
-        for i in reversed(range(self.n_layers)):
+        for i in reversed(list(range(self.n_layers))):
             current_activation = self.activations[i]
             current_gradient = 1.0 - current_activation ** 2
             current_W_grad = gnp.dot(current_activation.T, propagate_error)
@@ -93,7 +93,7 @@ class DNN(object):
         
         self.activations.append(train_set_x)
                 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             current_activations = gnp.tanh(gnp.dot(self.activations[i], self.W_params[i]) + self.b_params[i])
             self.activations.append(current_activations)
         
@@ -103,7 +103,7 @@ class DNN(object):
     def gradient_update(self, batch_size, learning_rate, momentum):
     
         multiplier = learning_rate / batch_size;
-        for i in xrange(len(self.W_grads)):
+        for i in range(len(self.W_grads)):
         
             if i >= len(self.W_grads) - 2:
                 local_multiplier = multiplier * 0.5
@@ -139,7 +139,7 @@ class DNN(object):
         
         current_activations = test_set_x
                 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             current_activations = gnp.tanh(gnp.dot(current_activations, self.W_params[i]) + self.b_params[i])
         
         final_layer_output = gnp.dot(current_activations, self.W_params[self.n_layers]) + self.b_params[self.n_layers]

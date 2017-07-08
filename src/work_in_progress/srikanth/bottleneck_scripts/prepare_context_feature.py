@@ -52,9 +52,9 @@ def generate_context_feature(in_data_dir, out_data_dir, context_width, dimension
     for file_path, filename in zip(file_paths, filenames):
         features, frame_number = load_binary_file(file_path, dimension)
 
-        print   file_index, features.shape, filename
+        print(file_index, features.shape, filename)
         expand_features = numpy.zeros((frame_number+window_size-1, dimension))
-        for ci in xrange(context_width):
+        for ci in range(context_width):
             expand_features[ci, :] = features[0, :]
             expand_features[frame_number+context_width+ci, :] = features[frame_number-1, :]
 
@@ -62,7 +62,7 @@ def generate_context_feature(in_data_dir, out_data_dir, context_width, dimension
 
         context_features = numpy.zeros((frame_number, dimension*window_size))
 
-        for wi in xrange(window_size):
+        for wi in range(window_size):
             context_features[0:frame_number, wi*dimension:(wi+1)*dimension] = expand_features[wi:frame_number+wi, :]
 
         context_filename = out_data_dir + '/' + os.path.splitext(filename)[0] + '.lab'

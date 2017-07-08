@@ -3,7 +3,7 @@ import os
 import numpy, re, sys
 from multiprocessing import Pool
 from io_funcs.binary_io import BinaryIOCollection
-from linguistic_base import LinguisticBase
+from .linguistic_base import LinguisticBase
 
 import matplotlib.mlab as mlab
 import math
@@ -120,7 +120,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         logger = logging.getLogger("dur")
         utt_number = len(ori_file_list)
         if utt_number != len(output_file_list):
-            print   "the number of input and output files should be the same!\n";
+            print("the number of input and output files should be the same!\n");
             sys.exit(1)
                
         ### set default feature type to numerical, if not assigned ###
@@ -144,7 +144,7 @@ class HTSLabelNormalisation(LabelNormalisation):
             logger.critical("Unknown feature type: %s \n Please use one of the following: binary, numerical\n" %(feature_type))
             sys.exit(1)
 
-        for i in xrange(utt_number):
+        for i in range(utt_number):
             self.extract_dur_features(ori_file_list[i], output_file_list[i], label_type, feature_type, unit_size, feat_size)
     
     def extract_dur_features(self, in_file_name, out_file_name=None, label_type="state_align", feature_type=None, unit_size=None, feat_size=None):
@@ -206,7 +206,7 @@ class HTSLabelNormalisation(LabelNormalisation):
             if state_index == 1:
                 phone_duration = frame_number
                 
-                for i in xrange(state_number - 1):
+                for i in range(state_number - 1):
                     line = utt_labels[current_index + i + 1].strip()
                     temp_list = re.split('\s+', line)
                     phone_duration += int((int(temp_list[1]) - int(temp_list[0]))/50000)
@@ -358,7 +358,7 @@ class HTSLabelNormalisation(LabelNormalisation):
 
             if self.add_frame_features:
                 current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))
-                for i in xrange(frame_number):
+                for i in range(frame_number):
                     current_block_binary_array[i, 0:self.dict_size] = label_vector
 
                     if self.subphone_feats == 'minimal_phoneme':
@@ -458,7 +458,7 @@ class HTSLabelNormalisation(LabelNormalisation):
                 label_continuous_vector = self.pattern_matching_continous_position(full_label) 
                 label_vector = numpy.concatenate([label_binary_vector, label_continuous_vector], axis = 1)
 
-                for i in xrange(state_number - 1):
+                for i in range(state_number - 1):
                     line = utt_labels[current_index + i + 1].strip()
                     temp_list = re.split('\s+', line)
                     phone_duration += int((int(temp_list[1]) - int(temp_list[0]))/50000)
@@ -468,7 +468,7 @@ class HTSLabelNormalisation(LabelNormalisation):
 
             if self.add_frame_features:
                 current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))
-                for i in xrange(frame_number):
+                for i in range(frame_number):
                     current_block_binary_array[i, 0:self.dict_size] = label_vector
 		    
                     if self.subphone_feats == 'full':
@@ -521,7 +521,7 @@ class HTSLabelNormalisation(LabelNormalisation):
                 label_feature_index = label_feature_index + frame_number
             elif self.subphone_feats == 'state_only' and state_index == state_number:
                 current_block_binary_array = numpy.zeros((state_number, self.dict_size+self.frame_feature_size))
-                for i in xrange(state_number):
+                for i in range(state_number):
                     current_block_binary_array[i, 0:self.dict_size] = label_vector
                     current_block_binary_array[i, self.dict_size] = float(i+1)   ## state index (counting forwards)
                 label_feature_matrix[label_feature_index:label_feature_index+state_number,] = current_block_binary_array
@@ -552,12 +552,12 @@ class HTSLabelNormalisation(LabelNormalisation):
         duration_feature_array = numpy.zeros((total_num_of_frames, self.frame_feature_size))
 
         frame_index=0 
-        for i in xrange(ph_count):
+        for i in range(ph_count):
             frame_number = int(dur_data[i])
             if self.subphone_feats == "coarse_coding":
                 cc_feat_matrix = self.extract_coarse_coding_features_relative(frame_number)
 
-                for j in xrange(frame_number):
+                for j in range(frame_number):
                     duration_feature_array[frame_index, 0] = cc_feat_matrix[j, 0]
                     duration_feature_array[frame_index, 1] = cc_feat_matrix[j, 1]
                     duration_feature_array[frame_index, 2] = cc_feat_matrix[j, 2]
@@ -593,7 +593,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         
         cc_feat_matrix = numpy.zeros((dur, 3))
 
-        for i in xrange(dur):
+        for i in range(dur):
             rel_indx = int((200/float(dur))*i)
             cc_feat_matrix[i,0] = self.cc_features[0, 300+rel_indx]
             cc_feat_matrix[i,1] = self.cc_features[1, 200+rel_indx]
@@ -628,12 +628,12 @@ class HTSLabelNormalisation(LabelNormalisation):
         y2 = mlab.normpdf(x2, mu2, sigma2)
         y3 = mlab.normpdf(x3, mu3, sigma3)
 
-        for i in xrange(dur):
+        for i in range(dur):
             cc_feat_matrix[i,0] = y1[(dur+1+i)*10]
             cc_feat_matrix[i,1] = y2[i*10]
             cc_feat_matrix[i,2] = y3[i*10]
 
-        for i in xrange(3):
+        for i in range(3):
             cc_feat_matrix[:,i] = cc_feat_matrix[:,i]/max(cc_feat_matrix[:,i])
 
         return cc_feat_matrix
@@ -650,15 +650,15 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         lab_binary_vector = numpy.zeros((1, self.dict_size))
 
-        for i in xrange(self.dict_size):
+        for i in range(self.dict_size):
             current_question_list = self.question_dict[str(i)]
             binary_flag = 0
-            for iq in xrange(len(current_question_list)):
+            for iq in range(len(current_question_list)):
                 current_question = current_question_list[iq]
                 current_size = len(current_question)
                 if current_question[0] == '*' and current_question[current_size-1] == '*':
                     temp_question = current_question[1:current_size-1]
-                    for il in xrange(1, label_size-current_size+2):
+                    for il in range(1, label_size-current_size+2):
                         if temp_question == label[il:il+current_size-2]:
                             binary_flag = 1
                 elif current_question[current_size-1] != '*':
@@ -680,10 +680,10 @@ class HTSLabelNormalisation(LabelNormalisation):
         dict_size = len(self.discrete_dict)
         lab_binary_vector = numpy.zeros((1, dict_size))
         
-        for i in xrange(dict_size):
+        for i in range(dict_size):
             current_question_list = self.discrete_dict[str(i)]
             binary_flag = 0
-            for iq in xrange(len(current_question_list)):
+            for iq in range(len(current_question_list)):
                 current_compiled = current_question_list[iq]
                
                 ms = current_compiled.search(label)
@@ -701,7 +701,7 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         lab_continuous_vector = numpy.zeros((1, dict_size))
         
-        for i in xrange(dict_size):
+        for i in range(dict_size):
             continuous_value = -1.0
 
             current_compiled = self.continuous_dict[str(i)]
@@ -879,7 +879,7 @@ if __name__ == '__main__':
     
     qs_file_name = '/afs/inf.ed.ac.uk/group/cstr/projects/blizzard_entries/blizzard2016/straight_voice/Hybrid_duration_experiments/dnn_tts_release/lstm_rnn/data/questions.hed'
     
-    print   qs_file_name
+    print(qs_file_name)
     
     ori_file_list = ['/afs/inf.ed.ac.uk/group/cstr/projects/blizzard_entries/blizzard2016/straight_voice/Hybrid_duration_experiments/dnn_tts_release/lstm_rnn/data/label_state_align/AMidsummerNightsDream_000_000.lab']
     output_file_list = ['/afs/inf.ed.ac.uk/group/cstr/projects/blizzard_entries/blizzard2016/straight_voice/Hybrid_duration_experiments/dnn_tts_release/lstm_rnn/data/binary_label_601/AMidsummerNightsDream_000_000.lab']
@@ -892,5 +892,5 @@ if __name__ == '__main__':
     #feat_size = "phoneme"
     #label_operater.prepare_dur_data(ori_file_list, output_file_list, feature_type, unit_size, feat_size)
     #label_operater.prepare_dur_data(ori_file_list, output_file_list, feature_type)
-    print   label_operater.dimension
+    print(label_operater.dimension)
 

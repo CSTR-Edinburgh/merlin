@@ -94,7 +94,7 @@ class MinMaxNormalisation(object):
         min_value_matrix = numpy.zeros((file_number, self.feature_dimension))
         max_value_matrix = numpy.zeros((file_number, self.feature_dimension))
         io_funcs = BinaryIOCollection()
-        for i in xrange(file_number):
+        for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
             
             temp_min = numpy.amin(features, axis = 0)
@@ -130,7 +130,7 @@ class MinMaxNormalisation(object):
         fea_max_min_diff[fea_max_min_diff <= 0.0] = 1.0
         
         io_funcs = BinaryIOCollection()
-        for i in xrange(file_number):
+        for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
 
             frame_number = features.size / self.feature_dimension
@@ -146,7 +146,7 @@ class MinMaxNormalisation(object):
             ## reinstate original values:
             m,n = numpy.shape(features)
             for col in self.exclude_columns:
-                norm_features[range(m),[col]*m] = features[range(m),[col]*m]
+                norm_features[list(range(m)),[col]*m] = features[list(range(m)),[col]*m]
                 
             io_funcs.array_to_binary_file(norm_features, out_file_list[i])
             			
@@ -176,7 +176,7 @@ class MinMaxNormalisation(object):
         fea_max_min_diff[fea_max_min_diff <= 0.0] = 1.0
         
         io_funcs = BinaryIOCollection()
-        for i in xrange(file_number):
+        for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
 
             frame_number = features.size / self.feature_dimension
@@ -195,7 +195,7 @@ class MinMaxNormalisation(object):
         
         io_funcs = BinaryIOCollection()
         file_number = len(in_file_list)
-        for i in xrange(file_number):
+        for i in range(file_number):
             features = io_funcs.load_binary_file(in_file_list[i], self.feature_dimension)
             current_frame_number = features.size / self.feature_dimension
             

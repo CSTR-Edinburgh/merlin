@@ -37,7 +37,7 @@
 #  THIS SOFTWARE.
 ################################################################################
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -84,7 +84,7 @@ from run_keras_with_merlin_io import KerasClass
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
 
 
 def extract_file_id_list(file_list):
@@ -139,16 +139,16 @@ def visualize_dnn(dnn):
 
 	# reference activation weights in layers
     W = list(); layer_name = list()
-    for i in xrange(len(dnn.params)):
+    for i in range(len(dnn.params)):
         aa = dnn.params[i].get_value(borrow=True).T
-        print   aa.shape, aa.size
+        print(aa.shape, aa.size)
         if aa.size > aa.shape[0]:
         	W.append(aa)
         	layer_name.append(dnn.params[i].name)
         	
     ## plot activation weights including input and output
     layer_num = len(W)		
-    for i_layer in xrange(layer_num):
+    for i_layer in range(layer_num):
 		fig_name = 'Activation weights W' + str(i_layer) + '_' + layer_name[i_layer]
 		fig_title = 'Activation weights of W' + str(i_layer)
 		xlabel = 'Neuron index of hidden layer ' + str(i_layer)
@@ -165,7 +165,7 @@ def visualize_dnn(dnn):
 def load_covariance(var_file_dict, out_dimension_dict): 
     var = {}
     io_funcs = BinaryIOCollection()
-    for feature_name in var_file_dict.keys():
+    for feature_name in list(var_file_dict.keys()):
         var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
 
         var_values = numpy.reshape(var_values, (out_dimension_dict[feature_name], 1))
@@ -310,7 +310,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
                 batch_size = temp_train_set_x.shape[0]
                 
             n_train_batches = temp_train_set_x.shape[0] / batch_size
-            for index in xrange(n_train_batches):
+            for index in range(n_train_batches):
                 ## send a batch to the shared variable, rather than pass the batch size and batch index to the finetune function
                 train_set_x.set_value(numpy.asarray(temp_train_set_x[index*batch_size:(index + 1)*batch_size], dtype=theano.config.floatX), borrow=True)
                 train_set_y.set_value(numpy.asarray(temp_train_set_y[index*batch_size:(index + 1)*batch_size], dtype=theano.config.floatX), borrow=True)
@@ -348,7 +348,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
             plotlogger.save_plot('training convergence',title='Progress of training and validation error',xlabel='epochs',ylabel='error')
 
         if this_validation_loss < best_validation_loss:
-            cPickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
+            pickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
 
             best_dnn_model = dnn_model
             best_validation_loss = this_validation_loss
@@ -382,11 +382,11 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):  #file_number
+    for i in range(file_number):  #file_number
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -410,13 +410,13 @@ def dnn_generation_lstm(valid_file_list, nnets_file_name, n_ins, n_outs, out_fil
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     visualize_dnn(dnn_model)
     
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):  #file_number
+    for i in range(file_number):  #file_number
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -441,11 +441,11 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -513,7 +513,7 @@ def main_function(cfg):
 
     in_file_list_dict = {}
 
-    for feature_name in cfg.in_dir_dict.keys():
+    for feature_name in list(cfg.in_dir_dict.keys()):
         in_file_list_dict[feature_name] = prepare_file_path_list(file_id_list, cfg.in_dir_dict[feature_name], cfg.file_extension_dict[feature_name], False)
 
     nn_cmp_file_list         = prepare_file_path_list(file_id_list, nn_cmp_dir, cfg.cmp_ext)
@@ -584,7 +584,7 @@ def main_function(cfg):
             out_feat_dir  = os.path.join(inter_data_dir, 'binary_label_'+suffix)
             out_feat_file_list = prepare_file_path_list(file_id_list, out_feat_dir, cfg.lab_ext)
             in_dim = label_normaliser.dimension
-            for new_feature, new_feature_dim in cfg.additional_features.iteritems():
+            for new_feature, new_feature_dim in cfg.additional_features.items():
                 new_feat_dir  = os.path.join(data_dir, new_feature)
                 new_feat_file_list = prepare_file_path_list(file_id_list, new_feat_dir, '.'+new_feature)
                 
@@ -639,7 +639,7 @@ def main_function(cfg):
         acc_win = cfg.acc_win     #[1.0, -2.0, 1.0]
         
         acoustic_worker = AcousticComposition(delta_win = delta_win, acc_win = acc_win)
-        if 'dur' in cfg.in_dir_dict.keys() and cfg.AcousticModel:
+        if 'dur' in list(cfg.in_dir_dict.keys()) and cfg.AcousticModel:
             lf0_file_list = prepare_file_path_list(file_id_list, cfg.in_lf0_dir, cfg.lf0_ext)
             acoustic_worker.make_equal_frames(dur_file_list, lf0_file_list, cfg.in_dimension_dict)
         acoustic_worker.prepare_nn_data(in_file_list_dict, nn_cmp_file_list, cfg.in_dimension_dict, cfg.out_dimension_dict)
@@ -667,7 +667,7 @@ def main_function(cfg):
         os.makedirs(var_dir)
 
     var_file_dict = {}
-    for feature_name in cfg.out_dimension_dict.keys():
+    for feature_name in list(cfg.out_dimension_dict.keys()):
         var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
         
     ### normalise output acoustic data
@@ -707,7 +707,7 @@ def main_function(cfg):
         logger.info('saved %s vectors to %s' %(cfg.output_feature_normalisation, norm_info_file))
         
         feature_index = 0
-        for feature_name in cfg.out_dimension_dict.keys():
+        for feature_name in list(cfg.out_dimension_dict.keys()):
             feature_std_vector = numpy.array(global_std_vector[:,feature_index:feature_index+cfg.out_dimension_dict[feature_name]], 'float32')
 
             fid = open(var_file_dict[feature_name], 'w')
@@ -818,7 +818,7 @@ def main_function(cfg):
 
         bottleneck_size = min(hidden_layers_sizes)
         bottleneck_index = 0
-        for i in xrange(len(hidden_layers_sizes)):
+        for i in range(len(hidden_layers_sizes)):
             if hidden_layers_sizes(i) == bottleneck_size:
                 bottleneck_index = i
 
@@ -988,7 +988,7 @@ def main_function(cfg):
             untrimmed_test_labels = binary_label_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
 
 
-        if cfg.in_dimension_dict.has_key('mgc'):
+        if 'mgc' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_mgc_list, cfg.mgc_dim, \
@@ -1002,7 +1002,7 @@ def main_function(cfg):
             test_spectral_distortion  *= (10 /numpy.log(10)) * numpy.sqrt(2.0)    ##MCD
 
             
-        if cfg.in_dimension_dict.has_key('bap'):
+        if 'bap' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_bap_list, cfg.bap_dim, \
@@ -1015,7 +1015,7 @@ def main_function(cfg):
             valid_bap_mse = valid_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
             test_bap_mse  = test_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
                 
-        if cfg.in_dimension_dict.has_key('lf0'):
+        if 'lf0' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_lf0_list, cfg.lf0_dim, \
@@ -1116,7 +1116,7 @@ if __name__ == '__main__':
         cProfile.run('main_function(cfg)', 'mainstats')
 
         # create a stream for the profiler to write to
-        profiling_output = StringIO.StringIO()
+        profiling_output = io.StringIO()
         p = pstats.Stats('mainstats', stream=profiling_output)
 
         # print stats to that stream

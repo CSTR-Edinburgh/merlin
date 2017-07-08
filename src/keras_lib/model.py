@@ -85,7 +85,7 @@ class kerasModels(object):
         np.random.seed(seed)
         
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
@@ -113,7 +113,7 @@ class kerasModels(object):
         np.random.seed(seed)
         
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
@@ -156,7 +156,7 @@ class kerasModels(object):
         timesteps  = seq_length
 
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:

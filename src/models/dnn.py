@@ -40,7 +40,7 @@
 ###THEANO_FLAGS='cuda.root=/opt/cuda-5.0.35,mode=FAST_RUN,device=gpu0,floatX=float32,exception_verbosity=high' python dnn.py
 """
 """
-import cPickle
+import pickle
 import os
 import sys
 import time
@@ -91,7 +91,7 @@ class DNN(object):
         self.x = T.matrix('x') 
         self.y = T.matrix('y') 
 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = n_ins
             else:
@@ -137,13 +137,13 @@ class DNN(object):
 
         ### L1-norm
         if self.l1_reg is not None:
-            for i in xrange(self.n_layers):
+            for i in range(self.n_layers):
                 W = self.params[i * 2]
                 self.finetune_cost += self.l1_reg * (abs(W).sum())
 
         ### L2-norm
         if self.l2_reg is not None:
-            for i in xrange(self.n_layers):
+            for i in range(self.n_layers):
                 W = self.params[i * 2]
                 self.finetune_cost += self.l2_reg * T.sqr(W).sum()
 
@@ -164,7 +164,7 @@ class DNN(object):
 
         layer_size = len(self.params)
         lr_list = []
-        for i in xrange(layer_size):
+        for i in range(layer_size):
             lr_list.append(learning_rate)
 
         ##top 2 layers use a smaller learning rate
@@ -222,7 +222,7 @@ class DNN(object):
                                           
         # Create a function that scans the entire validation set
         def valid_score():
-            return [valid_score_i(i) for i in xrange(n_valid_batches)]
+            return [valid_score_i(i) for i in range(n_valid_batches)]
 
         if return_valid_score_i:
             return train_fn, valid_fn, valid_score_i

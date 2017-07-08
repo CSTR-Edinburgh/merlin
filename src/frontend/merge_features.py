@@ -21,13 +21,13 @@ class MergeFeat(object):
         '''
         utt_number = len(new_feat_file_list)
         if utt_number != len(binary_label_file_list):
-            print   "the number of new feature input files and label files should be the same!\n";
+            print("the number of new feature input files and label files should be the same!\n");
             sys.exit(1)
         
         new_feat_ext   = new_feat_file_list[0].split('/')[-1].split('.')[1]
                
         io_funcs = BinaryIOCollection()
-        for i in xrange(utt_number):
+        for i in range(utt_number):
             lab_file_name = binary_label_file_list[i]
             new_feat_file_name = new_feat_file_list[i]
             out_feat_file_name = out_feat_file_list[i]

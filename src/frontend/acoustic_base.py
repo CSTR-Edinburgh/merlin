@@ -73,7 +73,7 @@ class   AcousticBase(object):
         
         self.file_number = len(out_file_list)
         
-        for data_stream_name in in_file_list_dict.keys():
+        for data_stream_name in list(in_file_list_dict.keys()):
             
             try:
                 assert len(in_file_list_dict[data_stream_name]) == self.file_number
@@ -83,13 +83,13 @@ class   AcousticBase(object):
                 raise
             
             try:
-                assert in_dimension_dict.has_key(data_stream_name)
+                assert data_stream_name in in_dimension_dict
             except AssertionError:
                 self.logger.critical('data stream %s is missing in  the input dimension dict!' %(data_stream_name))
                 raise
             
             try:
-                assert out_dimension_dict.has_key(data_stream_name)
+                assert data_stream_name in out_dimension_dict
             except AssertionError:
                 self.logger.critical('data stream %s is missing in  the output dimension dict!' %(data_stream_name))
                 raise
@@ -108,14 +108,14 @@ class   AcousticBase(object):
 
         self.data_stream_number = len(self.data_stream_list)
 
-        if out_dimension_dict.has_key('vuv'):
+        if 'vuv' in out_dimension_dict:
             self.record_vuv = True
             
-            if not (in_dimension_dict.has_key('lf0') or in_dimension_dict.has_key('F0')):
+            if not ('lf0' in in_dimension_dict or 'F0' in in_dimension_dict):
                 self.logger.critical("if voiced and unvoiced information are to be recorded, the 'lf0' information must be provided")
                 raise
 
-        for data_stream_name in out_dimension_dict.keys():
+        for data_stream_name in list(out_dimension_dict.keys()):
             self.out_dimension += out_dimension_dict[data_stream_name]
 
         ### merge the data: like the cmp file
@@ -139,7 +139,7 @@ class   AcousticBase(object):
 
         frame_number = data.size
         last_value = 0.0
-        for i in xrange(frame_number):
+        for i in range(frame_number):
             if data[i] <= 0.0:
                 j = i+1
                 for j in range(i+1, frame_number):
@@ -174,12 +174,12 @@ class   AcousticBase(object):
         delta_vector = numpy.zeros((frame_number, 1))
 
         temp_vector[win_width:frame_number+win_width] = vector
-        for w in xrange(win_width):
+        for w in range(win_width):
             temp_vector[w, 0] = vector[0, 0]
             temp_vector[frame_number+win_width+w, 0] = vector[frame_number-1, 0]
 
-        for i in xrange(frame_number):
-            for w in xrange(win_length):
+        for i in range(frame_number):
+            for w in range(win_length):
                 delta_vector[i] += temp_vector[i+w, 0] * dynamic_win[w]
 
         return  delta_vector
@@ -189,7 +189,7 @@ class   AcousticBase(object):
         dynamic_matrix = numpy.zeros((frame_number, dimension))
         
         ###compute dynamic feature dimension by dimension
-        for dim in xrange(dimension):
+        for dim in range(dimension):
             dynamic_matrix[:, dim:dim+1] = self.compute_dynamic_vector(data_matrix[:, dim], dynamic_win, frame_number)
 
         return  dynamic_matrix

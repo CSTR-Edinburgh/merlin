@@ -180,7 +180,7 @@ class KerasClass(object):
             self.keras_models.train_feedforward_model(train_x, train_y, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs, shuffle_data=self.shuffle_data) 
         else:
             ### Train recurrent model ###
-            print('training algorithm: %d' % (self.training_algo))
+            print(('training algorithm: %d' % (self.training_algo)))
             self.keras_models.train_sequence_model(train_x, train_y, train_flen, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs, 
                                                                                         shuffle_data=self.shuffle_data, training_algo=self.training_algo) 
 
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     keras_instance.main_function()
 
     (m, s) = divmod(int(time.time() - start_time), 60) 
-    print("--- Job completion time: %d min. %d sec ---" % (m, s)) 
+    print(("--- Job completion time: %d min. %d sec ---" % (m, s))) 
 
     sys.exit(0)
 

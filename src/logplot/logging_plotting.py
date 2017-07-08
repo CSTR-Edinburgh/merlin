@@ -90,7 +90,7 @@ class PlotWithData(object):
         
     def add_data_point(self,series_name,data_point):
         # if there is no data series with this name yet, create an empty one
-        if not self.data.has_key(series_name):
+        if series_name not in self.data:
             self.data[series_name]=[]
         # append this data point (e.g., it might be a tuple (x,y) )
         # don't worry about data type or sorting - that is not our concern here
@@ -118,7 +118,7 @@ class PlotWithData(object):
         l=-1
         reference_x=None
         # print "starting with self.data=",self.data
-        for series_name,data_points in self.data.iteritems():
+        for series_name,data_points in self.data.items():
             if l > 0:
                 assert l == len(data_points)
             else:
@@ -172,7 +172,7 @@ class MultipleSeriesPlot(PlotWithData):
         if ylim:
             pylab.ylim(ylim)
         
-        for series_name,data_points in self.data.iteritems():
+        for series_name,data_points in self.data.items():
             xpoints=numpy.asarray([seq[0] for seq in data_points])
             ypoints=numpy.asarray([seq[1] for seq in data_points])
             line, = splt.plot(xpoints, ypoints, '-', linewidth=2)
@@ -188,7 +188,7 @@ class SingleWeightMatrixPlot(PlotWithData):
 
     def generate_plot(self, filename, title='', xlabel='', ylabel=''):
 
-        data_keys = self.data.keys()
+        data_keys = list(self.data.keys())
         key_num = len(data_keys)
 
         self.plot = plt.figure()
@@ -233,13 +233,13 @@ class LoggerPlotter(logging.getLoggerClass()):
         
     def add_plot_point(self,plot_name,series_name,data_point):
         # add a data point to a named plot
-        if not self.plots.has_key(plot_name):
+        if plot_name not in self.plots:
             self.plots[plot_name] = PlotWithData(plot_name)
         self.plots[plot_name].add_data_point(series_name,data_point)
             
     def save_plot(self,plot_name,**kwargs):
         logger = logging.getLogger("plotting")
-        if not self.plots.has_key(plot_name):
+        if plot_name not in self.plots:
             logger.warn('Tried to generate a plot called %s that does not exist' % plot_name)
             # raise an exception here?
         else:
@@ -270,7 +270,7 @@ class ColouredFormatter(logging.Formatter):
     # colourising formatter adapted from an answer to this question on Stack Overflow
     # http://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
 
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = list(range(8))
 
     COLOURS = {
         'DEBUG': BLUE,
@@ -323,7 +323,7 @@ if __name__ == '__main__':
 
 
 
-    print "testing the logging code"
+    print("testing the logging code")
     logger.debug('A DEBUG message')
     logger.info('A INFO message')
     logger.warning('A WARN message')
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     # logger.addHandler(ph)
     
 
-    print "testing the plotting code"
+    print("testing the plotting code")
     
     # the first argument is just a key for referring to this plot within the code
     # the second argument says what kind of plot we will be making

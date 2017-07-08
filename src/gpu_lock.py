@@ -19,7 +19,7 @@ def board_ids():
     """Returns integer board ids available on this machine."""
     from glob import glob
     board_devs = glob(_dev_prefix + '[0-9]*')
-    return range(len(board_devs))
+    return list(range(len(board_devs)))
 
 def _lock_file(id):
     """lock file from integer id"""
@@ -115,45 +115,45 @@ if __name__ == "__main__":
         if len(sys.argv) > 2:
             try:
                 pid = int(sys.argv[2])
-                print   pid, sys.argv[2]
+                print(pid, sys.argv[2])
                 assert(os.path.exists('/proc/%d' % pid))
             except:
-                print 'Usage: %s --id [pid_to_wait_on]' % me
-                print 'The optional process id must exist if specified.'
-                print 'Otherwise the id of the parent process is used.'
+                print('Usage: %s --id [pid_to_wait_on]' % me)
+                print('The optional process id must exist if specified.')
+                print('Otherwise the id of the parent process is used.')
                 sys.exit(1)
         else:
             pid = os.getppid()
-            print   pid
-        print obtain_lock_id(pid)
+            print(pid)
+        print(obtain_lock_id(pid))
     elif '--id-to-hog' in sys.argv:
-        print obtain_lock_id_to_hog()
+        print(obtain_lock_id_to_hog())
     elif '--free' in sys.argv:
         try:
             id = int(sys.argv[2])
         except:
-            print 'Usage: %s --free <id>' % me
+            print('Usage: %s --free <id>' % me)
             sys.exit(1)
         if free_lock(id):
-            print "Lock freed"
+            print("Lock freed")
         else:
             owner = owner_of_lock(id)
             if owner:
-                print "Failed to free lock id=%d owned by %s" % (id, owner)
+                print("Failed to free lock id=%d owned by %s" % (id, owner))
             else:
-                print "Failed to free lock, but it wasn't actually set?"
+                print("Failed to free lock, but it wasn't actually set?")
     else:
-        print '\n  Usage instructions:\n'
-        print '  To obtain and lock an id: %s --id' % me
-        print '  The lock is automatically freed when the parent terminates'
-        print
-        print "  To get an id that won't be freed: %s --id-to-hog" % me
-        print "  You *must* manually free these ids: %s --free <id>\n" % me
-        print '  More info: %s\n' % URL
+        print('\n  Usage instructions:\n')
+        print('  To obtain and lock an id: %s --id' % me)
+        print('  The lock is automatically freed when the parent terminates')
+        print()
+        print("  To get an id that won't be freed: %s --id-to-hog" % me)
+        print("  You *must* manually free these ids: %s --free <id>\n" % me)
+        print('  More info: %s\n' % URL)
         div = '  ' + "-"*60
-        print '\n' + div
-        print "  NVIDIA board users:"
-        print div
+        print('\n' + div)
+        print("  NVIDIA board users:")
+        print(div)
         for id in board_ids():
-            print "      Board %d: %s" % (id, owner_of_lock(id))
-        print div + '\n'
+            print("      Board %d: %s" % (id, owner_of_lock(id)))
+        print(div + '\n')

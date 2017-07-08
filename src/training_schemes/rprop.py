@@ -50,7 +50,7 @@ from collections import OrderedDict
 def compile_RPROP_train_function(model, gparams, params_to_update=[]):
 
     if params_to_update == []:  ## then update all by default
-        params_to_update = range(len(gparams))
+        params_to_update = list(range(len(gparams)))
 
     
     assert model.use_rprop in [2,4], 'RPROP version %s not implemented'%(use_rprop)
@@ -121,28 +121,28 @@ def compile_RPROP_train_function(model, gparams, params_to_update=[]):
     
     
 def check_rprop_values(model):
-    print '=== Update steps: ==='
+    print('=== Update steps: ===')
     for (i, update_step) in enumerate(model.update_values):
-        print '   param no. %s'%(i)
-        print get_stats(update_step)
+        print('   param no. %s'%(i))
+        print(get_stats(update_step))
         v = update_step.get_value()
         if len(v.shape) == 2:
-            print v[:4, :4]
+            print(v[:4, :4])
         else:
-            print v[:4]
-        print '   Update changes:--'
+            print(v[:4])
+        print('   Update changes:--')
         u = model.update_change_DEBUG[i].get_value()
         if len(u.shape) == 2:
-            print u[:4, :4]
+            print(u[:4, :4])
         else:
-            print u[:4]
+            print(u[:4])
             
                     
 def get_stats(theano_shared_params):
     vals = theano_shared_params.get_value()
     #m,n = numpy.shape(vals)
-    print '   shape, minm max, mean, 5th and 95th percentile'
-    print '   %s %s %s %s %s %s'%(numpy.shape(vals),vals.min(), vals.max(),vals.mean(), numpy.percentile(vals, 5), numpy.percentile(vals, 95))
+    print('   shape, minm max, mean, 5th and 95th percentile')
+    print('   %s %s %s %s %s %s'%(numpy.shape(vals),vals.min(), vals.max(),vals.mean(), numpy.percentile(vals, 5), numpy.percentile(vals, 95)))
 
 ## This is generic, and not specific to RPROP:
 def plot_weight_histogram(model, outfile, lower=-0.25, upper=0.25):
@@ -158,10 +158,10 @@ def plot_weight_histogram(model, outfile, lower=-0.25, upper=0.25):
             frame.axes.get_xaxis().set_ticks([])
         plt.hist(values, 100)
         plt.xlim(lower, upper)
-        print '   param no. %s'%(i)
-        print get_stats(theano_shared_params)
+        print('   param no. %s'%(i))
+        print(get_stats(theano_shared_params))
     plt.savefig(outfile)
-    print 'Made plot %s'%(outfile)
+    print('Made plot %s'%(outfile))
     
     
     

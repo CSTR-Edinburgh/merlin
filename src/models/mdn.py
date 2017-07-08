@@ -40,7 +40,7 @@
 ###THEANO_FLAGS='cuda.root=/opt/cuda-5.0.35,mode=FAST_RUN,device=gpu0,floatX=float32,exception_verbosity=high' python dnn.py
 """
 """
-import cPickle
+import pickle
 import os
 import sys
 import time
@@ -98,7 +98,7 @@ class MixtureDensityNetwork(object):
         self.x = T.matrix('x') 
         self.y = T.matrix('y') 
 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = n_ins
             else:
@@ -139,7 +139,7 @@ class MixtureDensityNetwork(object):
 
         if self.beta_opt:
             assert n_component == 1, "beta optimisation only implemented for single-component MDNs"
-            for i in xrange(n_component):  #n_component
+            for i in range(n_component):  #n_component
                 sigma = self.final_layer.sigma[:, i*n_outs:(i+1)*n_outs]
                 mu    = self.final_layer.mu[:, i*n_outs:(i+1)*n_outs]
                 mix_weight = self.final_layer.mix[:, i]
@@ -170,8 +170,8 @@ class MixtureDensityNetwork(object):
 
             all_mix_prob = []
             
-            print   n_component
-            for i in xrange(n_component):  #n_component
+            print(n_component)
+            for i in range(n_component):  #n_component
                 sigma = self.final_layer.sigma[:, i*n_outs:(i+1)*n_outs]
                 mu    = self.final_layer.mu[:, i*n_outs:(i+1)*n_outs]
                 mix_weight = self.final_layer.mix[:, i]
@@ -190,7 +190,7 @@ class MixtureDensityNetwork(object):
             
 
         if self.l2_reg is not None:
-            for i in xrange(self.n_layers-1):
+            for i in range(self.n_layers-1):
                 W = self.params[i * 2]
                 self.finetune_cost += self.l2_reg * T.sqr(W).sum()
             self.finetune_cost += self.l2_reg * T.sqr(self.final_layer.W_mu).sum()
@@ -215,7 +215,7 @@ class MixtureDensityNetwork(object):
 
         layer_size = len(self.params)
         lr_list = []
-        for i in xrange(layer_size):
+        for i in range(layer_size):
             lr_list.append(learning_rate)
 
         ##top 2 layers use a smaller learning rate
@@ -279,7 +279,7 @@ class MixtureDensityNetwork(object):
                                           (index + 1) * batch_size]})
         # Create a function that scans the entire validation set
         def valid_score():
-            return [valid_score_i(i) for i in xrange(n_valid_batches)]
+            return [valid_score_i(i) for i in range(n_valid_batches)]
 
         return train_fn, valid_fn
 

@@ -95,7 +95,7 @@ class DeepRecurrentNetwork(object):
         
         BLSTM_variants   = ['BLSTM', 'BSLSTM', 'BLSTME']
         Encoder_variants = ['RNNE', 'LSTME', 'BLSTME', 'SLSTME']
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = n_in
             else:

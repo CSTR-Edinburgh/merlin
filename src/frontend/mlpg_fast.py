@@ -112,7 +112,7 @@ class MLParameterGenerationFast(object):
         mu_frames = np.zeros((frame_number, 3))
         var_frames = np.zeros((frame_number, 3))
 
-        for d in xrange(static_dimension):
+        for d in range(static_dimension):
             var_frames[:, 0] = covariance[:, d]
             var_frames[:, 1] = covariance[:, static_dimension+d]
             var_frames[:, 2] = covariance[:, static_dimension*2+d]

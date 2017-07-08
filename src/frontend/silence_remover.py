@@ -55,14 +55,14 @@ class SilenceRemover(object):
         align_file_number = len(in_align_list)
 
         if  file_number != align_file_number:
-            print   "The number of input and output files does not equal!\n"
+            print("The number of input and output files does not equal!\n")
             sys.exit(1)
         if  file_number != len(out_data_list):
-            print   "The number of input and output files does not equal!\n"
+            print("The number of input and output files does not equal!\n")
             sys.exit(1)
 
         io_funcs = BinaryIOCollection()
-        for i in xrange(file_number):
+        for i in range(file_number):
 
             if self.label_type=="phone_align":
                 if dur_file_list:
@@ -78,7 +78,7 @@ class SilenceRemover(object):
             frame_number = ori_cmp_data.size/self.n_cmp
             
             if len(nonsilence_indices) == frame_number:
-                print 'WARNING: no silence found!'
+                print('WARNING: no silence found!')
                 # previsouly: continue -- in fact we should keep non-silent data!
 
             ## if labels have a few extra frames than audio, this can break the indexing, remove them:
@@ -155,7 +155,7 @@ class SilenceRemover(object):
 
             if self.remove_frame_features:
                 if label_binary_flag == 0:
-                    for frame_index in xrange(frame_number):
+                    for frame_index in range(frame_number):
                         nonsilence_frame_index_list.append(base_frame_index + frame_index)
                 base_frame_index = base_frame_index + frame_number
             elif self.subphone_feats == 'none':
@@ -190,7 +190,7 @@ class SilenceRemover(object):
 
             if self.remove_frame_features:
                 if label_binary_flag == 0:
-                    for frame_index in xrange(frame_number):
+                    for frame_index in range(frame_number):
                         nonsilence_frame_index_list.append(base_frame_index + frame_index)
                 base_frame_index = base_frame_index + frame_number
             elif self.subphone_feats == 'state_only':
@@ -242,11 +242,11 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
         ## In case they are different, resize -- keep label fixed as we assume this has
         ## already been processed. (This problem only arose with STRAIGHT features.)
         if audio_label_difference < 0:  ## label is longer -- pad audio to match by repeating last frame:
-            print 'audio too short -- pad'
+            print('audio too short -- pad')
             padding = numpy.vstack([data[-1, :]] * int(math.fabs(audio_label_difference)))
             data = numpy.vstack([data, padding])
         elif audio_label_difference > 0: ## audio is longer -- cut it
-            print 'audio too long -- trim'
+            print('audio too long -- trim')
             new_length = label.shape[0]
             data = data[:new_length, :]
         #else: -- expected case -- lengths match, so do nothing
@@ -258,7 +258,7 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
             assert (numpy.unique(silence_flag) == numpy.array([0]).all()) or \
                    (numpy.unique(silence_flag) == numpy.array([1]).all()), \
                    'dimension %s of %s contains values other than 0 and 1'%(silence_feature_index, infile)
-        print 'Remove %d%% of frames (%s frames) as silence... '%(100 * numpy.sum(silence_flag / float(len(silence_flag))), int(numpy.sum(silence_flag)))
+        print('Remove %d%% of frames (%s frames) as silence... '%(100 * numpy.sum(silence_flag / float(len(silence_flag))), int(numpy.sum(silence_flag))))
         non_silence_indices = numpy.nonzero(silence_flag == 0)  ## get the indices where silence_flag == 0 is True (i.e. != 0)
         if percent_to_keep != 0:
             assert type(percent_to_keep) == int and percent_to_keep > 0
@@ -272,7 +272,7 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
                         ## IndexError: index 445 is out of bounds for axis 0 with size 445 
             if len(silence_indices_to_keep) == 0:
                 silence_indices_to_keep = numpy.array([1]) ## avoid errors in case there is no silence
-            print '   Restore %s%% (every %sth frame: %s frames) of silent frames'%(percent_to_keep, every_nth, len(silence_indices_to_keep))
+            print('   Restore %s%% (every %sth frame: %s frames) of silent frames'%(percent_to_keep, every_nth, len(silence_indices_to_keep)))
 
             ## Append to end of utt -- same function used for labels and audio
             ## means that violation of temporal order doesn't matter -- will be consistent.

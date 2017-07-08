@@ -47,17 +47,17 @@ if __name__ == '__main__':
 
     ## shall we read the logging config file from command line?
     if len(sys.argv) < 3:
-        print 'usage: python view.py dimension filename(s)'
+        print('usage: python view.py dimension filename(s)')
         sys.exit(1)
 
     dimension = int(sys.argv[1])
     fnames = sys.argv[2:]
 
-    print fnames
+    print(fnames)
     
     io_funcs = BinaryIOCollection()
     for f in fnames:
         features = io_funcs.load_binary_file(f, dimension)
 
-    print features.shape
+    print(features.shape)
     # print features

@@ -1,5 +1,5 @@
 
-import cPickle
+import pickle
 import os
 import sys
 import time
@@ -36,7 +36,7 @@ class SequentialDNN(object):
         self.mW_params = []
         self.mb_params = []
         
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0: 
                 input_size = n_ins
             else:
@@ -79,7 +79,7 @@ class SequentialDNN(object):
         delta_indice = []
         acc_indice = []
         
-        for i in xrange(60):
+        for i in range(60):
             static_indice.append(i)
             delta_indice.append(i+60)
             acc_indice.append(i+120)
@@ -102,7 +102,7 @@ class SequentialDNN(object):
         var_base = var_base ** 2
         
         sub_dim_list = []
-        for i in xrange(61):
+        for i in range(61):
             sub_dim_list.append(1)
             
         sub_dim_start = 0        
@@ -167,7 +167,7 @@ class SequentialDNN(object):
         propagate_error = gnp.dot(observation_error, self.W_params[self.n_layers].T) # final layer is linear output, gradient is one
         self.W_grads.append(current_W_grad)
         self.b_grads.append(current_b_grad)
-        for i in reversed(range(self.n_layers)):
+        for i in reversed(list(range(self.n_layers))):
             current_activation = self.activations[i]
             current_gradient = 1.0 - current_activation ** 2
             current_W_grad = gnp.dot(current_activation.T, propagate_error)
@@ -182,7 +182,7 @@ class SequentialDNN(object):
         
         self.activations.append(train_set_x)
                 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             input_data = self.activations[i]
             current_activations = gnp.tanh(gnp.dot(input_data, self.W_params[i]) + self.b_params[i])
             self.activations.append(current_activations)
@@ -193,7 +193,7 @@ class SequentialDNN(object):
     def gradient_update(self, batch_size, learning_rate, momentum):
     
         multiplier = learning_rate / batch_size;
-        for i in xrange(len(self.W_grads)):
+        for i in range(len(self.W_grads)):
         
             if i >= len(self.W_grads) - 2:
                 local_multiplier = multiplier * 0.5
@@ -230,7 +230,7 @@ class SequentialDNN(object):
         
         current_activations = test_set_x
                 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             input_data = current_activations
             current_activations = gnp.tanh(gnp.dot(input_data, self.W_params[i]) + self.b_params[i])
         
@@ -243,7 +243,7 @@ class SequentialDNN(object):
         
         current_activations = test_set_x
                 
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             input_data = current_activations
             current_activations = gnp.tanh(gnp.dot(input_data, self.W_params[i]) + self.b_params[i])
         
@@ -261,7 +261,7 @@ class SequentialDNN(object):
         delta_indice = []
         acc_indice = []
         
-        for i in xrange(60):
+        for i in range(60):
             static_indice.append(i)
             delta_indice.append(i+60)
             acc_indice.append(i+120)
@@ -278,7 +278,7 @@ class SequentialDNN(object):
         var_base = var_base ** 2
         
         sub_dim_list = []
-        for i in xrange(60):
+        for i in range(60):
             sub_dim_list.append(1)
             
         sub_dim_start = 0
@@ -315,14 +315,14 @@ class SequentialDNN(object):
         assert len(self.W_params) == len(W_params)
         
 #        for i in xrange(len(self.W_params)):
-        for i in xrange(len(self.W_params)):
+        for i in range(len(self.W_params)):
             self.W_params[i] = W_params[i]
             self.b_params[i] = b_params[i]
 
     def set_delta_params(self, mW_params, mb_params):
         assert len(self.mW_params) == len(mW_params)
         
-        for i in xrange(len(self.mW_params)):
+        for i in range(len(self.mW_params)):
             self.mW_params[i] = mW_params[i]
             self.mb_params[i] = mb_params[i]
 
@@ -334,7 +334,7 @@ class SequentialDNN(object):
         wuw_mat = gnp.zeros((frame_number*static_dimension, frame_number*static_dimension))
         wu_mat  = gnp.zeros((frame_number*static_dimension, 3*frame_number*static_dimension))
 
-        for i in xrange(static_dimension):
+        for i in range(static_dimension):
             temp_var_base = [var_base[i*3], var_base[i*3+1], var_base[i*3+2]]
             temp_wuw, temp_wu = self.pre_compute_wuw(frame_number, temp_var_base)
             wuw_mat[frame_number*i:frame_number*(i+1), frame_number*i:frame_number*(i+1)] = gnp.garray(temp_wuw[:])

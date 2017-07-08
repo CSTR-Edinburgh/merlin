@@ -1,5 +1,5 @@
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -54,7 +54,7 @@ from utils.learn_rates import ExpDecreaseLearningRate
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
 
 
 
@@ -121,7 +121,7 @@ def visualize_dnn(dnn):
 
     layer_num = len(dnn.params) / 2     ## including input and output
 
-    for i in xrange(layer_num):
+    for i in range(layer_num):
         fig_name = 'Activation weights W' + str(i)
         fig_title = 'Activation weights of W' + str(i)
         xlabel = 'Neuron index of hidden layer ' + str(i)
@@ -203,7 +203,7 @@ def infer_projections(train_xy_file_list, valid_xy_file_list, \
 
 
     ############## load existing dnn #####
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     train_all_fn, train_subword_fn, train_word_fn, infer_projections_fn, valid_fn, valid_score_i = \
                     dnn_model.build_finetune_functions(
                     (train_set_x, train_set_x_proj, train_set_y), 
@@ -255,7 +255,7 @@ def infer_projections(train_xy_file_list, valid_xy_file_list, \
         logger.debug('infer word representations for validation set')
         valid_error = []
         n_valid_batches = valid_set_x.get_value().shape[0] / batch_size
-        for minibatch_index in xrange(n_valid_batches):
+        for minibatch_index in range(n_valid_batches):
             v_loss = infer_projections_fn(minibatch_index, current_finetune_lr, current_momentum)
             valid_error.append(v_loss)
 
@@ -322,7 +322,7 @@ def dnn_generation_PROJECTION(valid_file_list, nnets_file_name, n_ins, n_outs, o
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     ## 'remove' word representations by randomising them. As model is unpickled and
     ## not re-saved, this does not throw trained parameters away.
@@ -348,8 +348,8 @@ def dnn_generation_PROJECTION(valid_file_list, nnets_file_name, n_ins, n_outs, o
         ## use mean projection
         P = dnn_model.get_projection_weights()
         mean_row = P[:,:projection_end].mean(axis=0)
-        print 'mean row used for projection:'
-        print mean_row
+        print('mean row used for projection:')
+        print(mean_row)
         P = numpy.ones(numpy.shape(P), dtype=numpy.float32) * mean_row   ## stack mean rows
         dnn_model.params[0].set_value(P, borrow=True)
     elif synth_mode == 'inferred':
@@ -379,10 +379,10 @@ def dnn_generation_PROJECTION(valid_file_list, nnets_file_name, n_ins, n_outs, o
             for y in range(nstep):               
                 grid_params.append( column_min + (numpy.array([x, y]) * steps) )
         stacked_params = numpy.vstack(grid_params)
-        print stacked_params
-        print numpy.shape(stacked_params)
-        print 
-        print 
+        print(stacked_params)
+        print(numpy.shape(stacked_params))
+        print() 
+        print() 
 
 
         proj = numpy.ones(numpy.shape(P))
@@ -461,7 +461,7 @@ def dnn_generation_PROJECTION(valid_file_list, nnets_file_name, n_ins, n_outs, o
 
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -511,11 +511,11 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
     
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -648,10 +648,10 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
 
     if synth_mode == 'single_sentence_demo':
         synth_utts_input = synth_utts_input[:1]
-        print 
-        print 'mode: single_sentence_demo'
-        print synth_utts_input
-        print
+        print() 
+        print('mode: single_sentence_demo')
+        print(synth_utts_input)
+        print()
 
     indexed_utt_dir = os.path.join(out_dir, 'utt') ## place to put test utts with tokens labelled with projection indices
     direcs = [out_dir, indexed_utt_dir]
@@ -732,7 +732,7 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
     # create all the lists of these, ready to pass to the label composer
 
     in_label_align_file_list = {}
-    for label_style, label_style_required in label_composer.label_styles.iteritems():
+    for label_style, label_style_required in label_composer.label_styles.items():
         if label_style_required:
             logger.info('labels of style %s are required - constructing file paths for them' % label_style)
             if label_style == 'xpath':
@@ -747,7 +747,7 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
         num_files=len(file_id_list)
         logger.info('the label styles required are %s' % label_composer.label_styles)
         
-        for i in xrange(num_files):
+        for i in range(num_files):
             logger.info('making input label features for %4d of %4d' % (i+1,num_files))
 
             # iterate through the required label styles and open each corresponding label file
@@ -755,7 +755,7 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
             # a dictionary of file descriptors, pointing at the required files
             required_labels={}
             
-            for label_style, label_style_required in label_composer.label_styles.iteritems():
+            for label_style, label_style_required in label_composer.label_styles.items():
                 
                 # the files will be a parallel set of files for a single utterance
                 # e.g., the XML tree and an HTS label file
@@ -767,7 +767,7 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
             label_composer.make_labels(required_labels,out_file_name=binary_label_file_list[i],fill_missing_values=cfg.fill_missing_values,iterate_over_frames=cfg.iterate_over_frames)
                 
             # now close all opened files
-            for fd in required_labels.itervalues():
+            for fd in required_labels.values():
                 fd.close()
     
     # no silence removal for synthesis ...
@@ -791,7 +791,7 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
         nn_cmp_norm_dir = os.path.join(out_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
 
         in_file_list_dict = {}
-        for feature_name in cfg.in_dir_dict.keys():
+        for feature_name in list(cfg.in_dir_dict.keys()):
             in_direc = os.path.join(cmp_dir, feature_name)
             assert os.path.isdir(in_direc), in_direc
             in_file_list_dict[feature_name] = prepare_file_path_list(file_id_list, in_direc, cfg.file_extension_dict[feature_name], False)        
@@ -818,7 +818,7 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
     ### retrieve acoustic normalisation information for normalising the features back
     var_dir   = os.path.join(data_dir, 'var')
     var_file_dict = {}
-    for feature_name in cfg.out_dimension_dict.keys():
+    for feature_name in list(cfg.out_dimension_dict.keys()):
         var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
         
         
@@ -890,9 +890,9 @@ def main_function(cfg, in_dir, out_dir, token_xpath, index_attrib_name, synth_mo
         valid_x_file_list = copy.copy(nn_label_norm_file_list)
         valid_y_file_list = copy.copy(nn_cmp_norm_file_list)
 
-        print 'FILELIST for inferr:'
-        print train_x_file_list 
-        print 
+        print('FILELIST for inferr:')
+        print(train_x_file_list) 
+        print() 
 
         try:
             inferred_weights = infer_projections(train_xy_file_list = (train_x_file_list, train_y_file_list), \
@@ -987,11 +987,11 @@ def simple_scale_variance(indir, outdir, var_file_dict, out_dimension_dict, file
     static_variances = {}
  
     static_dimension_dict = {}
-    for (feature_name,size) in out_dimension_dict.items():
+    for (feature_name,size) in list(out_dimension_dict.items()):
         static_dimension_dict[feature_name] = size/3
 
     io_funcs = BinaryIOCollection()
-    for feature_name in var_file_dict.keys():
+    for feature_name in list(var_file_dict.keys()):
         var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
         static_var_values = var_values[:static_dimension_dict[feature_name], :]
         static_variances[feature_name] = static_var_values
@@ -1077,13 +1077,13 @@ def generate_wav_glottHMM(gen_dir, gen_file_id_list):
 
             stem_name = os.path.join(gen_dir, uttname + '.txt')
             comm = '%s %s %s %s %s'%(exports, synthesis, stem_name, general_glott_conf, user_glott_conf)
-            print comm
+            print(comm)
             os.system(comm)
 
 
             
         else:
-            print 'missing stream(s) for utterance ' + uttname
+            print('missing stream(s) for utterance ' + uttname)
         
 
 
@@ -1106,7 +1106,7 @@ if __name__ == '__main__':
     logger = logging.getLogger("main")
 
     if len(sys.argv) not in [8,9]:
-        print sys.argv
+        print(sys.argv)
         sys.exit('usage: run_dnn.sh config_file_name utt_dir')
 
     config_file = sys.argv[1]

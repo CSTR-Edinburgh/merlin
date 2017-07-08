@@ -49,10 +49,10 @@ class HTSLabelModification(object):
         '''
         utt_number = len(gen_dur_list)
         if utt_number != len(in_gen_label_align_file_list):
-            print   "the number of input and output files should be the same!\n";
+            print("the number of input and output files should be the same!\n");
             sys.exit(1)
                
-        for i in xrange(utt_number):
+        for i in range(utt_number):
             if (self.label_type=="state_align"):
                 self.modify_dur_from_state_alignment_labels(in_gen_label_align_file_list[i], gen_dur_list[i], gen_label_list[i])
             elif (self.label_type=="phone_align"):

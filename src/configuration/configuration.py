@@ -39,10 +39,10 @@
 
 
 import math
-import ConfigParser
+import configparser
 import os
 import logging
-import StringIO
+import io
 import sys
 import textwrap
 import datetime
@@ -116,7 +116,7 @@ class configuration(object):
 
         # load the config file
         try:
-            configparser = ConfigParser.ConfigParser()
+            configparser = configparser.ConfigParser()
             configparser.readfp(open(configFile))
             logger.debug('successfully read and parsed user configuration file %s' % configFile)
         except:
@@ -131,7 +131,7 @@ class configuration(object):
             try:
                 self.work_dir = configparser.get('Paths', 'work')
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 if self.work_dir == None:
                     logger.critical('Paths:work has no value!')
                     raise Exception
@@ -180,7 +180,7 @@ class configuration(object):
             ('stats_dir', self.stats_dir, 'Paths', 'stats'),
             ('gen_dir'  ,   self.gen_dir, 'Paths', 'gen'),
             ('pred_feat_dir',self.gen_dir, 'Paths', 'pred_feat'),
-            
+
             ('plot',      False, 'Utility', 'plot'),
             ('profile',   False, 'Utility', 'profile'),
 
@@ -199,13 +199,13 @@ class configuration(object):
             # Input-Output
             ('inp_dim', 425, 'Input-Output', 'inp_dim'),
             ('out_dim', 187, 'Input-Output', 'out_dim'),
-           
+
             ('inp_file_ext', '.lab', 'Input-Output', 'inp_file_ext'),
             ('out_file_ext', '.cmp', 'Input-Output', 'out_file_ext'),
 
             ('inp_norm', 'MINMAX', 'Input-Output', 'inp_norm'),
             ('out_norm', 'MINMAX', 'Input-Output', 'out_norm'),
-            
+
 	    ## for glottHMM
             ('in_F0_dir'   , os.path.join(self.work_dir, 'data/F0')  , 'Paths', 'in_F0_dir'),
             ('in_Gain_dir'   , os.path.join(self.work_dir, 'data/Gain')  , 'Paths', 'in_Gain_dir'),
@@ -282,16 +282,16 @@ class configuration(object):
 
             ('optimizer'        ,   'adam', 'Architecture', 'optimizer'),
             ('loss_function'    ,    'mse', 'Architecture', 'loss_function'),
-            
+
             # RNN
             ('stateful'           , False, 'Architecture', 'stateful'),
             ('use_high_batch_size', False, 'Architecture', 'use_high_batch_size'),
-            
+
             ('training_algo',   1, 'Architecture', 'training_algo'),
             ('merge_size'   ,   1, 'Architecture', 'merge_size'),
             ('seq_length'   , 200, 'Architecture', 'seq_length'),
             ('bucket_range' , 100, 'Architecture', 'bucket_range'),
-            
+
             # Data
             ('shuffle_data', True, 'Data', 'shuffle_data'),
 
@@ -430,7 +430,7 @@ class configuration(object):
                 value = configparser.get(section,option)
                 user_or_default='user'
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 # use default value, if there is one
                 if (default == None) or \
                    (default == '')   or \
@@ -497,7 +497,7 @@ class configuration(object):
             'MC2B'   : os.path.join(self.sptk_bindir,'mc2b'),
             'B2MC'  : os.path.join(self.sptk_bindir,'b2mc')
             }
-        
+
         self.STRAIGHT = {
             'SYNTHESIS_FFT' : os.path.join(self.straight_bindir, 'synthesis_fft'),
             'BNDAP2AP'      : os.path.join(self.straight_bindir, 'bndap2ap'),
@@ -520,11 +520,11 @@ class configuration(object):
 
             if not os.path.exists(self.gen_dir):
                 os.makedirs(self.gen_dir)
-            
+
             # input-output normalization stat files
             self.inp_stats_file = os.path.join(self.stats_dir, "input_%d_%s_%d.norm" %(int(self.train_file_number), self.inp_norm, self.inp_dim))
             self.out_stats_file = os.path.join(self.stats_dir, "output_%d_%s_%d.norm" %(int(self.train_file_number), self.out_norm, self.out_dim))
-            
+
             # define model file name
             if self.sequential_training:
                 self.combined_model_arch = 'RNN'+str(self.training_algo)
@@ -534,12 +534,12 @@ class configuration(object):
             self.combined_model_arch += '_'+str(len(self.hidden_layer_size))
             self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_size))
             self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_type))
-        
+
             self.nnets_file_name = '%s_%d_train_%d_%d_%d_%d_%d_model' \
-                              %(self.combined_model_arch, int(self.shuffle_data),  
+                              %(self.combined_model_arch, int(self.shuffle_data),
                                  self.inp_dim, self.out_dim, self.train_file_number, self.batch_size, self.num_of_epochs)
-        
-            logger.info('model file: %s' % (self.nnets_file_name)) 
+
+            logger.info('model file: %s' % (self.nnets_file_name))
 
             # model files
             self.json_model_file = os.path.join(self.model_dir, self.nnets_file_name+'.json')
@@ -549,24 +549,24 @@ class configuration(object):
             self.pred_feat_dir = os.path.join(self.gen_dir, self.nnets_file_name)
             if not os.path.exists(self.pred_feat_dir):
                 os.makedirs(self.pred_feat_dir)
-          
+
             # string.lower for some architecture values
             self.output_layer_type = self.output_layer_type.lower()
             self.optimizer         = self.optimizer.lower()
             self.loss_function     = self.loss_function.lower()
             for i in range(len(self.hidden_layer_type)):
                 self.hidden_layer_type[i] = self.hidden_layer_type[i].lower()
-            
+
             # set sequential training True if using LSTMs
             if 'lstm' in self.hidden_layer_type:
                 self.sequential_training = True
-            
+
             # set/limit batch size to 25
             if self.sequential_training and self.batch_size>50:
                 if not self.use_high_batch_size:
                     logger.info('reducing the batch size from %s to 25' % (self.batch_size))
                     self.batch_size = 25 ## num. of sentences in this case
-           
+
             # set default seq length for duration model
             if self.DurationModel and self.training_algo == 1 and self.seq_length>50:
                 self.seq_length = 20
@@ -576,9 +576,9 @@ class configuration(object):
             self.rnn_params['merge_size']   = self.merge_size
             self.rnn_params['seq_length']   = self.seq_length
             self.rnn_params['bucket_range'] = self.bucket_range
-            self.rnn_params['stateful']     = self.stateful  
+            self.rnn_params['stateful']     = self.stateful
 
-        
+
 
 
 
@@ -760,7 +760,7 @@ class configuration(object):
 
         self.multistream_outs = []
         if self.multistream_switch:
-            for feature_name in self.out_dimension_dict.keys():
+            for feature_name in list(self.out_dimension_dict.keys()):
                 self.multistream_outs.append(self.out_dimension_dict[feature_name])
 
 #                stream_lr_ratio = 0.5
@@ -844,7 +844,7 @@ class configuration(object):
 
 
         #To be recorded in the logging file for reference
-        for param_name in self.hyper_params.keys():
+        for param_name in list(self.hyper_params.keys()):
             logger.info('%s : %s' %(param_name, str(self.hyper_params[param_name])))
 
                 # input files
@@ -916,7 +916,7 @@ class configuration(object):
             # inject the config lines for the file handler, now that we know the name of the file it will write to
 
             if not os.path.exists(self.log_path):
-                os.makedirs(self.log_path, 0755)
+                os.makedirs(self.log_path, 0o755)
             log_file_name = '%s_%s_%d_%d_%d_%d_%f_%s.log' %(self.combined_model_name, self.combined_feature_name, self.train_file_number,
                                                                       self.cmp_dim, len(self.hidden_layer_size),
                                                                       self.hidden_layer_size[-1], self.learning_rate,
@@ -937,7 +937,7 @@ class configuration(object):
 
             try:
                 # pass that string as a filehandle
-                fh = StringIO.StringIO(config_string)
+                fh = io.StringIO(config_string)
                 logging.config.fileConfig(fh)
                 fh.close()
                 logger.info("logging is now fully configured")

@@ -108,7 +108,7 @@ class MLParameterGeneration(object):
         fn_wdw = self.build_theano_function_wdw()
         fn_wdu = self.build_theano_function_wdu()
 
-        for d in xrange(static_dimension):
+        for d in range(static_dimension):
             logger.debug('static dimension %3d of %3d' % (d+1,static_dimension) )
             
             D_static = self.prepare_D(frame_number, covariance[d, 0])
@@ -141,12 +141,12 @@ class MLParameterGeneration(object):
         w_delta  = numpy.zeros((frame_number+win_length*2, frame_number+win_length*2), dtype=theano.config.floatX)
         w_acc    = numpy.zeros((frame_number+win_length*2, frame_number+win_length*2), dtype=theano.config.floatX)
 
-        for i in xrange(frame_number+win_length*2):
+        for i in range(frame_number+win_length*2):
             w_static[i, i] = 1.0
             w_delta[i, i]  = self.delta_win[win_length]
             w_acc[i, i]    = self.acc_win[win_length]
 
-            for j in xrange(win_length):
+            for j in range(win_length):
                 if i - j > 0:
                     w_delta[i, i-j-1] = self.delta_win[win_length-j-1]
                     w_acc[i, i-j-1]   = self.acc_win[win_length-j-1]
@@ -161,11 +161,11 @@ class MLParameterGeneration(object):
         win_length = self.win_length
         D_matrix = numpy.zeros((frame_number+win_length*2, frame_number+win_length*2), dtype=theano.config.floatX)
 
-        for i in xrange(win_length):
+        for i in range(win_length):
             D_matrix[i, i] = 1.0
             D_matrix[frame_number+win_length+i, frame_number+win_length+i] = 1.0
 
-        for i in xrange(frame_number):
+        for i in range(frame_number):
             D_matrix[win_length+i, win_length+i] = 1.0 / D_value
 
         return  D_matrix

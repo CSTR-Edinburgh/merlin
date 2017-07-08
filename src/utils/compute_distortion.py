@@ -71,7 +71,7 @@ class   DistortionComputation(object):
             generation_lf0, lf0_frame_number = self.load_binary_file(lf0_file_name, self.lf0_dim)
 
             if ref_frame_number != mgc_frame_number:
-                print   "The number of frames is not the same: %d vs %d. Error in compute_distortion.py\n." %(ref_frame_number, mgc_frame_number)
+                print("The number of frames is not the same: %d vs %d. Error in compute_distortion.py\n." %(ref_frame_number, mgc_frame_number))
                 sys.exit(1)
 
             reference_mgc = reference_cmp[:, 0:self.mgc_dim]

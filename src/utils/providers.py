@@ -422,7 +422,7 @@ def expand_projection_inputs(temp_set_x, index_to_project, projection_insize):
     #     print projection_indices.tolist()
     #     print '            ^--- proj indices'
     #     print 
-    one_hot[range(m),projection_indices] = 1.0
+    one_hot[list(range(m)),projection_indices] = 1.0
     ## Effectively remove the index from the original data by setting to 0:
     temp_set_x[:, index_to_project] = 0.0
     return temp_set_x, one_hot

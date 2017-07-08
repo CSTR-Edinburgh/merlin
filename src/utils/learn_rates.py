@@ -171,7 +171,7 @@ class   ExpDecreaseLearningRate(object):
         self.rate_diff = self.start_rate - self.end_rate
         
         self.decrease_ratio = numpy.zeros((1, maximum_epoch+1))
-        for i in xrange(maximum_epoch):
+        for i in range(maximum_epoch):
             self.decrease_ratio[0, i+1] = maximum_epoch - i
             
         self.decrease_ratio = numpy.exp(self.decrease_ratio)
