@@ -1,39 +1,39 @@
 ################################################################################
 #           The Neural Network (NN) based Speech Synthesis System
 #                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/
-#                
-#                Centre for Speech Technology Research                 
-#                     University of Edinburgh, UK                       
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
 #                      Copyright (c) 2014-2015
-#                        All Rights Reserved.                           
-#                                                                       
+#                        All Rights Reserved.
+#
 # The system as a whole and most of the files in it are distributed
 # under the following copyright and conditions
 #
-#  Permission is hereby granted, free of charge, to use and distribute  
-#  this software and its documentation without restriction, including   
-#  without limitation the rights to use, copy, modify, merge, publish,  
-#  distribute, sublicense, and/or sell copies of this work, and to      
-#  permit persons to whom this work is furnished to do so, subject to   
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
 #  the following conditions:
-#  
-#   - Redistributions of source code must retain the above copyright  
-#     notice, this list of conditions and the following disclaimer.   
-#   - Redistributions in binary form must reproduce the above         
-#     copyright notice, this list of conditions and the following     
-#     disclaimer in the documentation and/or other materials provided 
-#     with the distribution.                                          
-#   - The authors' names may not be used to endorse or promote products derived 
-#     from this software without specific prior written permission.   
-#                                  
-#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        
-#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      
-#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   
-#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     
-#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    
-#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   
-#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          
-#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 ################################################################################
 
@@ -71,13 +71,13 @@ from operator import itemgetter, attrgetter
 #     """A handler for saving plots to disk"""
 #     def __init__(self,filename):
 #         logging.FileHandler.__init__(self,filename, mode='a', encoding=None, delay=False)
-    
+
 
 
 class PlotWithData(object):
     # a generic plot object that contains both the underlying data and the plot itself
     # this class needs to be subclassed for each specialised type of plot that we want
-    
+
     # the underlying data for the plot - a dictionary of data series
     # each series is a list of data points of arbitrary type (e.g., tuples, arrays, ..)
     data=None
@@ -87,7 +87,7 @@ class PlotWithData(object):
     def __init__(self,name):
         # clear the data series
         self.data={}
-        
+
     def add_data_point(self,series_name,data_point):
         # if there is no data series with this name yet, create an empty one
         if series_name not in self.data:
@@ -98,7 +98,7 @@ class PlotWithData(object):
 
     def sort_and_validate(self):
         # only applied if the data points are tuples, such as (x,y) values
-        
+
         # TO DO: first check that each series is a list of tuples, and that they have the same number of elements
 
         # this method checks that all data series
@@ -134,7 +134,7 @@ class PlotWithData(object):
 
 
         # print "ending with self.data=",self.data
-    
+
     def generate_plot(self,**kwargs):
         logger = logging.getLogger("plotting")
         logger.error('Cannot generate a plot from abstract class: PlotWithData' )
@@ -143,10 +143,10 @@ class PlotWithData(object):
 class MultipleSeriesPlot(PlotWithData):
 
     def generate_plot(self,filename,title='',xlabel='',ylabel='',xlim=None,ylim=None):
-        
+
         logger = logging.getLogger("plotting")
         logger.debug('MultipleSeriesPlot.generate_plot')
-        
+
         # a plot with one or more time series sharing a common x axis:
         # e.g., the training error and the validation error plotted against epochs
 
@@ -166,12 +166,12 @@ class MultipleSeriesPlot(PlotWithData):
         splt.set_title(title)
         splt.set_xlabel(xlabel)
         splt.set_ylabel(ylabel)
-        
+
         if xlim:
             pylab.xlim(xlim)
         if ylim:
             pylab.ylim(ylim)
-        
+
         for series_name,data_points in self.data.items():
             xpoints=numpy.asarray([seq[0] for seq in data_points])
             ypoints=numpy.asarray([seq[1] for seq in data_points])
@@ -180,7 +180,7 @@ class MultipleSeriesPlot(PlotWithData):
             line.set_label(series_name)
 
         splt.legend()
-        
+
         # TO DO - better filename configuration for plots
         self.plot.savefig(filename)
 
@@ -192,7 +192,7 @@ class SingleWeightMatrixPlot(PlotWithData):
         key_num = len(data_keys)
 
         self.plot = plt.figure()
-        if key_num == 1:   
+        if key_num == 1:
             splt = self.plot.add_subplot(1, 1, 1)
             im_data = splt.imshow(numpy.flipud(self.data[data_keys[0]][0]), origin='lower')
             splt.set_xlabel(xlabel)
@@ -205,18 +205,18 @@ class SingleWeightMatrixPlot(PlotWithData):
         self.plot.savefig(filename)  #, bbox_inches='tight'
 
 #class MultipleLinesPlot(PlotWithData):
-#    def generate_plot(self, filename, title='', xlabel='', ylabel=''):    
+#    def generate_plot(self, filename, title='', xlabel='', ylabel=''):
 
 class LoggerPlotter(logging.getLoggerClass()):
     """Based on the built-in logging class, with added capabilities including plotting"""
-    
+
     # a dictionary to store all generated plots
     # keys are plot names
-    # values are 
+    # values are
     plots ={}
     # where the plots will be saved - a directory
     plot_path='/tmp' # default location
-        
+
     def __init__(self,name):
         # initialise the logging parent class
         # (should really use 'super' here I think, but that fails - perhaps because the built in logger class is not derived from 'object' ?)
@@ -230,13 +230,13 @@ class LoggerPlotter(logging.getLoggerClass()):
 
     def create_plot(self,plot_name,plot_object):
         self.plots[plot_name] = plot_object(plot_name)
-        
+
     def add_plot_point(self,plot_name,series_name,data_point):
         # add a data point to a named plot
         if plot_name not in self.plots:
             self.plots[plot_name] = PlotWithData(plot_name)
         self.plots[plot_name].add_data_point(series_name,data_point)
-            
+
     def save_plot(self,plot_name,**kwargs):
         logger = logging.getLogger("plotting")
         if plot_name not in self.plots:
@@ -280,7 +280,7 @@ class ColouredFormatter(logging.Formatter):
         'CRITICAL': MAGENTA
     }
 
-    max_level_name_width = '8' 
+    max_level_name_width = '8'
 
     # terminal escape sequences
     RESET_SEQ = "\033[0m"
@@ -340,28 +340,28 @@ if __name__ == '__main__':
     # # need a handler which will control where to save plots
     # ph = PlotHandler("/tmp/plot_test/testing.pdf")
     # logger.addHandler(ph)
-    
+
 
     print("testing the plotting code")
-    
+
     # the first argument is just a key for referring to this plot within the code
     # the second argument says what kind of plot we will be making
 
 
     plotlogger.set_plot_path("./tmp")
-    
+
     logger.create_plot('test plot',MultipleTimeSeriesPlot)
-    
+
     plotlogger.add_plot_point('test plot','validation',(1,4))
     plotlogger.add_plot_point('test plot','validation',(3,2))
     plotlogger.add_plot_point('test plot','validation',(2,3))
     plotlogger.add_plot_point('test plot','validation',(4,3))
-    
+
     plotlogger.add_plot_point('test plot','training',(1,3))
     plotlogger.add_plot_point('test plot','training',(3,1))
     plotlogger.add_plot_point('test plot','training',(2,2))
     plotlogger.add_plot_point('test plot','training',(4,4))
-    
+
     plotlogger.save_plot('test plot',title='Training and validation error',xlabel='epochs',ylabel='error')
 
     weights = [[1, 2, 3, 3], [1, 1, 2, 1], [2, 1, 2, 2]]

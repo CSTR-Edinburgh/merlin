@@ -1,43 +1,43 @@
 ################################################################################
 #           The Neural Network (NN) based Speech Synthesis System
 #                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/
-#                
-#                Centre for Speech Technology Research                 
-#                     University of Edinburgh, UK                       
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
 #                      Copyright (c) 2014-2015
-#                        All Rights Reserved.                           
-#                                                                       
+#                        All Rights Reserved.
+#
 # The system as a whole and most of the files in it are distributed
 # under the following copyright and conditions
 #
-#  Permission is hereby granted, free of charge, to use and distribute  
-#  this software and its documentation without restriction, including   
-#  without limitation the rights to use, copy, modify, merge, publish,  
-#  distribute, sublicense, and/or sell copies of this work, and to      
-#  permit persons to whom this work is furnished to do so, subject to   
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
 #  the following conditions:
-#  
-#   - Redistributions of source code must retain the above copyright  
-#     notice, this list of conditions and the following disclaimer.   
-#   - Redistributions in binary form must reproduce the above         
-#     copyright notice, this list of conditions and the following     
-#     disclaimer in the documentation and/or other materials provided 
-#     with the distribution.                                          
-#   - The authors' names may not be used to endorse or promote products derived 
-#     from this software without specific prior written permission.   
-#                                  
-#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        
-#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      
-#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   
-#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     
-#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    
-#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   
-#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          
-#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 ################################################################################
 
-## Added FAST_MLPG as a variable here, in case someone wants to use the slow version, but perhaps we 
+## Added FAST_MLPG as a variable here, in case someone wants to use the slow version, but perhaps we
 ## should always use the bandmat version?
 FAST_MLPG = True
 #io_funcs.
@@ -63,7 +63,7 @@ class   ParameterGeneration(object):
         # self.logger = logging.getLogger('param_generation')
 
         self.var = {}
-    
+
     def duration_decomposition(self, in_file_list, dimension, out_dimension_dict, file_extension_dict):
 
         logger = logging.getLogger('param_generation')
@@ -77,15 +77,15 @@ class   ParameterGeneration(object):
             sys.exit(1)
         else:
             feature_name = list(out_dimension_dict.keys())[0]
-        
+
         io_funcs = BinaryIOCollection()
-        
+
         findex=0
         flen=len(in_file_list)
         for file_name in in_file_list:
-            
+
             findex=findex+1
-            
+
             dir_name = os.path.dirname(file_name)
             file_id = os.path.splitext(os.path.basename(file_name))[0]
 
@@ -99,7 +99,7 @@ class   ParameterGeneration(object):
             logger.info('processing %4d of %4d: %s' % (findex,flen,file_name) )
 
             new_file_name = os.path.join(dir_name, file_id + file_extension_dict[feature_name])
-            io_funcs.array_to_binary_file(gen_features, new_file_name) 
+            io_funcs.array_to_binary_file(gen_features, new_file_name)
 
             logger.debug('wrote to file %s' % new_file_name)
 
@@ -122,7 +122,7 @@ class   ParameterGeneration(object):
 #            else:
 #                vuv_dimension = dimension_index
 #                recorded_vuv = True
-            
+
             dimension_index += out_dimension_dict[feature_name]
 
         io_funcs = BinaryIOCollection()
@@ -132,20 +132,20 @@ class   ParameterGeneration(object):
         findex=0
         flen=len(in_file_list)
         for file_name in in_file_list:
-            
+
             findex=findex+1
-            
+
             dir_name = os.path.dirname(file_name)
             file_id = os.path.splitext(os.path.basename(file_name))[0]
 
             features, frame_number = io_funcs.load_binary_file_frame(file_name, dimension)
-            
+
             logger.info('processing %4d of %4d: %s' % (findex,flen,file_name) )
 
             for feature_name in self.gen_wav_features:
-                
+
                 logger.debug(' feature: %s' % feature_name)
-                
+
                 current_features = features[:, stream_start_index[feature_name]:stream_start_index[feature_name]+out_dimension_dict[feature_name]]
                 if FAST_MLPG:
                     ### fast version wants variance per frame, not single global one:
@@ -153,7 +153,7 @@ class   ParameterGeneration(object):
                     var = numpy.transpose(numpy.tile(var,frame_number))
                 else:
                     var = self.var[feature_name]
-                    
+
 #                print  var.shape[1]
                 if do_MLPG == False:
                     gen_features = current_features
@@ -181,17 +181,17 @@ class   ParameterGeneration(object):
                     in_f = open(label_align_dir+'/'+file_id+'.lab','r')
                     for line in in_f.readlines():
                         line = line.strip()
-            
+
                         if len(line) < 1:
                             continue
                         temp_list  = re.split('\s+', line)
                         start_time = int(int(temp_list[0])*(10**-4)/5)
                         end_time   = int(int(temp_list[1])*(10**-4)/5)
-            
+
                         full_label = temp_list[2]
-            
+
                         label_binary_flag = self.check_silence_pattern(full_label, silence_pattern)
-                        
+
                         if label_binary_flag:
                             if feature_name in ['lf0', 'F0']:
                                 gen_features[start_time:end_time, :] = self.inf_float
@@ -213,7 +213,7 @@ class   ParameterGeneration(object):
             self.var[feature_name] = var_values
 
 
-    def check_silence_pattern(self, label, silence_pattern): 
+    def check_silence_pattern(self, label, silence_pattern):
         for current_pattern in silence_pattern:
             current_pattern = current_pattern.strip('*')
             if current_pattern in label:
@@ -224,14 +224,14 @@ class   ParameterGeneration(object):
 
 
 if __name__ == '__main__':
-    
+
     in_file_list = ['/afs/inf.ed.ac.uk/group/project/dnn_tts/mtl_dnn/gen/dnn_2500_601_229/hvd_678.cmp']
 
     out_dimension_dict = { 'mgc' : 150,
                            'lf0' : 3,
                            'vuv' : 1,
                            'bap' : 75}
-        
+
     file_extension_dict = {'mgc' : '.mgc',
                            'lf0' : '.lf0',
                            'vuv' : '.vuv',
@@ -240,7 +240,7 @@ if __name__ == '__main__':
     var_file_dict  = { 'mgc' : '/afs/inf.ed.ac.uk/group/project/dnn_tts/mtl_dnn/data/var/mgc',
                        'lf0' : '/afs/inf.ed.ac.uk/group/project/dnn_tts/mtl_dnn/data/var/lf0',
                        'bap' : '/afs/inf.ed.ac.uk/group/project/dnn_tts/mtl_dnn/data/var/bap'}
-         
+
     generator = ParameterGeneration()
 
     generator.acoustic_decomposition(in_file_list, 229, out_dimension_dict, file_extension_dict, var_file_dict)
