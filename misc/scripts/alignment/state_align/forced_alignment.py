@@ -32,16 +32,16 @@ class ForcedAlignment(object):
     def _make_proto(self):
         ## make proto
         fid = open(self.proto, 'w')
-        means = ' '.join(['0.0' for _ in xrange(39)])
-        varg  = ' '.join(['1.0' for _ in xrange(39)])
-        print >> fid, """~o <VECSIZE> 39 <USER>
+        means = ' '.join(['0.0' for _ in range(39)])
+        varg  = ' '.join(['1.0' for _ in range(39)])
+        print("""~o <VECSIZE> 39 <USER>
 ~h "proto"
 <BEGINHMM>
-<NUMSTATES> 7"""
-        for i in xrange(2, STATE_NUM+2):
-            print >> fid, '<STATE> {0}\n<MEAN> 39\n{1}'.format(i, means)
-            print >> fid, '<VARIANCE> 39\n{0}'.format(varg)
-        print >> fid, """<TRANSP> 7
+<NUMSTATES> 7""", file=fid)
+        for i in range(2, STATE_NUM+2):
+            print('<STATE> {0}\n<MEAN> 39\n{1}'.format(i, means), file=fid)
+            print('<VARIANCE> 39\n{0}'.format(varg), file=fid)
+        print("""<TRANSP> 7
  0.0 1.0 0.0 0.0 0.0 0.0 0.0
  0.0 0.6 0.4 0.0 0.0 0.0 0.0
  0.0 0.0 0.6 0.4 0.0 0.0 0.0
@@ -49,7 +49,7 @@ class ForcedAlignment(object):
  0.0 0.0 0.0 0.0 0.6 0.4 0.0
  0.0 0.0 0.0 0.0 0.0 0.7 0.3
  0.0 0.0 0.0 0.0 0.0 0.0 0.0
-<ENDHMM>"""
+<ENDHMM>""", file=fid)
         fid.close()
 
         ## make vFloors
@@ -61,8 +61,8 @@ class ForcedAlignment(object):
         fid = open(os.path.join(self.cur_dir, MACROS), 'w')
         source = open(os.path.join(self.cur_dir,
                       os.path.split(self.proto)[1]), 'r')
-        for _ in xrange(3):
-            print >> fid, source.readline(),
+        for _ in range(3):
+            print(source.readline(), end=' ', file=fid)
         source.close()
         # get remaining lines from vFloors
         fid.writelines(open(os.path.join(self.cur_dir,
@@ -76,7 +76,7 @@ class ForcedAlignment(object):
             source.readline()
             source.readline()
             # the header
-            print >> fid, '~h "{0}"'.format(phone.rstrip())
+            print('~h "{0}"'.format(phone.rstrip()), file=fid)
             # the rest
             fid.writelines(source.readlines())
             source.close()
@@ -105,8 +105,8 @@ class ForcedAlignment(object):
             tmp_list = line.split('-')
             tmp_list = tmp_list[1].split('+')
             mono_phone = tmp_list[0]
-            print >> fwe, '{0}'.format(mono_phone)
-            if not phoneme_dict.has_key(mono_phone):
+            print('{0}'.format(mono_phone), file=fwe)
+            if mono_phone not in phoneme_dict:
                 phoneme_dict[mono_phone] = 1
             phoneme_dict[mono_phone] += 1
         fwe.close()
@@ -132,18 +132,18 @@ class ForcedAlignment(object):
                 if not os.path.exists(mfc_sub_dir):
                     os.makedirs(mfc_sub_dir)
 
-                print >> copy_scp, '{0} {1}'.format(wav_file, mfc_file)
-                print >> check_scp, '{0}'.format(mfc_file)
+                print('{0} {1}'.format(wav_file, mfc_file), file=copy_scp)
+                print('{0}'.format(mfc_file), file=check_scp)
 
 
                 if multiple_speaker:
                     tmp_list = file_id.split('/')
                     speaker_name = tmp_list[0]
-                    if not speaker_utt_dict.has_key(speaker_name):
+                    if speaker_name not in speaker_utt_dict:
                         speaker_utt_dict[speaker_name] = []
                     speaker_utt_dict[speaker_name].append(mfc_file)
                 else:
-                    if not speaker_utt_dict.has_key('only_one'):
+                    if 'only_one' not in speaker_utt_dict:
                         speaker_utt_dict['only_one'] = []
                     speaker_utt_dict['only_one'].append(mfc_file)
 
@@ -154,17 +154,17 @@ class ForcedAlignment(object):
 
         fid = open(self.phonemes, 'w')
         fmap = open(self.phoneme_map, 'w')
-        for phoneme in phoneme_dict.keys():
+        for phoneme in list(phoneme_dict.keys()):
 #            print   phoneme, phoneme_dict[phoneme]
-            print >> fid, '{0}'.format(phoneme)
-            print >> fmap, '{0} {0}'.format(phoneme)
+            print('{0}'.format(phoneme), file=fid)
+            print('{0} {0}'.format(phoneme), file=fmap)
         fmap.close()
         fid.close()
 
         self.phoneme_mlf = os.path.join(self.cfg_dir, 'mono_phone.mlf')
         fid = open(self.phoneme_mlf, 'w')
-        print >> fid, '#!MLF!#'
-        print >> fid, '"*/*.lab" -> "' + self.mono_lab_dir + '"'
+        print('#!MLF!#', file=fid)
+        print('"*/*.lab" -> "' + self.mono_lab_dir + '"', file=fid)
         fid.close()
 
         return  speaker_utt_dict
@@ -174,7 +174,7 @@ class ForcedAlignment(object):
         Compute MFCCs
         """
         # write a CFG for extracting MFCCs
-        print >> open(self.cfg, 'w'), """SOURCEKIND = WAVEFORM
+        print("""SOURCEKIND = WAVEFORM
 SOURCEFORMAT = WAVE
 TARGETRATE = 50000.0
 TARGETKIND = MFCC_D_A_0
@@ -184,10 +184,10 @@ USEHAMMING = T
 ENORMALIZE = T
 CEPLIFTER = 22
 NUMCHANS = 20
-NUMCEPS = 12"""
+NUMCEPS = 12""", file=open(self.cfg, 'w'))
         check_call([HCopy, '-C', self.cfg, '-S', self.copy_scp])
         # write a CFG for what we just built
-        print >> open(self.cfg, 'w'), """TARGETRATE = 50000.0
+        print("""TARGETRATE = 50000.0
 TARGETKIND = USER
 WINDOWSIZE = 250000.0
 PREEMCOEF = 0.97
@@ -195,7 +195,7 @@ USEHAMMING = T
 ENORMALIZE = T
 CEPLIFTER = 22
 NUMCHANS = 20
-NUMCEPS = 12"""
+NUMCEPS = 12""", file=open(self.cfg, 'w'))
 
     def _nxt_dir(self):
         """
@@ -212,7 +212,7 @@ NUMCEPS = 12"""
 
     def prepare_training(self, file_id_list_name, wav_dir, lab_dir, work_dir, multiple_speaker):
 
-        print  '---preparing enverionment'
+        print('---preparing enverionment')
         self.cfg_dir = os.path.join(work_dir, 'config')
         self.model_dir = os.path.join(work_dir, 'model')
         self.cur_dir = os.path.join(self.model_dir, 'hmm0')
@@ -231,7 +231,7 @@ NUMCEPS = 12"""
         self.train_scp = os.path.join(self.cfg_dir, 'train.scp')
         # CFG
         self.cfg = os.path.join(self.cfg_dir, 'cfg')
-    
+
         self.wav_dir = wav_dir
         self.lab_dir = lab_dir
         self.mfc_dir = os.path.join(work_dir, 'mfc')
@@ -243,33 +243,33 @@ NUMCEPS = 12"""
             os.makedirs(self.mono_lab_dir)
 
         file_id_list = self._read_file_list(file_id_list_name)
-        print  '---checking data'
+        print('---checking data')
         speaker_utt_dict = self._check_data(file_id_list, multiple_speaker)
-        
-        print  '---extracting features'
-        self._HCopy()
-        print time.strftime("%c")
 
-        print  '---feature_normalisation'
+        print('---extracting features')
+        self._HCopy()
+        print(time.strftime("%c"))
+
+        print('---feature_normalisation')
         normaliser = MeanVarianceNorm(39)
-        for key_name in speaker_utt_dict.keys():
+        for key_name in list(speaker_utt_dict.keys()):
             normaliser.feature_normalisation(speaker_utt_dict[key_name], speaker_utt_dict[key_name])  ## save to itself
-        print time.strftime("%c")
-        
-        print  '---making proto'
+        print(time.strftime("%c"))
+
+        print('---making proto')
         self._make_proto()
-        
+
     def train_hmm(self, niter, num_mix):
         """
         Perform one or more rounds of estimation
         """
 
-        print time.strftime("%c")
-        print  '---training HMM models'
+        print(time.strftime("%c"))
+        print('---training HMM models')
         done = 0
         mix = 1
         while mix <= num_mix and done == 0:
-            for i in xrange(niter):
+            for i in range(niter):
                 next_dir = os.path.join(self.model_dir, 'hmm_mix_' + str(mix) + '_iter_' + str(i+1))
                 if not os.path.exists(next_dir):
                     os.makedirs(next_dir)
@@ -286,14 +286,14 @@ NUMCEPS = 12"""
                 ##increase mixture number
                 hed_file = os.path.join(self.cfg_dir, 'mix_' + str(mix * 2) + '.hed')
                 fid = open(hed_file, 'w')
-                print  >> fid, 'MU ' + str(mix * 2) + ' {*.state[2-'+str(STATE_NUM+2)+'].mix}\n'
+                print('MU ' + str(mix * 2) + ' {*.state[2-'+str(STATE_NUM+2)+'].mix}\n', file=fid)
                 fid.close()
 
                 next_dir = os.path.join(self.model_dir, 'hmm_mix_' + str(mix * 2) + '_iter_0')
                 if not os.path.exists(next_dir):
                     os.makedirs(next_dir)
-                
-                check_call( [HHEd, '-A', 
+
+                check_call( [HHEd, '-A',
                              '-H', os.path.join(self.cur_dir, MACROS),
                              '-H', os.path.join(self.cur_dir, HMMDEFS),
                              '-M', next_dir] + [hed_file] + [self.phonemes])
@@ -307,11 +307,11 @@ NUMCEPS = 12"""
         """
         Align using the models in self.cur_dir and MLF to path
         """
-        print  '---aligning data'
-        print time.strftime("%c")
+        print('---aligning data')
+        print(time.strftime("%c"))
         self.align_mlf = os.path.join(work_dir, 'mono_align.mlf')
 
-        check_call([HVite, '-a', '-f', '-m', '-y', 'lab', '-o', 'SM', 
+        check_call([HVite, '-a', '-f', '-m', '-y', 'lab', '-o', 'SM',
                     '-i', self.align_mlf, '-L', self.mono_lab_dir,
                     '-C', self.cfg, '-S', self.train_scp,
                     '-H', os.path.join(self.cur_dir, MACROS),
@@ -339,45 +339,42 @@ NUMCEPS = 12"""
             fw   = open(os.path.join(lab_align_dir, file_base), 'w')
             for full_lab in flab.readlines():
                 full_lab = full_lab.strip()
-                for i in xrange(state_num):
+                for i in range(state_num):
                     line = fid.readline()
                     line = line.strip()
                     tmp_list = line.split()
-                    print >> fw,'{0} {1} {2}[{3}]'.format(tmp_list[0], tmp_list[1], full_lab, i+2)
+                    print('{0} {1} {2}[{3}]'.format(tmp_list[0], tmp_list[1], full_lab, i+2), file=fw)
 
             fw.close()
             flab.close()
             line = fid.readline()
             line = line.strip()
             if line != '.':
-                print 'The two files are not matched!\n'
+                print('The two files are not matched!\n')
                 sys.exit(1)
         fid.close()
 
 
 if __name__ == '__main__':
 
-    work_dir = os.getcwd()  
+    work_dir = os.getcwd()
 
     wav_dir = os.path.join(work_dir, 'slt_wav')
     lab_dir = os.path.join(work_dir, 'label_no_align')
     lab_align_dir = os.path.join(work_dir, 'label_state_align')
 
     file_id_list_name = os.path.join(work_dir, 'file_id_list.scp')
-    
+
     ## if multiple_speaker is tuned on. the file_id_list.scp has to reflact this
     ## for example
     ## speaker_1/0001
     ## speaker_2/0001
     ## This is to do speaker-dependent normalisation
-    multiple_speaker = False    
+    multiple_speaker = False
 
     aligner = ForcedAlignment()
     aligner.prepare_training(file_id_list_name, wav_dir, lab_dir, work_dir, multiple_speaker)
 
     aligner.train_hmm(7, 32)
     aligner.align(work_dir, lab_align_dir)
-    print   '---done!'
-
-
-    
+    print('---done!')

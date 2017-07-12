@@ -47,10 +47,10 @@ from keras.layers import Dense, LSTM
 from keras.layers import Dropout
 
 class kerasModels(object):
-    
+
     def __init__(self, n_in, hidden_layer_size, n_out, hidden_layer_type, output_type='linear', dropout_rate=0.0, loss_function='mse', optimizer='adam'):
         """ This function initialises a neural network
-        
+
         :param n_in: Dimensionality of input features
         :param hidden_layer_size: The layer size for each hidden layer
         :param n_out: Dimensionality of output features
@@ -61,18 +61,18 @@ class kerasModels(object):
         :type hidden_layer_size: A list of integers
         :type n_out: Integrer
         """
-        
+
         self.n_in  = int(n_in)
         self.n_out = int(n_out)
-        
+
         self.n_layers = len(hidden_layer_size)
-       
+
         self.hidden_layer_size = hidden_layer_size
         self.hidden_layer_type = hidden_layer_type
-        
+
         assert len(self.hidden_layer_size) == len(self.hidden_layer_type)
-        
-        self.output_type   = output_type 
+
+        self.output_type   = output_type
         self.dropout_rate  = dropout_rate
         self.loss_function = loss_function
         self.optimizer     = optimizer
@@ -83,9 +83,9 @@ class kerasModels(object):
     def define_feedforward_model(self):
         seed = 12345
         np.random.seed(seed)
-        
+
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
@@ -111,20 +111,20 @@ class kerasModels(object):
     def define_sequence_model(self):
         seed = 12345
         np.random.seed(seed)
-        
+
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
                 input_size = self.hidden_layer_size[i - 1]
-           
-            if self.hidden_layer_type[i]=='lstm': 
+
+            if self.hidden_layer_type[i]=='lstm':
                 self.model.add(LSTM(
                         units=self.hidden_layer_size[i],
                         input_shape=(None, input_size),
                         return_sequences=True))
-            elif self.hidden_layer_type[i]=='blstm': 
+            elif self.hidden_layer_type[i]=='blstm':
                 self.model.add(LSTM(
                         units=self.hidden_layer_size[i],
                         input_shape=(None, input_size),
@@ -146,29 +146,29 @@ class kerasModels(object):
 
         # Compile the model
         self.compile_model()
-    
+
     def define_stateful_model(self, batch_size=25, seq_length=200):
         seed = 12345
         np.random.seed(seed)
-        
+
         # params
         batch_size = batch_size
         timesteps  = seq_length
 
         # add hidden layers
-        for i in xrange(self.n_layers):
+        for i in range(self.n_layers):
             if i == 0:
                 input_size = self.n_in
             else:
                 input_size = self.hidden_layer_size[i - 1]
-           
-            if hidden_layer_type[i]=='lstm': 
+
+            if hidden_layer_type[i]=='lstm':
                 self.model.add(LSTM(
                         units=self.hidden_layer_size[i],
                         batch_input_shape=(batch_size, timesteps, input_size),
                         return_sequences=True,
                         stateful=True))   #go_backwards=True))
-            elif self.hidden_layer_type[i]=='blstm': 
+            elif self.hidden_layer_type[i]=='blstm':
                 self.model.add(LSTM(
                         units=self.hidden_layer_size[i],
                         batch_input_shape=(batch_size, timesteps, input_size),
@@ -194,7 +194,7 @@ class kerasModels(object):
 
     def compile_model(self):
         self.model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
-        
+
     def save_model(self, json_model_file, h5_model_file):
         # serialize model to JSON
         model_json = self.model.to_json()
@@ -212,11 +212,7 @@ class kerasModels(object):
         loaded_model = model_from_json(loaded_model_json)
         loaded_model.load_weights(h5_model_file)
         print("Loaded model from disk")
-    
+
         #### compile the model ####
         self.model = loaded_model
         self.compile_model()
-
-
-
-        

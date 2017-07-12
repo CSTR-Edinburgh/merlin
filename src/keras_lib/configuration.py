@@ -37,10 +37,13 @@
 #  THIS SOFTWARE.
 ################################################################################
 
-import ConfigParser
+import sys
+if sys.version_info.major >= 3:
+    import configparser
+else:
+    import ConfigParser as configparser
 import logging
 import os
-import sys
 
 class configuration(object):
 
@@ -48,7 +51,7 @@ class configuration(object):
         pass;
 
     def configure(self, configFile=None):
-        
+
         # get a logger
         logger = logging.getLogger("configuration")
         # this (and only this) logger needs to be configured immediately, otherwise it won't work
@@ -87,7 +90,7 @@ class configuration(object):
         UTTID_REGEX = '(.*)\..*'
 
     def user_configuration(self,configFile=None):
-        
+
         # get a logger
         logger = logging.getLogger("configuration")
 
@@ -98,8 +101,8 @@ class configuration(object):
 
         # load the config file
         try:
-            configparser = ConfigParser.ConfigParser()
-            configparser.readfp(open(configFile))
+            cfgparser = configparser.ConfigParser()
+            cfgparser.readfp(open(configFile))
             logger.debug('successfully read and parsed user configuration file %s' % configFile)
         except:
             logger.fatal('error reading user configuration file %s' % configFile)
@@ -110,13 +113,13 @@ class configuration(object):
 
         if self.work_dir == None:
             try:
-                self.work_dir = configparser.get('Paths', 'work')
+                self.work_dir = cfgparser.get('Paths', 'work')
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 if self.work_dir == None:
                     logger.critical('Paths:work has no value!')
                     raise Exception
-       
+
         # default place for some data
         self.data_dir    = os.path.join(self.work_dir, 'data')
         self.keras_dir   = os.path.join(self.work_dir, 'keras')
@@ -137,31 +140,31 @@ class configuration(object):
             # Paths
             ('work_dir', self.work_dir, 'Paths','work'),
             ('data_dir', self.data_dir, 'Paths','data'),
-            
+
             ('inp_feat_dir', self.def_inp_dir, 'Paths', 'inp_feat'),
             ('out_feat_dir', self.def_out_dir, 'Paths', 'out_feat'),
 
             ('model_dir', self.model_dir, 'Paths', 'models'),
             ('stats_dir', self.stats_dir, 'Paths', 'stats'),
             ('gen_dir'  ,   self.gen_dir, 'Paths', 'gen'),
-            
+
             ('file_id_scp', os.path.join(self.data_dir, 'file_id_list.scp'), 'Paths', 'file_id_list'),
             ('test_id_scp', os.path.join(self.data_dir, 'test_id_list.scp'), 'Paths', 'test_id_list'),
-            
+
             # Input-Output
             ('inp_dim', 425, 'Input-Output', 'inp_dim'),
             ('out_dim', 187, 'Input-Output', 'out_dim'),
-           
+
             ('inp_file_ext', '.lab', 'Input-Output', 'inp_file_ext'),
             ('out_file_ext', '.cmp', 'Input-Output', 'out_file_ext'),
 
             ('inp_norm', 'MINMAX', 'Input-Output', 'inp_norm'),
             ('out_norm', 'MINMAX', 'Input-Output', 'out_norm'),
-            
+
             # Architecture
             ('hidden_layer_type', ['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH'], 'Architecture', 'hidden_layer_type'),
             ('hidden_layer_size', [ 1024 ,  1024 ,  1024 ,  1024 ,  1024 ,   1024], 'Architecture', 'hidden_layer_size'),
-            
+
             ('batch_size'   , 256, 'Architecture', 'batch_size'),
             ('num_of_epochs',   1, 'Architecture', 'training_epochs'),
             ('dropout_rate' , 0.0, 'Architecture', 'dropout_rate'),
@@ -169,17 +172,17 @@ class configuration(object):
             ('output_layer_type', 'linear', 'Architecture', 'output_layer_type'),
             ('optimizer'        ,   'adam', 'Architecture', 'optimizer'),
             ('loss_function'    ,    'mse', 'Architecture', 'loss_function'),
-            
+
             # RNN
             ('sequential_training', False, 'Architecture', 'sequential_training'),
             ('stateful'           , False, 'Architecture', 'stateful'),
             ('use_high_batch_size', False, 'Architecture', 'use_high_batch_size'),
-            
+
             ('training_algo',   1, 'Architecture', 'training_algo'),
             ('merge_size'   ,   1, 'Architecture', 'merge_size'),
             ('seq_length'   , 200, 'Architecture', 'seq_length'),
             ('bucket_range' , 100, 'Architecture', 'bucket_range'),
-            
+
             # Data
             ('shuffle_data', True, 'Data', 'shuffle_data'),
 
@@ -193,7 +196,7 @@ class configuration(object):
             ('TESTMODEL' , False, 'Processes', 'TESTMODEL')
 
         ]
-        
+
         # this uses exec(...) which is potentially dangerous since arbitrary code could be executed
         for (variable,default,section,option) in user_options:
             # default value
@@ -201,10 +204,10 @@ class configuration(object):
 
             try:
                 # first, look for a user-set value for this variable in the config file
-                value = configparser.get(section,option)
+                value = cfgparser.get(section,option)
                 user_or_default='user'
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 # use default value, if there is one
                 if (default == None) or \
                    (default == '')   or \
@@ -235,14 +238,14 @@ class configuration(object):
 
             logger.info('%20s has %7s value %s' % (section+":"+option,user_or_default,value) )
 
-    
+
     def complete_configuration(self):
         # to be called after reading any user-specific settings
         # because the values set here depend on those user-specific settings
 
         # get a logger
         logger = logging.getLogger("configuration")
-        
+
         ## create directories if not exists
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
@@ -252,11 +255,11 @@ class configuration(object):
 
         if not os.path.exists(self.gen_dir):
             os.makedirs(self.gen_dir)
-        
+
         # input-output normalization stat files
         self.inp_stats_file = os.path.join(self.stats_dir, "input_%d_%s_%d.norm" %(int(self.train_file_number), self.inp_norm, self.inp_dim))
         self.out_stats_file = os.path.join(self.stats_dir, "output_%d_%s_%d.norm" %(int(self.train_file_number), self.out_norm, self.out_dim))
-        
+
         # define model file name
         if self.sequential_training:
             self.combined_model_arch = 'RNN'+str(self.training_algo)
@@ -266,12 +269,12 @@ class configuration(object):
         self.combined_model_arch += '_'+str(len(self.hidden_layer_size))
         self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_size))
         self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_type))
-    
+
         self.nnets_file_name = '%s_%d_train_%d_%d_%d_%d_%d_model' \
-                          %(self.combined_model_arch, int(self.shuffle_data),  
+                          %(self.combined_model_arch, int(self.shuffle_data),
                              self.inp_dim, self.out_dim, self.train_file_number, self.batch_size, self.num_of_epochs)
-    
-        logger.info('model file: %s' % (self.nnets_file_name)) 
+
+        logger.info('model file: %s' % (self.nnets_file_name))
 
         # model files
         self.json_model_file = os.path.join(self.model_dir, self.nnets_file_name+'.json')
@@ -281,28 +284,27 @@ class configuration(object):
         self.pred_feat_dir = os.path.join(self.gen_dir, self.nnets_file_name)
         if not os.path.exists(self.pred_feat_dir):
             os.makedirs(self.pred_feat_dir)
-      
+
         # string.lower for some architecture values
         self.output_layer_type = self.output_layer_type.lower()
         self.optimizer         = self.optimizer.lower()
         self.loss_function     = self.loss_function.lower()
         for i in range(len(self.hidden_layer_type)):
             self.hidden_layer_type[i] = self.hidden_layer_type[i].lower()
-        
+
         # set sequential training True if using LSTMs
         if 'lstm' in self.hidden_layer_type:
             self.sequential_training = True
-        
+
         # set/limit batch size to 25
         if self.sequential_training and self.batch_size>50:
             if not self.use_high_batch_size:
                 logger.info('reducing the batch size from %s to 25' % (self.batch_size))
                 self.batch_size = 25 ## num. of sentences in this case
-        
+
         # rnn params
         self.rnn_params = {}
         self.rnn_params['merge_size']   = self.merge_size
         self.rnn_params['seq_length']   = self.seq_length
         self.rnn_params['bucket_range'] = self.bucket_range
-        self.rnn_params['stateful']     = self.stateful  
-
+        self.rnn_params['stateful']     = self.stateful

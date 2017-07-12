@@ -37,7 +37,7 @@
 #  THIS SOFTWARE.
 ################################################################################
 
-import os, sys 
+import os, sys
 import time
 import random
 import numpy as np
@@ -54,7 +54,7 @@ UTT_BUFFER_SIZE   =   10000
 FRAME_BUFFER_SIZE = 3000000
 
 
-def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, sequential_training=True): 
+def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, sequential_training=True):
     io_funcs = BinaryIOCollection()
 
     num_of_utt = len(inp_file_list)
@@ -67,10 +67,10 @@ def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, seq
     else:
         temp_set_x = np.empty((FRAME_BUFFER_SIZE, inp_dim))
         temp_set_y = np.empty((FRAME_BUFFER_SIZE, out_dim))
-     
+
     ### read file by file ###
     current_index = 0
-    for i in xrange(num_of_utt):    
+    for i in range(num_of_utt):
         inp_file_name = inp_file_list[i]
         out_file_name = out_file_list[i]
         inp_features, inp_frame_number = io_funcs.load_binary_file_frame(inp_file_name, inp_dim)
@@ -79,37 +79,37 @@ def read_data_from_file_list(inp_file_list, out_file_list, inp_dim, out_dim, seq
         base_file_name = os.path.basename(inp_file_name).split(".")[0]
 
         if abs(inp_frame_number-out_frame_number)>5:
-            print 'the number of frames in input and output features are different: %d vs %d (%s)' %(inp_frame_number, out_frame_number, base_file_name)
+            print('the number of frames in input and output features are different: %d vs %d (%s)' %(inp_frame_number, out_frame_number, base_file_name))
             sys.exit(0)
         else:
             frame_number = min(inp_frame_number, out_frame_number)
-  
+
         if sequential_training:
-            temp_set_x[base_file_name] = inp_features[0:frame_number] 
-            temp_set_y[base_file_name] = out_features[0:frame_number] 
+            temp_set_x[base_file_name] = inp_features[0:frame_number]
+            temp_set_y[base_file_name] = out_features[0:frame_number]
         else:
             temp_set_x[current_index:current_index+frame_number, ] = inp_features[0:frame_number]
             temp_set_y[current_index:current_index+frame_number, ] = out_features[0:frame_number]
             current_index += frame_number
-        
+
         if frame_number not in file_length_dict['framenum2utt']:
             file_length_dict['framenum2utt'][frame_number] = [base_file_name]
         else:
             file_length_dict['framenum2utt'][frame_number].append(base_file_name)
 
         file_length_dict['utt2framenum'][base_file_name] = frame_number
-    
+
         drawProgressBar(i+1, num_of_utt)
-        
+
     sys.stdout.write("\n")
-        
+
     if not sequential_training:
         temp_set_x = temp_set_x[0:current_index, ]
         temp_set_y = temp_set_y[0:current_index, ]
-    
+
     return temp_set_x, temp_set_y, file_length_dict
 
-def read_test_data_from_file_list(inp_file_list, inp_dim, sequential_training=True): 
+def read_test_data_from_file_list(inp_file_list, inp_dim, sequential_training=True):
     io_funcs = BinaryIOCollection()
 
     num_of_utt = len(inp_file_list)
@@ -120,10 +120,10 @@ def read_test_data_from_file_list(inp_file_list, inp_dim, sequential_training=Tr
         temp_set_x = {}
     else:
         temp_set_x = np.empty((FRAME_BUFFER_SIZE, inp_dim))
-     
+
     ### read file by file ###
     current_index = 0
-    for i in xrange(num_of_utt):    
+    for i in range(num_of_utt):
         inp_file_name = inp_file_list[i]
         inp_features, frame_number = io_funcs.load_binary_file_frame(inp_file_name, inp_dim)
 
@@ -134,33 +134,33 @@ def read_test_data_from_file_list(inp_file_list, inp_dim, sequential_training=Tr
         else:
             temp_set_x[current_index:current_index+frame_number, ] = inp_features[0:frame_number]
             current_index += frame_number
-        
+
         if frame_number not in file_length_dict['framenum2utt']:
             file_length_dict['framenum2utt'][frame_number] = [base_file_name]
         else:
             file_length_dict['framenum2utt'][frame_number].append(base_file_name)
 
         file_length_dict['utt2framenum'][base_file_name] = frame_number
-    
+
         drawProgressBar(i+1, num_of_utt)
-        
+
     sys.stdout.write("\n")
-        
+
     if not sequential_training:
         temp_set_x = temp_set_x[0:current_index, ]
-    
+
     return temp_set_x, file_length_dict
 
 def transform_data_to_3d_matrix(data, seq_length=200, max_length=0, merge_size=1, shuffle_data = True, shuffle_type = 1, padding="right"):
     num_of_utt = len(data)
-    feat_dim   = data[data.keys()[0]].shape[1]
+    feat_dim   = data[list(data.keys())[0]].shape[1]
 
     if max_length > 0:
         temp_set = np.zeros((num_of_utt, max_length, feat_dim))
-        
+
         ### read file by file ###
         current_index = 0
-        for base_file_name, in_features in data.iteritems():
+        for base_file_name, in_features in data.items():
             frame_number = min(in_features.shape[0], max_length)
             if padding=="right":
                 temp_set[current_index, 0:frame_number, ] = in_features
@@ -171,34 +171,34 @@ def transform_data_to_3d_matrix(data, seq_length=200, max_length=0, merge_size=1
     else:
         temp_set = np.zeros((FRAME_BUFFER_SIZE, feat_dim))
 
-        train_idx_list = data.keys()
+        train_idx_list = list(data.keys())
         train_idx_list.sort()
-        
+
         if shuffle_data:
             if shuffle_type == 1:
                 train_idx_list = shuffle_file_list(train_idx_list)
             elif shuffle_type == 2:
                 train_idx_list = shuffle_file_list(train_idx_list, shuffle_type=2, merge_size=merge_size)
-        
+
         ### read file by file ###
         current_index = 0
-        for file_number in xrange(num_of_utt):
+        for file_number in range(num_of_utt):
             base_file_name = train_idx_list[file_number]
             in_features    = data[base_file_name]
             frame_number   = in_features.shape[0]
-            
+
             temp_set[current_index:current_index+frame_number, ] = in_features
             current_index += frame_number
-    
+
             if (file_number+1)%merge_size == 0:
                 current_index = seq_length * (int(np.ceil(float(current_index)/float(seq_length))))
-            
-        
+
+
         num_of_samples = int(np.ceil(float(current_index)/float(seq_length)))
-    
+
         temp_set = temp_set[0: num_of_samples*seq_length, ]
         temp_set = temp_set.reshape(-1, seq_length, feat_dim)
-     
+
     return temp_set
 
 def read_and_transform_data_from_file_list(in_file_list, dim, seq_length=200, merge_size=1):
@@ -220,9 +220,9 @@ def read_and_transform_data_from_file_list(in_file_list, dim, seq_length=200, me
 
         if (i+1)%merge_size == 0:
             current_index = seq_length * (int(np.ceil(float(current_index)/float(seq_length))))
-            
+
         drawProgressBar(i+1, num_of_utt)
-        
+
     sys.stdout.write("\n")
 
     num_of_samples = int(np.ceil(float(current_index)/float(seq_length)))
@@ -236,22 +236,22 @@ def merge_data(train_x, train_y, merge_size):
     temp_train_x = {}
     temp_train_y = {}
 
-    train_id_list     = train_x.keys()
+    train_id_list     = list(train_x.keys())
     train_file_number = len(train_id_list)
     train_id_list.sort()
 
     inp_dim = train_x[train_id_list[0]].shape[1]
     out_dim = train_y[train_id_list[0]].shape[1]
-    
+
     merged_features_x = np.zeros((0, inp_dim))
     merged_features_y = np.zeros((0, out_dim))
     new_file_count = 0
-    for file_index in xrange(1, train_file_number+1):
+    for file_index in range(1, train_file_number+1):
         inp_features      = train_x[train_id_list[file_index-1]]
         out_features      = train_y[train_id_list[file_index-1]]
         merged_features_x = np.vstack((merged_features_x, inp_features))
         merged_features_y = np.vstack((merged_features_y, out_features))
-        
+
         if file_index % merge_size == 0 or file_index==train_file_number:
             base_file_name = "new_utterance_%04d" % (new_file_count)
             temp_train_x[base_file_name] = merged_features_x
@@ -266,27 +266,27 @@ def shuffle_file_list(train_idx_list, shuffle_type=1, merge_size=5):
     ### shuffle train id list ###
     random.seed(271638)
     train_file_number = len(train_idx_list)
-    
+
     if shuffle_type==1:  ## shuffle by sentence
         random.shuffle(train_idx_list)
         return train_idx_list
-     
+
     elif shuffle_type==2:  ## shuffle by a group of sentences
-        id_numbers = range(0, train_file_number, merge_size)
+        id_numbers = list(range(0, train_file_number, merge_size))
         random.shuffle(id_numbers)
         new_train_idx_list = []
-        for i in xrange(len(id_numbers)):
+        for i in range(len(id_numbers)):
             new_train_idx_list += train_idx_list[id_numbers[i]:id_numbers[i]+merge_size]
         return new_train_idx_list
 
 def get_stateful_data(train_x, train_y, batch_size):
-    num_of_batches = int(train_x.shape[0]/batch_size) 
+    num_of_batches = int(train_x.shape[0]/batch_size)
     train_x   = train_x[0: num_of_batches*batch_size, ]
     train_y   = train_y[0: num_of_batches*batch_size, ]
 
     stateful_seq = np.zeros(num_of_batches*batch_size, dtype="int32")
-    for i in xrange(num_of_batches):
-        stateful_seq[i*batch_size:(i+1)*batch_size] = np.array(range(batch_size))*num_of_batches+i
+    for i in range(num_of_batches):
+        stateful_seq[i*batch_size:(i+1)*batch_size] = np.array(list(range(batch_size)))*num_of_batches+i
 
     temp_train_x   = train_x[stateful_seq]
     temp_train_y   = train_y[stateful_seq]
@@ -306,7 +306,7 @@ def get_stateful_input(test_x, seq_length, batch_size=1):
     temp_test_x = temp_test_x.reshape(-1, seq_length, n_dim)
 
     return temp_test_x
-    
+
 def compute_norm_stats(data, stats_file, method="MVN"):
     #### normalize training data ####
     io_funcs = BinaryIOCollection()
@@ -317,8 +317,8 @@ def compute_norm_stats(data, stats_file, method="MVN"):
     elif method=="MINMAX":
         scaler = preprocessing.MinMaxScaler(feature_range=(0.01, 0.99)).fit(data)
         norm_matrix = np.vstack((scaler.min_, scaler.scale_))
-    
-    print norm_matrix.shape
+
+    print(norm_matrix.shape)
     io_funcs.array_to_binary_file(norm_matrix, stats_file)
 
     return scaler
@@ -344,21 +344,21 @@ def load_norm_stats(stats_file, dim, method="MVN"):
 def norm_data(data, scaler, sequential_training=True):
     if scaler is None:
         return;
-    
+
     #### normalize data ####
     if not sequential_training:
-        data = scaler.transform(data) 
+        data = scaler.transform(data)
     else:
-        for filename, features in data.iteritems():
+        for filename, features in data.items():
             data[filename] = scaler.transform(features)
 
 def denorm_data(data, scaler):
     if scaler is None:
         return;
-    
+
     #### de-normalize data ####
-    data = scaler.inverse_transform(data) 
-    
+    data = scaler.inverse_transform(data)
+
 def prepare_file_path_list(file_id_list, file_dir, file_extension, new_dir_switch=True):
     if not os.path.exists(file_dir) and new_dir_switch:
         os.makedirs(file_dir)
@@ -381,12 +381,12 @@ def read_file_list(file_name):
 
     return  file_lists
 
-def print_status(i, length): 
+def print_status(i, length):
     pr = int(float(i)/float(length)*100)
     st = int(float(pr)/7)
     sys.stdout.write(("\r%d/%d ")%(i,length)+("[ %d"%pr+"% ] <<< ")+('='*st)+(''*(100-st)))
     sys.stdout.flush()
-    
+
 def drawProgressBar(indx, length, barLen = 20):
     percent = float(indx)/length
     sys.stdout.write("\r")

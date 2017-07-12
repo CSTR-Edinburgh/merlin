@@ -4,28 +4,28 @@ import re
 
 def change_label_format(inp_label_file_list, out_label_file_list, label_style="state_align"):
 
-    utt_len = len(inp_label_file_list) 
-        
+    utt_len = len(inp_label_file_list)
+
     ### read file by file ###
-    for i in range(utt_len):    
+    for i in range(utt_len):
         inp_label_file_name = inp_label_file_list[i]
         out_label_file_name = out_label_file_list[i]
 
         label_info = convert_hts_lab_to_festival_lab(inp_label_file_name, out_label_file_name, label_style)
-     
+
         print_status(i, utt_len)
 
     sys.stdout.write("\n")
-    
+
 def convert_hts_lab_to_festival_lab(inp_label_file_name, out_label_file_name, label_style):
     ### read label file ###
     fid = open(inp_label_file_name)
     utt_labels = fid.readlines()
     fid.close()
-    
+
     dur = 0.0
-    lab_info = [[],[]]   
-    
+    lab_info = [[],[]]
+
     ### process label file ###
     for line in utt_labels:
         line = line.strip()
@@ -56,10 +56,10 @@ def convert_hts_lab_to_festival_lab(inp_label_file_name, out_label_file_name, la
             dur = dur + ((float(ph_end_time)-float(ph_start_time))*(10**-7))
             lab_info[0].append(dur)
             lab_info[1].append(current_phone)
-             
+
     out_f = open(out_label_file_name, 'w')
     out_f.write('#\n')
-    for j in xrange(len(lab_info[0])):
+    for j in range(len(lab_info[0])):
         dur = lab_info[0][j]
         ph  = lab_info[1][j]
         out_f.write(str(dur)+' 125 '+ph+'\n')
@@ -67,7 +67,7 @@ def convert_hts_lab_to_festival_lab(inp_label_file_name, out_label_file_name, la
 
     return lab_info
 
-def print_status(i, length): 
+def print_status(i, length):
     pr = int(float(i+1)/float(length)*100)
     st = int(float(pr)/7)
     sys.stdout.write(("\r%d/%d ")%(i+1,length)+("[ %d"%pr+"% ] <<< ")+('='*st)+(''*(100-st)))
@@ -96,9 +96,9 @@ def read_file_list(file_name):
     return  file_lists
 
 if __name__=='__main__':
-    
+
     if len(sys.argv)!=5:
-        print 'Usage: python convert_hts_label_format_to_festival.py <input_folder> <output_folder> <file_list> <label_style: state_align/phone_align>\n'
+        print('Usage: python convert_hts_label_format_to_festival.py <input_folder> <output_folder> <file_list> <label_style: state_align/phone_align>\n')
         sys.exit(1)
 
     inp_lab_dir  = sys.argv[1]
@@ -106,11 +106,11 @@ if __name__=='__main__':
 
     file_id_scp  = sys.argv[3]
     file_id_list = read_file_list(file_id_scp)
-    
+
     label_style  = sys.argv[4]
-      
+
     inp_label_file_list = prepare_file_path_list(file_id_list, inp_lab_dir, '.lab')
     out_label_file_list = prepare_file_path_list(file_id_list, out_lab_dir, '.lab')
-   
-    print 'changing HTS label format to festival...' 
+
+    print('changing HTS label format to festival...')
     change_label_format(inp_label_file_list, out_label_file_list, label_style)

@@ -14,11 +14,11 @@ def create_dictionary_from_txt_dir(txt_dir):
 
     num_of_files = len(textfiles)
 
-    for i in xrange(num_of_files):
+    for i in range(num_of_files):
         textfile = textfiles[i]
         junk,filename = os.path.split(textfile)
         filename = filename.split('.')[0]
-        
+
         text = readtext(textfile)
         utt_text[filename] = text
 
@@ -45,7 +45,7 @@ def create_dictionary_from_txt_file(txt_file):
 if __name__ == "__main__":
 
     if len(sys.argv)!=5:
-        print 'Usage: python genScmFile.py <in_txt_dir/in_txt_file> <out_utt_dir> <out_scm_file> <out_file_id_list>'
+        print('Usage: python genScmFile.py <in_txt_dir/in_txt_file> <out_utt_dir> <out_scm_file> <out_file_id_list>')
         sys.exit(1)
 
     out_utt_dir  = sys.argv[2]
@@ -54,14 +54,14 @@ if __name__ == "__main__":
 
     if not os.path.exists(out_utt_dir):
         os.makedirs(out_utt_dir)
-    
+
     if os.path.isdir(sys.argv[1]):
-        print "creating a scheme file from text directory"
+        print("creating a scheme file from text directory")
         in_txt_dir = sys.argv[1]
         utt_text   = create_dictionary_from_txt_dir(in_txt_dir)
-    
+
     elif os.path.isfile(sys.argv[1]):
-        print "creating a scheme file from text file"
+        print("creating a scheme file from text file")
         in_txt_file = sys.argv[1]
         utt_text    = create_dictionary_from_txt_file(in_txt_file)
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     ### if you want to use a particular voice
     #out_f1.write("(voice_cstr_edi_fls_multisyn)\n")
 
-    for utt_name, sentence in sorted_utt_text.iteritems():
+    for utt_name, sentence in sorted_utt_text.items():
         out_file_name = os.path.join(out_utt_dir, utt_name+'.utt')
         sentence = sentence.replace('"', '\\"')
         out_f1.write("(utt.save (utt.synth (Utterance Text \""+sentence+"\" )) \""+out_file_name+"\")\n")

@@ -1,5 +1,5 @@
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -8,14 +8,14 @@ import glob
 import struct
 
 file_location = os.path.split(os.path.realpath(os.path.abspath(os.path.dirname(__file__))))[0]+'/'
-sys.path.append(file_location + '/../')    
+sys.path.append(file_location + '/../')
 
 
 #  numpy & theano imports need to be done in this order (only for some numpy installations, not sure why)
 import numpy
 # we need to explicitly import this in some cases, not sure why this doesn't get imported with numpy itself
 import numpy.distutils.__config__
-# and only after that can we import theano 
+# and only after that can we import theano
 import theano
 
 from utils.providers import ListDataProvider
@@ -53,7 +53,7 @@ from utils.learn_rates import ExpDecreaseLearningRate
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
 
 
 def extract_file_id_list(file_list):
@@ -101,13 +101,13 @@ def prepare_file_path_list(file_id_list, file_dir, file_extension, new_dir_switc
 
     return  file_name_list
 
-    
+
 
 def visualize_dnn(dnn):
 
     layer_num = len(dnn.params) / 2     ## including input and output
 
-    for i in xrange(layer_num):
+    for i in range(layer_num):
         fig_name = 'Activation weights W' + str(i)
         fig_title = 'Activation weights of W' + str(i)
         xlabel = 'Neuron index of hidden layer ' + str(i)
@@ -129,13 +129,13 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
-    
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
+
 #    visualize_dnn(dbn)
 
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -143,8 +143,8 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         features = features[:(n_ins * (features.size / n_ins))]
         features = features.reshape((-1, n_ins))
         temp_set_x = features.tolist()
-        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX)) 
-        
+        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX))
+
         predicted_parameter = dnn_model.parameter_prediction(test_set_x=test_set_x)
 #        predicted_parameter = test_out()
 
@@ -155,7 +155,7 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         predicted_parameter.tofile(fid)
         logger.debug('saved to %s' % out_file_list[i])
         fid.close()
-        
+
 ##generate bottleneck layer as festures
 def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list):
     logger = logging.getLogger("dnn_generation")
@@ -163,11 +163,11 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
-    
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
+
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -175,8 +175,8 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
         features = features[:(n_ins * (features.size / n_ins))]
         features = features.reshape((-1, n_ins))
         temp_set_x = features.tolist()
-        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX)) 
-        
+        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX))
+
         predicted_parameter = dnn_model.generate_top_hidden_layer(test_set_x=test_set_x)
 
         ### write to cmp file
@@ -188,26 +188,26 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
         fid.close()
 
 
-def main_function(cfg, in_dir, out_dir):    
-    
-    
+def main_function(cfg, in_dir, out_dir):
+
+
     # get a logger for this main function
     logger = logging.getLogger("main")
-    
+
     # get another logger to handle plotting duties
     plotlogger = logging.getLogger("plotting")
-    
-    
+
+
     #### parameter setting########
     hidden_layers_sizes = cfg.hyper_params['hidden_layer_size']
-    
+
     file_id_list = []
-    
+
     if cfg.label_style == 'HTS':
         ext = '.lab'
     else:
         ext = '.utt'
-        
+
     synth_utts = glob.glob(in_dir + '/*' + ext)
     for fname in synth_utts:
         junk,name = os.path.split(fname)
@@ -218,14 +218,14 @@ def main_function(cfg, in_dir, out_dir):
 
     ###total file number including training, development, and testing
     #total_file_number = len(file_id_list)
-    
+
     data_dir = cfg.data_dir
 
     #nn_cmp_dir       = os.path.join(data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
     #nn_cmp_norm_dir   = os.path.join(data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
-    
+
     model_dir = os.path.join(cfg.work_dir, 'nnets_model')
-    gen_dir   = os.path.join(out_dir, 'gen')    
+    gen_dir   = os.path.join(out_dir, 'gen')
 
     #in_file_list_dict = {}
 
@@ -237,11 +237,11 @@ def main_function(cfg, in_dir, out_dir):
 
     ###normalisation information
     norm_info_file = os.path.join(data_dir, 'norm_info' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim) + '_' + cfg.output_feature_normalisation + '.dat')
-    
+
     ### normalise input full context label
 
     # currently supporting two different forms of lingustic features
-    # later, we should generalise this 
+    # later, we should generalise this
 
     if cfg.label_style == 'HTS':
         label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name)
@@ -267,15 +267,15 @@ def main_function(cfg, in_dir, out_dir):
         label_data_dir = cfg.work_dir
     else:
         label_data_dir = data_dir
-    
+
     min_max_normaliser = None
     label_norm_file = 'label_norm_%s.dat' %(cfg.label_style)
     label_norm_file = os.path.join(label_data_dir, label_norm_file)
-    
+
     if cfg.label_style == 'HTS':
-        # simple HTS labels 
+        # simple HTS labels
         logger.info('preparing label data (input) using standard HTS style labels')
-        label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list) 
+        label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list)
 
     else:
 
@@ -288,39 +288,39 @@ def main_function(cfg, in_dir, out_dir):
 
         lab_dim=label_composer.compute_label_dimension()
         logger.info('label dimension will be %d' % lab_dim)
-    
+
         if cfg.precompile_xpaths:
             label_composer.precompile_xpaths()
-    
+
         # there are now a set of parallel input label files (e.g, one set of HTS and another set of Ossian trees)
         # create all the lists of these, ready to pass to the label composer
 
         in_label_align_file_list = {}
-        for label_style, label_style_required in label_composer.label_styles.iteritems():
+        for label_style, label_style_required in label_composer.label_styles.items():
             if label_style_required:
                 logger.info('labels of style %s are required - constructing file paths for them' % label_style)
                 if label_style == 'xpath':
                     in_label_align_file_list['xpath'] = prepare_file_path_list(file_id_list, in_dir, cfg.utt_ext, False)
                 elif label_style == 'hts':
-                    logger.critical('script not tested with HTS labels')        
+                    logger.critical('script not tested with HTS labels')
                 else:
                     logger.critical('unsupported label style %s specified in label configuration' % label_style)
                     raise Exception
-    
-            # now iterate through the files, one at a time, constructing the labels for them 
+
+            # now iterate through the files, one at a time, constructing the labels for them
             num_files=len(file_id_list)
             logger.info('the label styles required are %s' % label_composer.label_styles)
-        
-            for i in xrange(num_files):
+
+            for i in range(num_files):
                 logger.info('making input label features for %4d of %4d' % (i+1,num_files))
 
                 # iterate through the required label styles and open each corresponding label file
 
                 # a dictionary of file descriptors, pointing at the required files
                 required_labels={}
-            
-                for label_style, label_style_required in label_composer.label_styles.iteritems():
-                
+
+                for label_style, label_style_required in label_composer.label_styles.items():
+
                     # the files will be a parallel set of files for a single utterance
                     # e.g., the XML tree and an HTS label file
                     if label_style_required:
@@ -329,12 +329,12 @@ def main_function(cfg, in_dir, out_dir):
 
                 logger.debug('label styles with open files: %s' % required_labels)
                 label_composer.make_labels(required_labels,out_file_name=binary_label_file_list[i],fill_missing_values=cfg.fill_missing_values,iterate_over_frames=cfg.iterate_over_frames)
-                
+
                 # now close all opened files
-                for fd in required_labels.itervalues():
+                for fd in required_labels.values():
                     fd.close()
-    
-    
+
+
     # no silence removal for synthesis ...
 
     ## minmax norm:
@@ -342,13 +342,13 @@ def main_function(cfg, in_dir, out_dir):
 
     # reload stored minmax values: (TODO -- move reading and writing into MinMaxNormalisation class)
     fid = open(label_norm_file, 'rb')
-    
+
     ## This doesn't work -- precision is lost -- reads in as float64
     #label_norm_info = numpy.fromfile(fid)  ## label_norm_info = numpy.array(label_norm_info, 'float32')
 
     ## use struct to enforce float32:
     nbytes = os.stat(label_norm_file)[6]  # length in bytes
-    data = fid.read(nbytes)               # = read until bytes run out 
+    data = fid.read(nbytes)               # = read until bytes run out
     fid.close()
     m = nbytes / 4  ## number 32 bit floats
     format = str(m)+"f"
@@ -356,7 +356,7 @@ def main_function(cfg, in_dir, out_dir):
     label_norm_info = numpy.array(label_norm_info)
 
     min_max_normaliser.min_vector = label_norm_info[:m/2]
-    min_max_normaliser.max_vector = label_norm_info[m/2:]         
+    min_max_normaliser.max_vector = label_norm_info[m/2:]
 
     ###  apply precompuated min-max to the whole dataset
     min_max_normaliser.normalise_data(binary_label_file_list, nn_label_norm_file_list)
@@ -365,14 +365,14 @@ def main_function(cfg, in_dir, out_dir):
 
     ### make output acoustic data
 #    if cfg.MAKECMP:
-   
+
     ### retrieve acoustic normalisation information for normalising the features back
     var_dir   = os.path.join(data_dir, 'var')
     var_file_dict = {}
-    for feature_name in cfg.out_dimension_dict.keys():
+    for feature_name in list(cfg.out_dimension_dict.keys()):
         var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
-        
-        
+
+
     ### normalise output acoustic data
 #    if cfg.NORMCMP:
 
@@ -380,9 +380,9 @@ def main_function(cfg, in_dir, out_dir):
     for hid_size in hidden_layers_sizes:
         combined_model_arch += '_' + str(hid_size)
     nnets_file_name = '%s/%s_%s_%d_%s_%d.%d.train.%d.model' \
-                      %(model_dir, cfg.model_type, cfg.combined_feature_name, int(cfg.multistream_switch), 
+                      %(model_dir, cfg.model_type, cfg.combined_feature_name, int(cfg.multistream_switch),
                         combined_model_arch, lab_dim, cfg.cmp_dim, cfg.train_file_number)
- 
+
     ### DNN model training
 #    if cfg.TRAINDNN:
 
@@ -410,13 +410,13 @@ def main_function(cfg, in_dir, out_dir):
     cmp_min_max = numpy.fromfile(fid, dtype=numpy.float32)
     fid.close()
     cmp_min_max = cmp_min_max.reshape((2, -1))
-    cmp_min_vector = cmp_min_max[0, ] 
+    cmp_min_vector = cmp_min_max[0, ]
     cmp_max_vector = cmp_min_max[1, ]
 
     if cfg.output_feature_normalisation == 'MVN':
         denormaliser = MeanVarianceNorm(feature_dimension = cfg.cmp_dim)
         denormaliser.feature_denormalisation(gen_file_list, gen_file_list, cmp_min_vector, cmp_max_vector)
-    
+
     elif cfg.output_feature_normalisation == 'MINMAX':
         denormaliser = MinMaxNormalisation(cfg.cmp_dim, min_value = 0.01, max_value = 0.99, min_vector = cmp_min_vector, max_vector = cmp_max_vector)
         denormaliser.denormalise_data(gen_file_list, gen_file_list)
@@ -425,11 +425,11 @@ def main_function(cfg, in_dir, out_dir):
         raise
 
     ##perform MLPG to smooth parameter trajectory
-    ## lf0 is included, the output features much have vuv. 
+    ## lf0 is included, the output features much have vuv.
     generator = ParameterGeneration(gen_wav_features = cfg.gen_wav_features)
-    generator.acoustic_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict, var_file_dict)    
+    generator.acoustic_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict, var_file_dict)
 
-    
+
     logger.info('Simple variance expansion')
     test_var_scaling=False
     scaled_dir = gen_dir + '_scaled'
@@ -441,9 +441,9 @@ def main_function(cfg, in_dir, out_dir):
     ### generate wav ----
     #if cfg.GENWAV:
     logger.info('reconstructing waveform(s)')
-    #generate_wav_glottHMM(scaled_dir, file_id_list)   
-    generate_wav(scaled_dir, file_id_list, cfg)   
-    
+    #generate_wav_glottHMM(scaled_dir, file_id_list)
+    generate_wav(scaled_dir, file_id_list, cfg)
+
 
 def simple_scale_variance(indir, outdir, var_file_dict, out_dimension_dict, file_id_list, gv_weight=1.0):
     ## simple variance scaling (silen et al. 2012, paragraph 3.1)
@@ -452,15 +452,15 @@ def simple_scale_variance(indir, outdir, var_file_dict, out_dimension_dict, file
 #     streams_to_scale = ['LSF']
     all_streams = ['cmp','mgc','lf0','bap']
     streams_to_scale = ['mgc']
-    
+
     static_variances = {}
- 
+
     static_dimension_dict = {}
-    for (feature_name,size) in out_dimension_dict.items():
+    for (feature_name,size) in list(out_dimension_dict.items()):
         static_dimension_dict[feature_name] = size/3
 
     io_funcs = BinaryIOCollection()
-    for feature_name in var_file_dict.keys():
+    for feature_name in list(var_file_dict.keys()):
         var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
         static_var_values = var_values[:static_dimension_dict[feature_name], :]
         static_variances[feature_name] = static_var_values
@@ -479,12 +479,12 @@ def simple_scale_variance(indir, outdir, var_file_dict, out_dimension_dict, file
                 sys.exit(infile + ' does not exist')
             if stream in streams_to_scale:
                 speech, dimension = io_funcs.load_binary_file_frame(infile, static_dimension_dict[stream])
-                utt_mean = numpy.mean(speech, axis=0) 
-                utt_std =  numpy.std(speech, axis=0) 
+                utt_mean = numpy.mean(speech, axis=0)
+                utt_std =  numpy.std(speech, axis=0)
 
                 global_std = numpy.transpose((static_variances[stream]))
                 weighted_global_std = (gv_weight * global_std) + (local_weight * utt_std)
-                std_ratio = weighted_global_std / utt_std 
+                std_ratio = weighted_global_std / utt_std
 
                 nframes, ndim = numpy.shape(speech)
                 utt_mean_matrix = numpy.tile(utt_mean, (nframes,1))
@@ -500,18 +500,18 @@ def simple_scale_variance(indir, outdir, var_file_dict, out_dimension_dict, file
 
 
 def simple_scale_variance_CONTINUUM(indir, outdir, var_file_dict, out_dimension_dict, file_id_list):
-    ## Try range of interpolation weights for combining global & local variance 
+    ## Try range of interpolation weights for combining global & local variance
     all_streams = ['cmp','HNR','F0','LSF','Gain','LSFsource']
     streams_to_scale = ['LSF']
 
     static_variances = {}
- 
+
     static_dimension_dict = {}
-    for (feature_name,size) in out_dimension_dict.items():
+    for (feature_name,size) in list(out_dimension_dict.items()):
         static_dimension_dict[feature_name] = size/3
 
     io_funcs = BinaryIOCollection()
-    for feature_name in var_file_dict.keys():
+    for feature_name in list(var_file_dict.keys()):
         var_values, dimension = io_funcs.load_binary_file_frame(var_file_dict[feature_name], 1)
         static_var_values = var_values[:static_dimension_dict[feature_name], :]
         static_variances[feature_name] = static_var_values
@@ -526,20 +526,20 @@ def simple_scale_variance_CONTINUUM(indir, outdir, var_file_dict, out_dimension_
             for stream in all_streams:
                 infile = os.path.join(indir, uttname + '.' + stream)
                 extended_uttname = uttname + '_gv' + str(gv_weight)
-                print extended_uttname
+                print(extended_uttname)
                 outfile = os.path.join(outdir, extended_uttname + '.' + stream)
                 if not os.path.isfile(infile):
                     sys.exit(infile + ' does not exist')
                 if stream in streams_to_scale:
                     speech, dimension = io_funcs.load_binary_file_frame(infile, static_dimension_dict[stream])
-                    utt_mean = numpy.mean(speech, axis=0) 
-                    utt_std =  numpy.std(speech, axis=0) 
+                    utt_mean = numpy.mean(speech, axis=0)
+                    utt_std =  numpy.std(speech, axis=0)
 
                     global_std = numpy.transpose((static_variances[stream]))
 
                     weighted_global_std = (gv_weight * global_std) + (local_weight * utt_std)
 
-                    std_ratio = weighted_global_std / utt_std 
+                    std_ratio = weighted_global_std / utt_std
 
                     nframes, ndim = numpy.shape(speech)
                     utt_mean_matrix = numpy.tile(utt_mean, (nframes,1))
@@ -597,42 +597,42 @@ def generate_wav_glottHMM(gen_dir, gen_file_id_list):
                     extra = '.NEGVALS'
                 fname = os.path.join(gen_dir, uttname + '.' + stream)
                 fname_txt = os.path.join(gen_dir, uttname + '.txt.' + stream + extra)
-                comm = '%s +fa %s > %s'%(x2x, fname, fname_txt) 
+                comm = '%s +fa %s > %s'%(x2x, fname, fname_txt)
                 os.system(comm)
             log_to_hertz(os.path.join(gen_dir, uttname + '.txt.F0.NEGVALS'), \
                                         os.path.join(gen_dir, uttname + '.txt.F0'))
 
             stem_name = os.path.join(gen_dir, uttname + '.txt')
             comm = '%s %s %s %s %s'%(exports, synthesis, stem_name, general_glott_conf, user_glott_conf)
-            print comm
+            print(comm)
             os.system(comm)
 
 
-            
+
         else:
-            print 'missing stream(s) for utterance ' + uttname
-        
+            print('missing stream(s) for utterance ' + uttname)
+
 
 
 if __name__ == '__main__':
-    
-    
-    
+
+
+
     # these things should be done even before trying to parse the command line
 
     # create a configuration instance
     # and get a short name for this instance
     cfg=configuration.cfg
-# 
+#
 #     # set up logging to use our custom class
 #     logging.setLoggerClass(LoggerPlotter)
-# 
+#
 #     # get a logger for this main function
 #     logger = logging.getLogger("main")
 
 
     if len(sys.argv) != 4:
-        print 'usage: run_dnn.sh config_file_name in_dir out_dir'
+        print('usage: run_dnn.sh config_file_name in_dir out_dir')
         #logger.critical('usage: run_dnn.sh config_file_name utt_dir')
         sys.exit(1)
 
@@ -642,7 +642,7 @@ if __name__ == '__main__':
 
     config_file = os.path.abspath(config_file)
     cfg.configure(config_file)
-    
+
     main_function(cfg, in_dir, out_dir)
-        
+
     sys.exit(0)

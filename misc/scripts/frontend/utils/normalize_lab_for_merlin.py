@@ -13,7 +13,7 @@ def divide_into_states(st_dur, fn_dur, num_states):
     #if nof_each_state<1:
     #    print 'warning: some states are with zero duration'
 
-    for k in xrange(num_states-1):
+    for k in range(num_states-1):
         state_dur[1][k]   = state_dur[0][k]+(nof_each_state*50000)
         state_dur[0][k+1] = state_dur[1][k]
 
@@ -21,7 +21,7 @@ def divide_into_states(st_dur, fn_dur, num_states):
 
 def normalize_dur(dur):
     rem_t = dur%50000
-    
+
     if rem_t<=25000:
         dur = dur - rem_t
     else:
@@ -31,7 +31,7 @@ def normalize_dur(dur):
 
 def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_stamps):
     out_f = open(out_lab_file,'w')
-    
+
     in_f = open(in_lab_file,'r')
     data = in_f.readlines()
     in_f.close()
@@ -73,17 +73,17 @@ def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_sta
 
     num_states = 5
     tot_num_ph = len(merged_data[0])
-    for j in xrange(tot_num_ph):
+    for j in range(tot_num_ph):
         if j<tot_num_ph-1:
             ph_end = normalize_dur(int(merged_data[0][j+1]))
-            merged_data[0][j+1] = str(ph_end)    
+            merged_data[0][j+1] = str(ph_end)
             merged_data[1][j]   = merged_data[0][j+1]
         else:
             end_time = normalize_dur(int(end_time))
             merged_data[1][j]=str(end_time)
 
         if (int(merged_data[1][j])-int(merged_data[0][j]))==0:
-            print 'Error: zero duration for this phone'
+            print('Error: zero duration for this phone')
             raise
 
         if label_style == "phone_align":
@@ -92,8 +92,8 @@ def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_sta
             else:
                 out_f.write(merged_data[2][j]+'\n')
         elif label_style == "state_align":
-            for k in xrange(num_states):
-                state_dur = divide_into_states(int(merged_data[0][j]), int(merged_data[1][j]), num_states) 
+            for k in range(num_states):
+                state_dur = divide_into_states(int(merged_data[0][j]), int(merged_data[1][j]), num_states)
                 out_f.write(str(state_dur[0][k])+' '+str(state_dur[1][k])+' '+merged_data[2][j]+'['+str(k+2)+']\n')
 
     out_f.close()
@@ -101,7 +101,7 @@ def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_sta
 if __name__ == "__main__":
 
     if len(sys.argv)<5:
-        print 'Usage: python normalize_lab_for_merlin.py <input_lab_dir> <output_lab_dir> <label_style> <file_id_list_scp> <optional: write_time_stamps (1/0)>\n'
+        print('Usage: python normalize_lab_for_merlin.py <input_lab_dir> <output_lab_dir> <label_style> <file_id_list_scp> <optional: write_time_stamps (1/0)>\n')
         sys.exit(0)
 
     in_lab_dir   = sys.argv[1]
@@ -112,10 +112,10 @@ if __name__ == "__main__":
     write_time_stamps = True
     if len(sys.argv)==6:
         if int(sys.argv[5])==0:
-            write_time_stamps = False 
+            write_time_stamps = False
 
     if label_style!="phone_align" and label_style!="state_align":
-        print "These labels %s are not supported as of now...please use state_align or phone_align!!" % (label_style)
+        print("These labels %s are not supported as of now...please use state_align or phone_align!!" % (label_style))
         sys.exit(0)
 
     if not os.path.exists(out_lab_dir):
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     for i in in_f.readlines():
         filename = i.strip()+'.lab'
-        print filename
+        print(filename)
         in_lab_file  = os.path.join(in_lab_dir, filename)
         out_lab_file = os.path.join(out_lab_dir, filename)
         normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_stamps)

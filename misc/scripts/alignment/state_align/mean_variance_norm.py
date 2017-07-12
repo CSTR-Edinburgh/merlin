@@ -9,15 +9,15 @@ class   MeanVarianceNorm():
     plan: 1: support normal MVN and denormalisation for both input and output
           2: support stream-based operation: for example, some streams can use min-max, other streams use MVN, may need one more class
     '''
-    def __init__(self, feature_dimension):   
-    
+    def __init__(self, feature_dimension):
+
         self.mean_vector = None
-        self.std_vector  = None     
+        self.std_vector  = None
         self.feature_dimension = feature_dimension
 
     def feature_normalisation(self, in_file_list, out_file_list):
         logger = logging.getLogger('feature_normalisation')
-        
+
 #        self.feature_dimension = feature_dimension
         try:
             assert len(in_file_list) == len(out_file_list)
@@ -29,10 +29,10 @@ class   MeanVarianceNorm():
             self.mean_vector = self.compute_mean(in_file_list, 0, self.feature_dimension)
         if self.std_vector  == None:
             self.std_vector = self.compute_std(in_file_list, self.mean_vector, 0, self.feature_dimension)
-        
+
         io_funcs = HTKFeat_read()
         file_number = len(in_file_list)
-        for i in xrange(file_number):
+        for i in range(file_number):
             features, current_frame_number = io_funcs.getall(in_file_list[i])
 #            print   current_frame_number
 #            features = io_funcs.data
@@ -40,13 +40,13 @@ class   MeanVarianceNorm():
 
             mean_matrix = numpy.tile(self.mean_vector, (current_frame_number, 1))
             std_matrix = numpy.tile(self.std_vector, (current_frame_number, 1))
-            
+
             norm_features = (features - mean_matrix) / std_matrix
 
-            htk_writer  = HTKFeat_write(veclen=io_funcs.veclen, sampPeriod=io_funcs.sampPeriod, paramKind=9)            
+            htk_writer  = HTKFeat_write(veclen=io_funcs.veclen, sampPeriod=io_funcs.sampPeriod, paramKind=9)
             htk_writer.writeall(norm_features, out_file_list[i])
 
-#            htk_writter = HTK_Parm_IO(n_samples=io_funcs.n_samples, samp_period=io_funcs.samp_period, samp_size=io_funcs.samp_size, param_kind=io_funcs.param_kind, data=norm_features)    
+#            htk_writter = HTK_Parm_IO(n_samples=io_funcs.n_samples, samp_period=io_funcs.samp_period, samp_size=io_funcs.samp_size, param_kind=io_funcs.param_kind, data=norm_features)
 #            htk_writter.write_htk(out_file_list[i])
 
         return  self.mean_vector, self.std_vector
@@ -66,7 +66,7 @@ class   MeanVarianceNorm():
             logger.critical('the dimensionalities of the mean and standard derivation vectors are not the same as the dimensionality of the feature')
             raise
 
-        for i in xrange(file_number):
+        for i in range(file_number):
             features, current_frame_number = io_funcs.load_binary_file_frame(in_file_list[i], self.feature_dimension)
 
             mean_matrix = numpy.tile(mean_vector, (current_frame_number, 1))
@@ -79,9 +79,9 @@ class   MeanVarianceNorm():
     def compute_mean(self, file_list, start_index, end_index):
 
         logger = logging.getLogger('feature_normalisation')
-        
+
         local_feature_dimension = end_index - start_index
-        
+
         mean_vector = numpy.zeros((1, local_feature_dimension))
         all_frame_number = 0
 
@@ -95,7 +95,7 @@ class   MeanVarianceNorm():
 
             mean_vector += numpy.reshape(numpy.sum(features[:, start_index:end_index], axis=0), (1, local_feature_dimension))
             all_frame_number += current_frame_number
-            
+
         mean_vector /= float(all_frame_number)
 
         # setting the print options in this way seems to break subsequent printing of numpy float32 types
@@ -106,15 +106,15 @@ class   MeanVarianceNorm():
         logger.info(' mean: %s' % mean_vector)
         # restore the print options
         # numpy.set_printoptions(po)
-        
+
         self.mean_vector = mean_vector
-        
+
         return  mean_vector
-    
+
     def compute_std(self, file_list, mean_vector, start_index, end_index):
-    
+
         logger = logging.getLogger('feature_normalisation')
-        
+
         local_feature_dimension = end_index - start_index
 
         std_vector = numpy.zeros((1, self.feature_dimension))
@@ -125,14 +125,14 @@ class   MeanVarianceNorm():
             features, current_frame_number = io_funcs.getall(file_name)
 
             mean_matrix = numpy.tile(mean_vector, (current_frame_number, 1))
-            
+
             std_vector += numpy.reshape(numpy.sum((features[:, start_index:end_index] - mean_matrix) ** 2, axis=0), (1, local_feature_dimension))
             all_frame_number += current_frame_number
-            
+
         std_vector /= float(all_frame_number)
-        
+
         std_vector = std_vector ** 0.5
-        
+
         # setting the print options in this way seems to break subsequent printing of numpy float32 types
         # no idea what is going on - removed until this can be solved
         # po=numpy.get_printoptions()
@@ -141,7 +141,7 @@ class   MeanVarianceNorm():
         logger.info('  std: %s' % std_vector)
         # restore the print options
         # numpy.set_printoptions(po)
-        
+
         self.std_vector = std_vector
-        
+
         return  std_vector
