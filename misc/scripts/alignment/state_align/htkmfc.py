@@ -87,7 +87,7 @@ class HTKFeat_read(object):
                     self.A = self.A.byteswap()
                     self.B = self.B.byteswap()
         else:
-            self.dtype = 'f'    
+            self.dtype = 'f'
             self.veclen = self.sampSize / 4
         self.hdrlen = self.fh.tell()
 

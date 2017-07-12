@@ -21,7 +21,7 @@ def divide_into_states(st_dur, fn_dur, num_states):
 
 def normalize_dur(dur):
     rem_t = dur%50000
-    
+
     if rem_t<=25000:
         dur = dur - rem_t
     else:
@@ -31,7 +31,7 @@ def normalize_dur(dur):
 
 def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_stamps):
     out_f = open(out_lab_file,'w')
-    
+
     in_f = open(in_lab_file,'r')
     data = in_f.readlines()
     in_f.close()
@@ -76,7 +76,7 @@ def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_sta
     for j in range(tot_num_ph):
         if j<tot_num_ph-1:
             ph_end = normalize_dur(int(merged_data[0][j+1]))
-            merged_data[0][j+1] = str(ph_end)    
+            merged_data[0][j+1] = str(ph_end)
             merged_data[1][j]   = merged_data[0][j+1]
         else:
             end_time = normalize_dur(int(end_time))
@@ -93,7 +93,7 @@ def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_sta
                 out_f.write(merged_data[2][j]+'\n')
         elif label_style == "state_align":
             for k in range(num_states):
-                state_dur = divide_into_states(int(merged_data[0][j]), int(merged_data[1][j]), num_states) 
+                state_dur = divide_into_states(int(merged_data[0][j]), int(merged_data[1][j]), num_states)
                 out_f.write(str(state_dur[0][k])+' '+str(state_dur[1][k])+' '+merged_data[2][j]+'['+str(k+2)+']\n')
 
     out_f.close()
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     write_time_stamps = True
     if len(sys.argv)==6:
         if int(sys.argv[5])==0:
-            write_time_stamps = False 
+            write_time_stamps = False
 
     if label_style!="phone_align" and label_style!="state_align":
         print("These labels %s are not supported as of now...please use state_align or phone_align!!" % (label_style))

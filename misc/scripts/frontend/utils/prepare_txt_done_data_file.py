@@ -22,4 +22,4 @@ if __name__ == "__main__":
             data = data.replace('"', '\\"')
             out_f.write("( "+file_id+" \" "+data+" \")\n")
 
-    out_f.close()    
+    out_f.close()

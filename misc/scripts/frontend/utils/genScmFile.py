@@ -18,7 +18,7 @@ def create_dictionary_from_txt_dir(txt_dir):
         textfile = textfiles[i]
         junk,filename = os.path.split(textfile)
         filename = filename.split('.')[0]
-        
+
         text = readtext(textfile)
         utt_text[filename] = text
 
@@ -54,12 +54,12 @@ if __name__ == "__main__":
 
     if not os.path.exists(out_utt_dir):
         os.makedirs(out_utt_dir)
-    
+
     if os.path.isdir(sys.argv[1]):
         print("creating a scheme file from text directory")
         in_txt_dir = sys.argv[1]
         utt_text   = create_dictionary_from_txt_dir(in_txt_dir)
-    
+
     elif os.path.isfile(sys.argv[1]):
         print("creating a scheme file from text file")
         in_txt_file = sys.argv[1]

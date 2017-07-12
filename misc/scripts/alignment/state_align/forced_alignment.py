@@ -231,7 +231,7 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
         self.train_scp = os.path.join(self.cfg_dir, 'train.scp')
         # CFG
         self.cfg = os.path.join(self.cfg_dir, 'cfg')
-    
+
         self.wav_dir = wav_dir
         self.lab_dir = lab_dir
         self.mfc_dir = os.path.join(work_dir, 'mfc')
@@ -245,7 +245,7 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
         file_id_list = self._read_file_list(file_id_list_name)
         print('---checking data')
         speaker_utt_dict = self._check_data(file_id_list, multiple_speaker)
-        
+
         print('---extracting features')
         self._HCopy()
         print(time.strftime("%c"))
@@ -255,10 +255,10 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
         for key_name in list(speaker_utt_dict.keys()):
             normaliser.feature_normalisation(speaker_utt_dict[key_name], speaker_utt_dict[key_name])  ## save to itself
         print(time.strftime("%c"))
-        
+
         print('---making proto')
         self._make_proto()
-        
+
     def train_hmm(self, niter, num_mix):
         """
         Perform one or more rounds of estimation
@@ -292,8 +292,8 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
                 next_dir = os.path.join(self.model_dir, 'hmm_mix_' + str(mix * 2) + '_iter_0')
                 if not os.path.exists(next_dir):
                     os.makedirs(next_dir)
-                
-                check_call( [HHEd, '-A', 
+
+                check_call( [HHEd, '-A',
                              '-H', os.path.join(self.cur_dir, MACROS),
                              '-H', os.path.join(self.cur_dir, HMMDEFS),
                              '-M', next_dir] + [hed_file] + [self.phonemes])
@@ -311,7 +311,7 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
         print(time.strftime("%c"))
         self.align_mlf = os.path.join(work_dir, 'mono_align.mlf')
 
-        check_call([HVite, '-a', '-f', '-m', '-y', 'lab', '-o', 'SM', 
+        check_call([HVite, '-a', '-f', '-m', '-y', 'lab', '-o', 'SM',
                     '-i', self.align_mlf, '-L', self.mono_lab_dir,
                     '-C', self.cfg, '-S', self.train_scp,
                     '-H', os.path.join(self.cur_dir, MACROS),
@@ -357,20 +357,20 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
 
 if __name__ == '__main__':
 
-    work_dir = os.getcwd()  
+    work_dir = os.getcwd()
 
     wav_dir = os.path.join(work_dir, 'slt_wav')
     lab_dir = os.path.join(work_dir, 'label_no_align')
     lab_align_dir = os.path.join(work_dir, 'label_state_align')
 
     file_id_list_name = os.path.join(work_dir, 'file_id_list.scp')
-    
+
     ## if multiple_speaker is tuned on. the file_id_list.scp has to reflact this
     ## for example
     ## speaker_1/0001
     ## speaker_2/0001
     ## This is to do speaker-dependent normalisation
-    multiple_speaker = False    
+    multiple_speaker = False
 
     aligner = ForcedAlignment()
     aligner.prepare_training(file_id_list_name, wav_dir, lab_dir, work_dir, multiple_speaker)
@@ -378,6 +378,3 @@ if __name__ == '__main__':
     aligner.train_hmm(7, 32)
     aligner.align(work_dir, lab_align_dir)
     print('---done!')
-
-
-    
