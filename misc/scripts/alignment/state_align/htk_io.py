@@ -102,8 +102,8 @@ class HTK_Parm_IO(object):
             self.samp_size = struct.unpack('<H', f.read(2))[0]
             self.param_kind = struct.unpack('<H', f.read(2))[0]
 
-            print   self.n_samples, self.samp_size
-            print   self.param_kind, self._C             
+            print(self.n_samples, self.samp_size)
+            print(self.param_kind, self._C)             
 
             if (self.htk_datatype_has_option(self._C)):
                 #TODO compression
@@ -154,13 +154,13 @@ class HTK_Parm_IO(object):
     
     def print_info(self):
         
-        print "Samples number: ", self.n_samples
-        print "Sample period: [100ns]", self.samp_period
-        print "Bytes/sample:", self.samp_size
-        print "ParamKind - datatype: ", self.htk_datatype()
-        print "ParamKind - options: _E(%i), _D(%i), A(%i)", self.htk_datatype_has_option(self._E), self.htk_datatype_has_option(self._D), self.htk_datatype_has_option(self._A)
-        print "Features matrix shape", self.data.shape
-        print "Features", self.data
+        print("Samples number: ", self.n_samples)
+        print("Sample period: [100ns]", self.samp_period)
+        print("Bytes/sample:", self.samp_size)
+        print("ParamKind - datatype: ", self.htk_datatype())
+        print("ParamKind - options: _E(%i), _D(%i), A(%i)", self.htk_datatype_has_option(self._E), self.htk_datatype_has_option(self._D), self.htk_datatype_has_option(self._A))
+        print("Features matrix shape", self.data.shape)
+        print("Features", self.data)
         
         return None
     
@@ -176,20 +176,20 @@ def test_HTK_Parm_IO():
     htk = HTK_Parm_IO()
     
     try:   
-        print 'SOURCE FILE : '
+        print('SOURCE FILE : ')
         htk.read_htk(filename_src)
         htk.print_info()
         #print "t", htk.dupa, sys.byteorder
         
         htk.writeHTK(filename_dst)
         
-        print 'TARGET FILE : '
+        print('TARGET FILE : ')
         htk2 = HTK_Parm_IO()
         htk2.read_htk(filename_dst)
         htk2.print_info()
         
     except Exception as e:
-        print e
+        print(e)
     
     return None
     

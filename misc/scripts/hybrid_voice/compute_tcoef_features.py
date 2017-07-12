@@ -17,7 +17,7 @@ def findHybridParamRichContexts(file_id_list, feat_dict, vfloor, data_dir, tcoef
         os.makedirs(tcoef_dir)
 
     #print "vfloor: {0}".format(vfloor)
-    for file_index in xrange(len(file_id_list)):
+    for file_index in range(len(file_id_list)):
         file_name  = file_id_list[file_index]
         label_file = os.path.join(lab_dir, file_name+'.lab')
         tcoef_file = os.path.join(tcoef_dir, file_name+'.tcoef')
@@ -27,7 +27,7 @@ def findHybridParamRichContexts(file_id_list, feat_dict, vfloor, data_dir, tcoef
 
         feat_index = 0
         tempFeats  = [[] for x in range(len(feat_dict))]
-        for feat_ext, feat_dim in feat_dict.iteritems():
+        for feat_ext, feat_dim in feat_dict.items():
             in_feat_dir = os.path.join(data_dir, feat_ext)
             feat_file   = os.path.join(in_feat_dir, file_name+'.'+feat_ext)
             
@@ -45,7 +45,7 @@ def findHybridParamRichContexts(file_id_list, feat_dict, vfloor, data_dir, tcoef
     	silMeans = numpy.zeros(len(features[0]))
     	silVars  = numpy.ones(len(features[0]))
     	
-        for x in xrange(len(hybridInfo[1])):
+        for x in range(len(hybridInfo[1])):
             outf.write('{0}'.format(float(hybridInfo[4][x])/sectoms))
             if sil_identifier in hybridInfo[3][x]:
                 tempMeans = silMeans
@@ -143,12 +143,12 @@ if __name__=='__main__':
     feat_index = 0
     vf=[[] for x in range(len(feat_dict))]
 
-    for feat_ext, feat_dim in feat_dict.iteritems():
+    for feat_ext, feat_dim in feat_dict.items():
         filename = feat_ext+'_'+str(feat_dim)+'_vfloor'
         var_file = os.path.join(vfloor_dir, filename) 
 
         if not os.path.isfile(var_file):
-            print 'Calculating variance flooring for '+feat_ext+'...'
+            print('Calculating variance flooring for '+feat_ext+'...')
             in_feat_dir    = os.path.join(data_dir, feat_ext)
             feat_file_list = prepare_file_path_list(train_id_list, in_feat_dir, feat_ext)
 
@@ -165,9 +165,9 @@ if __name__=='__main__':
 
     #### calculate tcoef features ####
     
-    print 'computing tcoef features for training data...'
+    print('computing tcoef features for training data...')
     tempFeats = findHybridParamRichContexts(train_id_list, feat_dict, vfloor, data_dir, tcoef_train_dir, in_lab_dir, sil_identifier)
     
-    print 'computing tcoef features for test data...'
+    print('computing tcoef features for test data...')
     tempFeats = findHybridParamRichContexts(test_id_list , feat_dict, vfloor, data_dir, tcoef_test_dir,  in_lab_dir, sil_identifier)
 

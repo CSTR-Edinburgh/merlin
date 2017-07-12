@@ -26,16 +26,16 @@ USER = 9
 DISCRETE = 10
 PLP = 11
 
-_E = 0000100 # has energy
-_N = 0000200 # absolute energy supressed
-_D = 0000400 # has delta coefficients
-_A = 0001000 # has acceleration (delta-delta) coefficients
-_C = 0002000 # is compressed
-_Z = 0004000 # has zero mean static coefficients
-_K = 0010000 # has CRC checksum
-_O = 0020000 # has 0th cepstral coefficient
-_V = 0040000 # has VQ data
-_T = 0100000 # has third differential coefficients
+_E = 0o000100 # has energy
+_N = 0o000200 # absolute energy supressed
+_D = 0o000400 # has delta coefficients
+_A = 0o001000 # has acceleration (delta-delta) coefficients
+_C = 0o002000 # is compressed
+_Z = 0o004000 # has zero mean static coefficients
+_K = 0o010000 # has CRC checksum
+_O = 0o020000 # has 0th cepstral coefficient
+_V = 0o040000 # has VQ data
+_T = 0o100000 # has third differential coefficients
 
 def open(f, mode=None, veclen=13):
     """Open an HTK format feature file for reading or writing.
@@ -50,7 +50,7 @@ def open(f, mode=None, veclen=13):
     elif mode in ('w', 'wb'):
         return HTKFeat_write(f, veclen)
     else:
-        raise Exception, "mode must be 'r', 'rb', 'w', or 'wb'"
+        raise Exception("mode must be 'r', 'rb', 'w', or 'wb'")
 
 class HTKFeat_read(object):
     "Read HTK format feature files"
@@ -94,7 +94,7 @@ class HTKFeat_read(object):
     def seek(self, idx):
         self.fh.seek(self.hdrlen + idx * self.sampSize, 0)
 
-    def next(self):
+    def __next__(self):
         vec = numpy.fromfile(self.fh, self.dtype, self.veclen)
         if len(vec) == 0:
             raise StopIteration
@@ -106,7 +106,7 @@ class HTKFeat_read(object):
         return vec
 
     def readvec(self):
-        return self.next()
+        return next(self)
 
     def getall(self, filename):
         self.open(filename)

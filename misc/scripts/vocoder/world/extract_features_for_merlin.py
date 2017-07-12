@@ -74,7 +74,7 @@ get_wav_filelist(wav_dir)
 for file in wav_files:
     if file is not None:
         file_id = os.path.basename(file).split(".")[0]
-        print('\n'+file_id)
+        print(('\n'+file_id))
         ### WORLD ANALYSIS -- extract vocoder parameters ###
         ### extract f0, sp, ap ###
         world_analysis_cmd = "%s %s %s %s %s" %(os.path.join(world,'analysis'), \
@@ -115,4 +115,4 @@ shutil.rmtree(f0_dir, ignore_errors=True)
 for zippath in glob.iglob(os.path.join(bap_dir, '*.bapd')):
     os.remove(zippath)
 
-print("You should have your features ready in: "+out_dir)    
+print(("You should have your features ready in: "+out_dir))    

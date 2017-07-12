@@ -45,7 +45,7 @@ class ContextInfo:
     
     def sameContext(self, altContext):
         if self.context==altContext:
-            print 'match found: {0}'.format(altContext)
+            print('match found: {0}'.format(altContext))
         return self.context==altContext
     
     def addContextInstance(self, fileID, frameStart, frameEnd, btlnkFeats):
@@ -63,9 +63,9 @@ class ContextInfo:
 
 class DistributionInfo:
     def __init__(self, mixNum=1): 
-        self.mean      = [None for x in xrange(mixNum)]
-        self.var       = [None for x in xrange(mixNum)]
-        self.mixWeight = [None for x in xrange(mixNum)]
+        self.mean      = [None for x in range(mixNum)]
+        self.var       = [None for x in range(mixNum)]
+        self.mixWeight = [None for x in range(mixNum)]
     
     def setVariance(self, variance, index=0):
         self.var[index] = numpy.array(variance, dtype=numpy.float)
@@ -78,13 +78,13 @@ class DistributionInfo:
     
     def getCovariance(self, index=0):
         covariance = numpy.zeros((len(self.var[index]), len(self.var[index])))
-        for i in xrange(len(self.var[index])):
+        for i in range(len(self.var[index])):
             covariance[i, i] = self.var[index][i]
         return covariance
     
     def getInverseCovariance(self, index=0):
         covariance = numpy.zeros((len(self.var[index]), len(self.var[index])))
-        for i in xrange(len(self.var[index])):
+        for i in range(len(self.var[index])):
             covariance[i,i] = 1.0/self.var[index][i]
         return covariance
     
@@ -106,7 +106,7 @@ class DistributionInfo:
 
     def enforceVFloor(self, varFloor, index=0):
         count=0
-        for x in xrange(len(self.var[index])):
+        for x in range(len(self.var[index])):
             if self.var[index][x]<varFloor[x]:
                 self.var[index][x] = varFloor[x]
                 count = count+1
@@ -120,7 +120,7 @@ def readBottleneckFeatures(fname, featNum=32):
 
 def calculateParamGV(feat_file_list, feat_dim=32):
     data = numpy.empty((1, feat_dim))
-    for file_index in xrange(len(feat_file_list)):
+    for file_index in range(len(feat_file_list)):
         file_name   = feat_file_list[file_index]
         (junk, ext) = feat_file_list[file_index].split('.')
         
@@ -143,9 +143,9 @@ def readHybridLabelFile(fname, idnum, sil_identifier='#', ignoreSilence=True):
     data = fid.readlines()
     fid.close()
 
-    lines = [[data[x].split()[0], data[x].split()[2]] for x in xrange(1,len(data))] #exclude first line!
+    lines = [[data[x].split()[0], data[x].split()[2]] for x in range(1,len(data))] #exclude first line!
 
-    columns = [[] for x in xrange(len(lines[0]))]
+    columns = [[] for x in range(len(lines[0]))]
     for line in lines:
         for i, item in enumerate(line):
             columns[i].append(item)
@@ -157,7 +157,7 @@ def readHybridLabelFile(fname, idnum, sil_identifier='#', ignoreSilence=True):
     if ignoreSilence:
         keep = [not(bool(re.search(sil_identifier,x))) for x in columns[3]]
     else:
-        keep = [bool(1) for x in xrange(len(columns[3]))]
+        keep = [bool(1) for x in range(len(columns[3]))]
 
     toInc  = numpy.where(keep)[0]
     gap    = numpy.array(columns[2][toInc], dtype=numpy.float64)-numpy.array(columns[1][toInc], dtype=numpy.float64)
@@ -170,7 +170,7 @@ def readHybridLabelFile(fname, idnum, sil_identifier='#', ignoreSilence=True):
     allFrameStart = numpy.ones(len(columns[2]))*-1
     allFrameEnd   = numpy.ones(len(columns[2]))*-1
 
-    for point in xrange(len(toInc)):
+    for point in range(len(toInc)):
         allFrameEnd[toInc[point]]   = frameEnd[point]
         allFrameStart[toInc[point]] = frameStart[point]
 
@@ -179,16 +179,16 @@ def readHybridLabelFile(fname, idnum, sil_identifier='#', ignoreSilence=True):
     return data
 
 def convertToHybridLabel(labData, numHybridSec):
-    hybridData   = [[] for x in xrange(len(labData))]
+    hybridData   = [[] for x in range(len(labData))]
     labDurations = labData[2]-labData[1]
     
     tDur = labData[5]-labData[4]
-    for i in xrange(len(labData[0])):
+    for i in range(len(labData[0])):
         #keep as frames or convert to time?! Currently kept in frames
         sectionLen = float(labDurations[i])/numHybridSec
         
         tLen = float(tDur[i])/numHybridSec
-        for j in xrange(numHybridSec):
+        for j in range(numHybridSec):
             hybridData[0].append(labData[0][0])
             hybridData[1].append(int(labData[1][i]+numpy.floor((j)*sectionLen)))
             hybridData[2].append(int(labData[1][i]+numpy.floor((j+1)*sectionLen)))

@@ -32,7 +32,7 @@ class   MeanVarianceNorm():
         
         io_funcs = HTKFeat_read()
         file_number = len(in_file_list)
-        for i in xrange(file_number):
+        for i in range(file_number):
             features, current_frame_number = io_funcs.getall(in_file_list[i])
 #            print   current_frame_number
 #            features = io_funcs.data
@@ -66,7 +66,7 @@ class   MeanVarianceNorm():
             logger.critical('the dimensionalities of the mean and standard derivation vectors are not the same as the dimensionality of the feature')
             raise
 
-        for i in xrange(file_number):
+        for i in range(file_number):
             features, current_frame_number = io_funcs.load_binary_file_frame(in_file_list[i], self.feature_dimension)
 
             mean_matrix = numpy.tile(mean_vector, (current_frame_number, 1))

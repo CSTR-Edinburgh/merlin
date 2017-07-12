@@ -59,7 +59,7 @@ def convert_hts_lab_to_festival_lab(inp_label_file_name, out_label_file_name, la
              
     out_f = open(out_label_file_name, 'w')
     out_f.write('#\n')
-    for j in xrange(len(lab_info[0])):
+    for j in range(len(lab_info[0])):
         dur = lab_info[0][j]
         ph  = lab_info[1][j]
         out_f.write(str(dur)+' 125 '+ph+'\n')
@@ -98,7 +98,7 @@ def read_file_list(file_name):
 if __name__=='__main__':
     
     if len(sys.argv)!=5:
-        print 'Usage: python convert_hts_label_format_to_festival.py <input_folder> <output_folder> <file_list> <label_style: state_align/phone_align>\n'
+        print('Usage: python convert_hts_label_format_to_festival.py <input_folder> <output_folder> <file_list> <label_style: state_align/phone_align>\n')
         sys.exit(1)
 
     inp_lab_dir  = sys.argv[1]
@@ -112,5 +112,5 @@ if __name__=='__main__':
     inp_label_file_list = prepare_file_path_list(file_id_list, inp_lab_dir, '.lab')
     out_label_file_list = prepare_file_path_list(file_id_list, out_lab_dir, '.lab')
    
-    print 'changing HTS label format to festival...' 
+    print('changing HTS label format to festival...') 
     change_label_format(inp_label_file_list, out_label_file_list, label_style)
