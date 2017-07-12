@@ -19,6 +19,18 @@ wav_dir=$1
 inp_txt=$2
 lab_dir=$3
 
+if [ ! "$(ls -A ${wav_dir})" ]; then
+    echo "Please place your audio files in: ${wav_dir}"
+    exit 1
+fi
+
+if [ ! "$(ls -A ${inp_txt})" ]; then
+    echo "Please give text as input in format: either 1 or 2"
+    echo "1. database/txt       -- a text directory containing text files"
+    echo "2. database/utts.data -- a single text file with each sentence in a new line in festival format"
+    exit 1
+fi
+
 ####################################
 ########## Prepare labels ##########
 ####################################

@@ -37,7 +37,7 @@ _O = 0o020000 # has 0th cepstral coefficient
 _V = 0o040000 # has VQ data
 _T = 0o100000 # has third differential coefficients
 
-def open(f, mode=None, veclen=13):
+def open_htk_file(f, mode=None, veclen=13):
     """Open an HTK format feature file for reading or writing.
     The mode parameter is 'rb' (reading) or 'wb' (writing)."""
     if mode is None:
@@ -57,15 +57,15 @@ class HTKFeat_read(object):
     def __init__(self, filename=None):
         self.swap = (unpack('=i', pack('>i', 42))[0] != 42)
         if (filename != None):
-            self.open(filename)
+            self.open_file(filename)
 
     def __iter__(self):
         self.fh.seek(12,0)
         return self
 
-    def open(self, filename):
+    def open_file(self, filename):
         self.filename = filename
-        self.fh = file(filename, "rb")
+        self.fh = open(filename, "rb")
         self.readheader()
 
     def readheader(self):
@@ -90,6 +90,7 @@ class HTKFeat_read(object):
             self.dtype = 'f'
             self.veclen = self.sampSize / 4
         self.hdrlen = self.fh.tell()
+        self.veclen = int(self.veclen)
 
     def seek(self, idx):
         self.fh.seek(self.hdrlen + idx * self.sampSize, 0)
@@ -109,7 +110,7 @@ class HTKFeat_read(object):
         return next(self)
 
     def getall(self, filename):
-        self.open(filename)
+        self.open_file(filename)
         self.readheader()
 
 #        print   self.nSamples, self.veclen
@@ -144,14 +145,14 @@ class HTKFeat_write(object):
         self.filesize = 0
         self.swap = (unpack('=i', pack('>i', 42))[0] != 42)
         if (filename != None):
-            self.open(filename)
+            self.open_file(filename)
 
     def __del__(self):
         self.close()
 
-    def open(self, filename):
+    def open_file(self, filename):
         self.filename = filename
-        self.fh = file(filename, "wb")
+        self.fh = open(filename, "wb")
         self.writeheader()
 
     def close(self):
@@ -174,7 +175,7 @@ class HTKFeat_write(object):
         self.filesize = self.filesize + self.veclen
 
     def writeall(self, arr, filename):
-        self.open(filename)
+        self.open_file(filename)
         for row in arr:
             self.writevec(row)
 

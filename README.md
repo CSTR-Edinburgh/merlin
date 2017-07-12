@@ -15,7 +15,7 @@ Merlin is free software, distributed under an Apache License Version 2.0, allowi
 
 Read the documentation at [cstr-edinburgh.github.io/merlin](https://cstr-edinburgh.github.io/merlin/).
 
-Merlin is compatible with: __Python 2.7__.
+Merlin is compatible with: __Python 2.7-3.6__.
 
 Installation
 ------------
@@ -26,7 +26,7 @@ Merlin uses the following dependencies:
 - matplotlib
 - bandmat
 - theano
-- sklearn, keras (optional, required if you use keras models)
+- sklearn, keras, h5py (optional, required if you use keras models)
 
 To install Merlin, `cd` merlin and run the below steps:
 
@@ -55,8 +55,8 @@ Now, you can also follow Josh Meyer [blog post](http://jrmeyer.github.io/merlin/
 
 For a more in-depth tutorial about building voices with Merlin, you can check out:
 
-- [Arctic voices](https://cstr-edinburgh.github.io/merlin/slt-arctic-voice)
-- [Build your own voice](https://cstr-edinburgh.github.io/merlin/build-own-voice)
+- [Arctic voices](https://cstr-edinburgh.github.io/merlin/getting-started/slt-arctic-voice)
+- [Build your own voice](https://cstr-edinburgh.github.io/merlin/getting-started/build-own-voice)
 
 
 Synthetic speech samples

@@ -34,14 +34,15 @@ class ForcedAlignment(object):
         fid = open(self.proto, 'w')
         means = ' '.join(['0.0' for _ in range(39)])
         varg  = ' '.join(['1.0' for _ in range(39)])
-        print("""~o <VECSIZE> 39 <USER>
+        fid.write("""~o <VECSIZE> 39 <USER>
 ~h "proto"
 <BEGINHMM>
-<NUMSTATES> 7""", file=fid)
+<NUMSTATES> 7
+""")
         for i in range(2, STATE_NUM+2):
-            print('<STATE> {0}\n<MEAN> 39\n{1}'.format(i, means), file=fid)
-            print('<VARIANCE> 39\n{0}'.format(varg), file=fid)
-        print("""<TRANSP> 7
+            fid.write('<STATE> {0}\n<MEAN> 39\n{1}\n'.format(i, means))
+            fid.write('<VARIANCE> 39\n{0}\n'.format(varg))
+        fid.write("""<TRANSP> 7
  0.0 1.0 0.0 0.0 0.0 0.0 0.0
  0.0 0.6 0.4 0.0 0.0 0.0 0.0
  0.0 0.0 0.6 0.4 0.0 0.0 0.0
@@ -49,7 +50,8 @@ class ForcedAlignment(object):
  0.0 0.0 0.0 0.0 0.6 0.4 0.0
  0.0 0.0 0.0 0.0 0.0 0.7 0.3
  0.0 0.0 0.0 0.0 0.0 0.0 0.0
-<ENDHMM>""", file=fid)
+<ENDHMM>
+""")
         fid.close()
 
         ## make vFloors
@@ -62,7 +64,7 @@ class ForcedAlignment(object):
         source = open(os.path.join(self.cur_dir,
                       os.path.split(self.proto)[1]), 'r')
         for _ in range(3):
-            print(source.readline(), end=' ', file=fid)
+            fid.write(source.readline())
         source.close()
         # get remaining lines from vFloors
         fid.writelines(open(os.path.join(self.cur_dir,
@@ -76,7 +78,7 @@ class ForcedAlignment(object):
             source.readline()
             source.readline()
             # the header
-            print('~h "{0}"'.format(phone.rstrip()), file=fid)
+            fid.write('~h "{0}"\n'.format(phone.rstrip()))
             # the rest
             fid.writelines(source.readlines())
             source.close()
@@ -105,7 +107,7 @@ class ForcedAlignment(object):
             tmp_list = line.split('-')
             tmp_list = tmp_list[1].split('+')
             mono_phone = tmp_list[0]
-            print('{0}'.format(mono_phone), file=fwe)
+            fwe.write('{0}\n'.format(mono_phone))
             if mono_phone not in phoneme_dict:
                 phoneme_dict[mono_phone] = 1
             phoneme_dict[mono_phone] += 1
@@ -132,8 +134,8 @@ class ForcedAlignment(object):
                 if not os.path.exists(mfc_sub_dir):
                     os.makedirs(mfc_sub_dir)
 
-                print('{0} {1}'.format(wav_file, mfc_file), file=copy_scp)
-                print('{0}'.format(mfc_file), file=check_scp)
+                copy_scp.write('{0} {1}\n'.format(wav_file, mfc_file))
+                check_scp.write('{0}\n'.format(mfc_file))
 
 
                 if multiple_speaker:
@@ -155,16 +157,15 @@ class ForcedAlignment(object):
         fid = open(self.phonemes, 'w')
         fmap = open(self.phoneme_map, 'w')
         for phoneme in list(phoneme_dict.keys()):
-#            print   phoneme, phoneme_dict[phoneme]
-            print('{0}'.format(phoneme), file=fid)
-            print('{0} {0}'.format(phoneme), file=fmap)
+            fid.write('{0}\n'.format(phoneme))
+            fmap.write('{0} {0}\n'.format(phoneme))
         fmap.close()
         fid.close()
 
         self.phoneme_mlf = os.path.join(self.cfg_dir, 'mono_phone.mlf')
         fid = open(self.phoneme_mlf, 'w')
-        print('#!MLF!#', file=fid)
-        print('"*/*.lab" -> "' + self.mono_lab_dir + '"', file=fid)
+        fid.write('#!MLF!#\n')
+        fid.write('"*/*.lab" -> "' + self.mono_lab_dir + '"\n')
         fid.close()
 
         return  speaker_utt_dict
@@ -174,7 +175,7 @@ class ForcedAlignment(object):
         Compute MFCCs
         """
         # write a CFG for extracting MFCCs
-        print("""SOURCEKIND = WAVEFORM
+        open(self.cfg, 'w').write("""SOURCEKIND = WAVEFORM
 SOURCEFORMAT = WAVE
 TARGETRATE = 50000.0
 TARGETKIND = MFCC_D_A_0
@@ -184,10 +185,11 @@ USEHAMMING = T
 ENORMALIZE = T
 CEPLIFTER = 22
 NUMCHANS = 20
-NUMCEPS = 12""", file=open(self.cfg, 'w'))
+NUMCEPS = 12
+""")
         check_call([HCopy, '-C', self.cfg, '-S', self.copy_scp])
         # write a CFG for what we just built
-        print("""TARGETRATE = 50000.0
+        open(self.cfg, 'w').write("""TARGETRATE = 50000.0
 TARGETKIND = USER
 WINDOWSIZE = 250000.0
 PREEMCOEF = 0.97
@@ -195,7 +197,8 @@ USEHAMMING = T
 ENORMALIZE = T
 CEPLIFTER = 22
 NUMCHANS = 20
-NUMCEPS = 12""", file=open(self.cfg, 'w'))
+NUMCEPS = 12
+""")
 
     def _nxt_dir(self):
         """
@@ -232,7 +235,7 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
         # CFG
         self.cfg = os.path.join(self.cfg_dir, 'cfg')
 
-        self.wav_dir = wav_dir
+        self.wav_dir=wav_dir
         self.lab_dir = lab_dir
         self.mfc_dir = os.path.join(work_dir, 'mfc')
         if not os.path.exists(self.mfc_dir):
@@ -286,7 +289,7 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
                 ##increase mixture number
                 hed_file = os.path.join(self.cfg_dir, 'mix_' + str(mix * 2) + '.hed')
                 fid = open(hed_file, 'w')
-                print('MU ' + str(mix * 2) + ' {*.state[2-'+str(STATE_NUM+2)+'].mix}\n', file=fid)
+                fid.write('MU ' + str(mix * 2) + ' {*.state[2-'+str(STATE_NUM+2)+'].mix}\n')
                 fid.close()
 
                 next_dir = os.path.join(self.model_dir, 'hmm_mix_' + str(mix * 2) + '_iter_0')
@@ -343,7 +346,7 @@ NUMCEPS = 12""", file=open(self.cfg, 'w'))
                     line = fid.readline()
                     line = line.strip()
                     tmp_list = line.split()
-                    print('{0} {1} {2}[{3}]'.format(tmp_list[0], tmp_list[1], full_lab, i+2), file=fw)
+                    fw.write('{0} {1} {2}[{3}]\n'.format(tmp_list[0], tmp_list[1], full_lab, i+2))
 
             fw.close()
             flab.close()
