@@ -66,7 +66,7 @@ if [ "$train" = true ]; then
     python ${frontend}/utils/normalize_lab_for_merlin.py \
                             ${out_dir}/prompt-lab/full \
                             ${out_dir}/label_no_align \
-                            phone_align \
+                            ${Labels} \
                             ${out_dir}/$file_id_scp 0
     ### remove any un-necessary files
     rm -rf ${out_dir}/prompt-lab
