@@ -10,7 +10,7 @@ def readtext(fname):
 
 def create_dictionary_from_txt_dir(txt_dir):
     utt_text = {}
-    textfiles = glob.glob(in_txt_dir + '/*.txt')
+    textfiles = glob.glob(txt_dir + '/*.txt')
 
     num_of_files = len(textfiles)
 
