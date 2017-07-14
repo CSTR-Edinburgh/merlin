@@ -52,6 +52,6 @@ Generate new sentences
 To generate new sentences, please follow below steps:
 
 Step  8: Run either demo voice or full voice. <br/>
-Step  9: Place the txt files containing the utterances in experiments/<voice>/test_synthesis/txt
+Step  9: Place the txt files containing the utterances in experiments/roger_demo OR roger_full/test_synthesis/txt
 Step 10: ./merlin_synthesis.sh
 
