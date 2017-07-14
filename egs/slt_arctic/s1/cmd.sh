@@ -9,7 +9,8 @@
 
 #a) Sun grid options (IDIAP)
 # ATTENTION: Do that in your shell: SETSHELL grid
-export cuda_cmd="queue.pl -l gpu"
+#export cuda_cmd="queue.pl -l gpu"
+#export cuda_short_cmd="queue.pl -l sgpu"
 #export cuda_cmd="queue.pl -l q1d,hostname=dynamix03"
 #export cuda_cmd="..."
 
@@ -18,4 +19,5 @@ export cuda_cmd="queue.pl -l gpu"
 #export cuda_cmd="queue.pl -q long.q@pcspeech-gpu"
 
 #c) run it locally...
-#export cuda_cmd=run.pl
+export cuda_cmd=run.pl
+export cuda_short_cmd=$cuda_cmd

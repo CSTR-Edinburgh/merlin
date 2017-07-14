@@ -15,7 +15,6 @@ fi
 if [ ! -d "${ROGER_DB}" ]; then
     echo "ERROR: Variable ROGER_DB must be set to the roger database."
     echo "       Use: export ROGER_DB=path/to/db/"
-    # export ROGER_DB=/idiap/resource/database/blizzard2008/blizzard_release/
     exit 1
 fi
 
@@ -49,11 +48,15 @@ audio_dir=database/wav
 txt_dir=database/txt
 label_dir=database/labels
 
+# Select the utterance list(s) to be used for training.
 if [[ "$voice_name" == *"demo"* ]]
 then
+    # The demo version only uses theherald1 (281 utterances, 42.8 minutes)
     uttLists=("theherald1")
 elif [[ "$voice_name" == *"full"* ]]
 then
+    # The full version uses all utterance lists with meaningful utterances.
+    # Using: carroll, arcitc, theherald1-3 (4871 utterances, ~8h).
     uttLists=("carroll" "arctic" "theherald") # Can be any of carroll, unilex, address, spelling, arcitc, emphasis, theherald, theherald1, theherald2, theherald3, all_new, total.
 else
     echo "Undefined voice name ($voice_name)...please use roger_demo or roger_full !!"
@@ -80,20 +83,25 @@ if [ ! -e $audio_dir ]; then
     done
 fi
 
-# Get labels.
+# Labels have to be removed because utterance list selection could have been changed.
 rm -rf $txt_dir
+# Leave this check for fast testing, when $txt_dir does not have to be removed.
 if [ ! -e $txt_dir ]; then
     mkdir -p $txt_dir
+    # The utts.data file contains all labels.
     cp ${ROGER_DB}/utts.data ${txt_dir}/utts.data
-    #ln -s $ROGER_DB/utts.data $txt_dir/utts.data
+    # Combine the selected utterances to a regex pattern.
     utts_pat=$(echo ${utts[@]}|tr " " "|")
+    # Select those labes of utts.data which belong to the selected utterances.
     cat ${txt_dir}/utts.data | grep -wE "${utts_pat}" >| ${txt_dir}/utts_selected.data
     # Turn every line of utts.data into a txt file using the utterance id as file name.
     awk -F' ' -v outDir=${txt_dir} '{print substr($0,length($1)+2,length($0)) > outDir"/"substr($1,2,length($1)-1)".txt"}' ${txt_dir}/utts_selected.data
+    # Remove unnecessary files.
     rm ${txt_dir}/utts.data
     rm ${txt_dir}/utts_selected.data
 fi
 
+# Clear the labels directory.
 rm -rf $label_dir
 
 ### create some test files ###
@@ -133,6 +141,7 @@ echo "######### No. of files ###############" >> $global_config_file
 echo "######################################" >> $global_config_file
 echo "" >> $global_config_file
 
+# Automatically select 5% of the data for validation and test set.
 num_files=$(ls -1 $audio_dir | wc -l)
 num_dev_set=$(awk "BEGIN { pc=${num_files}*0.05; print(int(pc)) }")
 num_train_set=$(($num_files-2*$num_dev_set))

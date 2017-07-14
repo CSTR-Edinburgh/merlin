@@ -1,0 +1,12 @@
+About the roger blizzard2008 corpus
+
+The roger database was constructed at the Centre for Speech Technology Research at the University of Edinburgh for the Blizzard Challange 2008. The database was only available to registered participants in the challange (see http://www.cstr.ed.ac.uk/projects/roger_blizzard2008/).
+
+It contains 9609 utterances (~15h) from one english speaker (roger) at 16 kHz
+
+Each subdirectory of this directory contains the
+scripts for a sequence of experiments.
+
+  s1: To run roger_demo or roger_full with WORLD vocoder
+
+

@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
 source cmd.sh
-export ROGER_DB=/idiap/resource/database/blizzard2008/blizzard_release/
+export cuda_cmd=$cuda_short_cmd # Demo uses few data so use short queues.
+#export ROGER_DB=/idiap/resource/database/blizzard2008/blizzard_release/
 
 if test "$#" -ne 0; then
     echo "Usage: ./run_full_voice.sh"
