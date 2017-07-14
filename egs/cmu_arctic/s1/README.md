@@ -48,6 +48,6 @@ To generate new sentences, please follow below steps:
 
 Step  8: Run either demo voice or full voice. <br/>
 Step  9: Place the txt files containing the utterances in experiments/speaker_arctic_demo OR speaker_arctic_full/test_synthesis/txt <br/>
-	 NOTE: speaker should be the speaker you used before (bdl, slt, jmk).
+	 NOTE: speaker should be the speaker you used before (bdl, slt, jmk). <br/>
 Step 10: ./merlin_synthesis.sh
 
