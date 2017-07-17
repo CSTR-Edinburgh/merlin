@@ -813,13 +813,13 @@ def main_function(cfg):
         temp_dir_name = '%s_%s_%d_%d_%d_%d_%s_hidden' \
                         %(cfg.model_type, cfg.combined_feature_name, \
                           cfg.train_file_number, lab_dim, cfg.cmp_dim, \
-                          len(hidden_layers_sizes), combined_model_arch)
+                          len(hidden_layer_size), combined_model_arch)
         gen_dir = os.path.join(gen_dir, temp_dir_name)
 
-        bottleneck_size = min(hidden_layers_sizes)
+        bottleneck_size = min(hidden_layer_size)
         bottleneck_index = 0
-        for i in range(len(hidden_layers_sizes)):
-            if hidden_layers_sizes(i) == bottleneck_size:
+        for i in range(len(hidden_layer_size)):
+            if hidden_layer_size(i) == bottleneck_size:
                 bottleneck_index = i
 
         logger.info('generating bottleneck features from DNN')
