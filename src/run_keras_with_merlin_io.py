@@ -106,13 +106,17 @@ class KerasClass(object):
         test_file_number  = cfg.test_file_number
 
         file_id_scp  = cfg.file_id_scp
+        test_id_scp  = cfg.test_id_scp
 
         #### main processess ####
-
+        
         self.NORMDATA   = cfg.NORMDATA
         self.TRAINMODEL = cfg.TRAINMODEL
         self.TESTMODEL  = cfg.TESTMODEL
 
+        #### Generate only test list ####
+        self.GenTestList = cfg.GenTestList
+        
         ###################################################
         ####### End of user-defined conf variables ########
         ###################################################
@@ -130,7 +134,12 @@ class KerasClass(object):
         self.inp_test_file_list = data_utils.prepare_file_path_list(valid_id_list, inp_feat_dir, inp_file_ext)
         self.out_test_file_list = data_utils.prepare_file_path_list(valid_id_list, out_feat_dir, out_file_ext)
 
-        self.gen_test_file_list  = data_utils.prepare_file_path_list(valid_id_list, pred_feat_dir, out_file_ext)
+        self.gen_test_file_list = data_utils.prepare_file_path_list(valid_id_list, pred_feat_dir, out_file_ext)
+
+        if self.GenTestList:
+            test_id_list = data_utils.read_file_list(test_id_scp)
+            self.inp_test_file_list = data_utils.prepare_file_path_list(test_id_list, inp_feat_dir, inp_file_ext)
+            self.gen_test_file_list = data_utils.prepare_file_path_list(test_id_list, pred_feat_dir, out_file_ext)
 
         #### Define keras models class ####
         self.keras_models = TrainKerasModels(self.inp_dim, self.hidden_layer_size, self.out_dim, self.hidden_layer_type,

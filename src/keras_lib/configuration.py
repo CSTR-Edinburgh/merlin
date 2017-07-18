@@ -191,9 +191,11 @@ class configuration(object):
             ('test_file_number' , impossible_int, 'Data','test_file_number'),
 
             # Processes
-            ('NORMDATA'  , False, 'Processes', 'NORMDATA'),
-            ('TRAINMODEL', False, 'Processes', 'TRAINMODEL'),
-            ('TESTMODEL' , False, 'Processes', 'TESTMODEL')
+            ('GenTestList', False, 'Processes', 'GenTestList'),
+
+            ('NORMDATA'   , False, 'Processes', 'NORMDATA'),
+            ('TRAINMODEL' , False, 'Processes', 'TRAINMODEL'),
+            ('TESTMODEL'  , False, 'Processes', 'TESTMODEL')
 
         ]
 

@@ -566,7 +566,7 @@ def main_function(cfg):
 
         in_label_align_file_list = prepare_file_path_list(test_id_list, cfg.in_label_align_dir, cfg.lab_ext, False)
 
-        if cfg.AcousticModel and cfg.test_synth_dir is not None:
+        if cfg.test_synth_dir is not None:
             binary_label_file_list   = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
             nn_label_file_list       = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
             nn_label_norm_file_list  = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
@@ -758,6 +758,10 @@ def main_function(cfg):
         cfg.out_feat_dir  = nn_cmp_norm_dir
         cfg.pred_feat_dir = gen_dir
 
+        if cfg.test_synth_dir is not None:
+            cfg.inp_feat_dir  = cfg.test_synth_dir
+            cfg.pred_feat_dir = cfg.test_synth_dir
+        
         ### call kerasclass and use an instance ###
         keras_instance = KerasClass(cfg)
 
