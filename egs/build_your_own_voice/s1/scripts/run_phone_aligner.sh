@@ -63,7 +63,7 @@ cat cmu_us_${Voice}/etc/txt.done.data | cut -d " " -f 2 > file_id_list.scp
 echo "converting festival utts to labels..."
 ${frontend}/festival_utt_to_lab/make_labels \
                         full-context-labels \
-                        cmu_us_slt_arctic/festival/utts \
+                        cmu_us_${Voice}/festival/utts \
                         ${FESTDIR}/examples/dumpfeats \
                         ${frontend}/festival_utt_to_lab 
 
