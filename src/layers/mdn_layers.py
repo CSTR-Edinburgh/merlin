@@ -1,44 +1,44 @@
 ################################################################################
 #           The Neural Network (NN) based Speech Synthesis System
 #                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/
-#                
-#                Centre for Speech Technology Research                 
-#                     University of Edinburgh, UK                       
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
 #                      Copyright (c) 2014-2015
-#                        All Rights Reserved.                           
-#                                                                       
+#                        All Rights Reserved.
+#
 # The system as a whole and most of the files in it are distributed
 # under the following copyright and conditions
 #
-#  Permission is hereby granted, free of charge, to use and distribute  
-#  this software and its documentation without restriction, including   
-#  without limitation the rights to use, copy, modify, merge, publish,  
-#  distribute, sublicense, and/or sell copies of this work, and to      
-#  permit persons to whom this work is furnished to do so, subject to   
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
 #  the following conditions:
-#  
-#   - Redistributions of source code must retain the above copyright  
-#     notice, this list of conditions and the following disclaimer.   
-#   - Redistributions in binary form must reproduce the above         
-#     copyright notice, this list of conditions and the following     
-#     disclaimer in the documentation and/or other materials provided 
-#     with the distribution.                                          
-#   - The authors' names may not be used to endorse or promote products derived 
-#     from this software without specific prior written permission.   
-#                                  
-#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        
-#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      
-#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   
-#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     
-#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    
-#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   
-#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          
-#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 ################################################################################
 
 
-import numpy, time, cPickle, gzip, sys, os, copy
+import numpy, time, pickle, gzip, sys, os, copy
 
 import theano
 import theano.tensor as T
@@ -50,12 +50,12 @@ import logging
 class MixtureDensityOutputLayer(object):
     def __init__(self, rng, input, n_in, n_out, n_component):
         self.input = input
-        
+
         W_value = rng.normal(0.0, 1.0/numpy.sqrt(n_in), size=(n_in, n_out*n_component))
         self.W_mu = theano.shared(value=numpy.asarray(W_value, dtype=theano.config.floatX), name='W_mu', borrow=True)
-        
+
         self.W_sigma = theano.shared(value=numpy.asarray(W_value.copy(), dtype=theano.config.floatX), name='W_sigma', borrow=True)
-        
+
         W_mix_value = rng.normal(0.0, 1.0/numpy.sqrt(n_in), size=(n_in, n_component))
         self.W_mix = theano.shared(value=numpy.asarray(W_mix_value, dtype=theano.config.floatX), name='W_mix', borrow=True)
 
@@ -72,7 +72,7 @@ class MixtureDensityOutputLayer(object):
         self.delta_W_mix   = theano.shared(value = numpy.zeros((n_in, n_component),
                                            dtype=theano.config.floatX), name='delta_W_mix')
 
-        
+
         self.params = [self.W_mu, self.W_sigma, self.W_mix]
         self.delta_params = [self.delta_W_mu, self.delta_W_sigma, self.delta_W_mix]
 
@@ -90,7 +90,7 @@ class LinearLayer(object):
             b = theano.shared(value=numpy.zeros((n_out,),
                                         dtype=theano.config.floatX),
                                    name='b', borrow=True)
-        
+
         self.W = W
         self.b = b
 
@@ -131,7 +131,7 @@ class SigmoidLayer(object):
             b = theano.shared(value=numpy.zeros((n_out,),
                               dtype=theano.config.floatX),
                               name='b', borrow=True)
-        
+
         self.W = W
         self.b = b
 
@@ -143,7 +143,7 @@ class SigmoidLayer(object):
 
         self.output = T.dot(self.input, self.W) + self.b
         self.output = activation(self.output)
-        
+
         self.params = [self.W, self.b]
         self.delta_params = [self.delta_W, self.delta_b]
 
@@ -157,19 +157,19 @@ class SigmoidLayer(object):
         for param, iparam in zip(self.params, iparams):
             updates[param] = iparam
         return updates
-        
+
 
 class GeneralLayer(object):
 
     def __init__(self, rng, input, n_in, n_out, W = None, b = None, activation = 'linear'):
- 
+
         self.input = input
         self.n_in = n_in
         self.n_out = n_out
 
-        self.logger = logging.getLogger('general_layer')        
+        self.logger = logging.getLogger('general_layer')
 
-        # randomly initialise the activation weights based on the input size, as advised by the 'tricks of neural network book'        
+        # randomly initialise the activation weights based on the input size, as advised by the 'tricks of neural network book'
         if W is None:
             W_values = numpy.asarray(rng.normal(0.0, 1.0/numpy.sqrt(n_in),
                     size=(n_in, n_out)), dtype=theano.config.floatX)
@@ -212,7 +212,7 @@ class GeneralLayer(object):
 
         self.params = [self.W, self.b]
         self.delta_params = [self.delta_W, self.delta_b]
-    
+
     def errors(self, y):
         errors = T.mean(T.sum((self.output-y)**2, axis=1))
 
@@ -233,7 +233,7 @@ class HiddenLayer(object):
         self.input = input
         self.n_in = n_in
         self.n_out = n_out
-        
+
         if W is None:
 
             W_values = numpy.asarray(rng.normal(0.0, 1.0/numpy.sqrt(n_in),
@@ -275,23 +275,23 @@ class HiddenLayer(object):
                            else activation(lin_output))
 
 #        self.output = self.rectifier_linear(lin_output)
-        
+
         # parameters of the model
         self.params = [self.W, self.b]
         self.delta_params = [self.delta_W, self.delta_b]
-    
+
     def rectifier_linear(self, x):
         x = T.maximum(0.0, x)
-        
+
         return  x
-        
+
     def rectifier_smooth(self, x):
         x = numpy.log(1.0 + numpy.exp(x))
-        
+
         return  x
 
 class dA(object):
-    def __init__(self, numpy_rng, theano_rng = None, input = None, 
+    def __init__(self, numpy_rng, theano_rng = None, input = None,
                  n_visible= None, n_hidden= None, W = None, bhid = None,
                  bvis = None, firstlayer = 0, variance   = None ):
 
@@ -299,19 +299,19 @@ class dA(object):
         self.n_hidden  = n_hidden
 
         # create a Theano random generator that gives symbolic random values
-        if not theano_rng : 
+        if not theano_rng :
             theano_rng = RandomStreams(numpy_rng.randint(2**30))
 
         if not W:
-            initial_W = numpy.asarray( numpy_rng.uniform( 
-                      low  = -4*numpy.sqrt(6./(n_hidden+n_visible)), 
-                      high =  4*numpy.sqrt(6./(n_hidden+n_visible)), 
+            initial_W = numpy.asarray( numpy_rng.uniform(
+                      low  = -4*numpy.sqrt(6./(n_hidden+n_visible)),
+                      high =  4*numpy.sqrt(6./(n_hidden+n_visible)),
                       size = (n_visible, n_hidden)),
                                        dtype = theano.config.floatX)
             W = theano.shared(value = initial_W, name ='W')
 
         if not bvis:
-            bvis = theano.shared(value = numpy.zeros(n_visible, 
+            bvis = theano.shared(value = numpy.zeros(n_visible,
                                          dtype = theano.config.floatX))
 
         if not bhid:
@@ -322,11 +322,11 @@ class dA(object):
         self.W = W
         self.b = bhid
         self.b_prime = bvis
-        self.W_prime = self.W.T 
+        self.W_prime = self.W.T
         self.theano_rng = theano_rng
 
-        if input == None : 
-            self.x = T.dmatrix(name = 'input') 
+        if input == None :
+            self.x = T.dmatrix(name = 'input')
         else:
             self.x = input
 
@@ -346,16 +346,16 @@ class dA(object):
     def get_corrupted_input(self, input, corruption_level):
         if self.firstlayer == 0 :
             return  self.theano_rng.binomial(
-                             size = input.shape, 
-                             n = 1, 
-                             p = 1 - corruption_level, 
+                             size = input.shape,
+                             n = 1,
+                             p = 1 - corruption_level,
                              dtype=theano.config.floatX) * input
         else :
-            noise = self.theano_rng.normal( size = input.shape, 
+            noise = self.theano_rng.normal( size = input.shape,
                                             dtype = theano.config.floatX)
             denoises = noise * self.var * corruption_level
             return input+denoises
-    
+
     def get_hidden_values(self, input):
         return T.nnet.sigmoid(T.dot(input, self.W) + self.b)
 
@@ -364,20 +364,20 @@ class dA(object):
             return T.dot(hidden, self.W_prime) + self.b_prime
         else :
             return T.nnet.sigmoid(T.dot(hidden, self.W_prime) + self.b_prime)
-    
+
     def get_cost_updates(self, corruption_level, learning_rate):
         tilde_x = self.get_corrupted_input(self.x, corruption_level)
         y       = self.get_hidden_values( tilde_x )
         z       = self.get_reconstructed_input(y)
 
-        L = T.sum ( (self.x-z) * (self.x-z), axis=1 ) 
+        L = T.sum ( (self.x-z) * (self.x-z), axis=1 )
         cost = T.mean(L) / 2
 
         gparams = T.grad(cost, self.params)
         updates = {}
         for param, gparam in zip(self.params, gparams):
             updates[param] = param -  learning_rate*gparam
-    
+
         return (cost, updates)
 
     def init_params(self, iparams):
@@ -389,7 +389,7 @@ class dA(object):
     def get_test_cost(self, corruption_level):
         """ This function computes the cost and the updates for one trainng
         step of the dA """
-        
+
         # tilde_x = self.get_corrupted_input(self.x, corruption_level, 0.5)
         y       = self.get_hidden_values( self.x )
         z       = self.get_reconstructed_input(y)

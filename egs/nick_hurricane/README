@@ -1,0 +1,19 @@
+About the Nick Hurricane corpus
+-------------------------------
+
+This corpus is subset of Nick corpus and is used in Merlin demo paper from CSTR in SSW9.
+It consists of 2542 sentences -- train(2400), valid(70) and test(72).
+
+For more details about the corpus, please follow below link:
+http://datashare.is.ed.ac.uk/handle/10283/347 
+
+Each subdirectory of this directory contains the scripts for a sequence of experiments.
+
+  s1: To run nick_hurricane with STRAIGHT vocoder and combilex phoneset
+      The data is not publicly available as it includes features extracted from STRAIGHT and 
+      labels using Combilex phoneset (both of them have restricted usage).
+
+      Therefore, the scripts are meant for internal purpose and also for those who have license to both.
+      For password, please mail me, only if you have license to both. 
+
+

@@ -1,39 +1,39 @@
 ################################################################################
 #           The Neural Network (NN) based Speech Synthesis System
 #                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/
-#                
-#                Centre for Speech Technology Research                 
-#                     University of Edinburgh, UK                       
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
 #                      Copyright (c) 2014-2015
-#                        All Rights Reserved.                           
-#                                                                       
+#                        All Rights Reserved.
+#
 # The system as a whole and most of the files in it are distributed
 # under the following copyright and conditions
 #
-#  Permission is hereby granted, free of charge, to use and distribute  
-#  this software and its documentation without restriction, including   
-#  without limitation the rights to use, copy, modify, merge, publish,  
-#  distribute, sublicense, and/or sell copies of this work, and to      
-#  permit persons to whom this work is furnished to do so, subject to   
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
 #  the following conditions:
-#  
-#   - Redistributions of source code must retain the above copyright  
-#     notice, this list of conditions and the following disclaimer.   
-#   - Redistributions in binary form must reproduce the above         
-#     copyright notice, this list of conditions and the following     
-#     disclaimer in the documentation and/or other materials provided 
-#     with the distribution.                                          
-#   - The authors' names may not be used to endorse or promote products derived 
-#     from this software without specific prior written permission.   
-#                                  
-#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        
-#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      
-#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   
-#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     
-#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    
-#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   
-#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          
-#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 ################################################################################
 
@@ -49,20 +49,20 @@ class SilenceRemover(object):
         self.remove_frame_features = remove_frame_features
         self.subphone_feats = subphone_feats
         self.n_cmp = n_cmp
-        
+
     def remove_silence(self, in_data_list, in_align_list, out_data_list, dur_file_list=None):
         file_number = len(in_data_list)
         align_file_number = len(in_align_list)
 
         if  file_number != align_file_number:
-            print   "The number of input and output files does not equal!\n"
+            print("The number of input and output files does not equal!\n")
             sys.exit(1)
         if  file_number != len(out_data_list):
-            print   "The number of input and output files does not equal!\n"
+            print("The number of input and output files does not equal!\n")
             sys.exit(1)
 
         io_funcs = BinaryIOCollection()
-        for i in xrange(file_number):
+        for i in range(file_number):
 
             if self.label_type=="phone_align":
                 if dur_file_list:
@@ -74,11 +74,11 @@ class SilenceRemover(object):
                 nonsilence_indices = self.load_alignment(in_align_list[i])
 
             ori_cmp_data = io_funcs.load_binary_file(in_data_list[i], self.n_cmp)
-            
+
             frame_number = ori_cmp_data.size/self.n_cmp
-            
+
             if len(nonsilence_indices) == frame_number:
-                print 'WARNING: no silence found!'
+                print('WARNING: no silence found!')
                 # previsouly: continue -- in fact we should keep non-silent data!
 
             ## if labels have a few extra frames than audio, this can break the indexing, remove them:
@@ -110,19 +110,19 @@ class SilenceRemover(object):
                     binary_flag = 1
             if binary_flag == 1:
                 break
-        
+
         return  binary_flag # one means yes, zero means no
     """
 
     ## OSW: rewrote above more succintly
-    def check_silence_pattern(self, label): 
+    def check_silence_pattern(self, label):
         for current_pattern in self.silence_pattern:
             current_pattern = current_pattern.strip('*')
             if current_pattern in label:
                 return 1
         return 0
-        
-        
+
+
     def load_phone_alignment(self, alignment_file_name, dur_file_name=None):
 
         if dur_file_name:
@@ -144,7 +144,7 @@ class SilenceRemover(object):
             full_label = temp_list[2]
 
             # to do - support different frame shift - currently hardwired to 5msec
-            # currently under beta testing: supports different frame shift 
+            # currently under beta testing: supports different frame shift
             if dur_file_name:
                 frame_number = manual_dur_data[ph_count]
                 ph_count = ph_count+1
@@ -155,16 +155,16 @@ class SilenceRemover(object):
 
             if self.remove_frame_features:
                 if label_binary_flag == 0:
-                    for frame_index in xrange(frame_number):
+                    for frame_index in range(frame_number):
                         nonsilence_frame_index_list.append(base_frame_index + frame_index)
                 base_frame_index = base_frame_index + frame_number
             elif self.subphone_feats == 'none':
                 if label_binary_flag == 0:
                     nonsilence_frame_index_list.append(base_frame_index)
                 base_frame_index = base_frame_index + 1
-            
+
         fid.close()
-        
+
         return  nonsilence_frame_index_list
 
     def load_alignment(self, alignment_file_name, dur_file_name=None):
@@ -190,7 +190,7 @@ class SilenceRemover(object):
 
             if self.remove_frame_features:
                 if label_binary_flag == 0:
-                    for frame_index in xrange(frame_number):
+                    for frame_index in range(frame_number):
                         nonsilence_frame_index_list.append(base_frame_index + frame_index)
                 base_frame_index = base_frame_index + frame_number
             elif self.subphone_feats == 'state_only':
@@ -201,20 +201,20 @@ class SilenceRemover(object):
                 if label_binary_flag == 0:
                     nonsilence_frame_index_list.append(base_frame_index)
                 base_frame_index = base_frame_index + 1
-            
+
             #print start_time, end_time, frame_number, base_frame_index
         fid.close()
-        
+
         return  nonsilence_frame_index_list
 
 #    def load_binary_file(self, file_name, dimension):
-        
+
 #        fid_lab = open(file_name, 'rb')
 #        features = numpy.fromfile(fid_lab, dtype=numpy.float32)
 #        fid_lab.close()
 #        features = features[:(dimension * (features.size / dimension))]
 #        features = features.reshape((-1, dimension))
-        
+
 #        return  features
 
 
@@ -232,25 +232,25 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
     assert len(in_list) == len(out_list) == len(label_list)
     io_funcs = BinaryIOCollection()
     for (infile, outfile, label_file) in zip(in_list, out_list, label_list):
-    
+
         data = io_funcs.load_binary_file(infile, in_dimension)
         label = io_funcs.load_binary_file(label_file, label_dimension)
-        
+
         audio_label_difference = data.shape[0] - label.shape[0]
         assert math.fabs(audio_label_difference) < 3,'%s and %s contain different numbers of frames: %s %s'%(infile, label_file,  data.shape[0], label.shape[0])
-        
+
         ## In case they are different, resize -- keep label fixed as we assume this has
         ## already been processed. (This problem only arose with STRAIGHT features.)
         if audio_label_difference < 0:  ## label is longer -- pad audio to match by repeating last frame:
-            print 'audio too short -- pad'
+            print('audio too short -- pad')
             padding = numpy.vstack([data[-1, :]] * int(math.fabs(audio_label_difference)))
             data = numpy.vstack([data, padding])
         elif audio_label_difference > 0: ## audio is longer -- cut it
-            print 'audio too long -- trim'
+            print('audio too long -- trim')
             new_length = label.shape[0]
             data = data[:new_length, :]
         #else: -- expected case -- lengths match, so do nothing
-                    
+
         silence_flag = label[:, silence_feature_index]
 #         print silence_flag
         if not (numpy.unique(silence_flag) == numpy.array([0,1])).all():
@@ -258,34 +258,34 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
             assert (numpy.unique(silence_flag) == numpy.array([0]).all()) or \
                    (numpy.unique(silence_flag) == numpy.array([1]).all()), \
                    'dimension %s of %s contains values other than 0 and 1'%(silence_feature_index, infile)
-        print 'Remove %d%% of frames (%s frames) as silence... '%(100 * numpy.sum(silence_flag / float(len(silence_flag))), int(numpy.sum(silence_flag)))
+        print('Remove %d%% of frames (%s frames) as silence... '%(100 * numpy.sum(silence_flag / float(len(silence_flag))), int(numpy.sum(silence_flag))))
         non_silence_indices = numpy.nonzero(silence_flag == 0)  ## get the indices where silence_flag == 0 is True (i.e. != 0)
         if percent_to_keep != 0:
             assert type(percent_to_keep) == int and percent_to_keep > 0
             #print silence_flag
-            silence_indices = numpy.nonzero(silence_flag == 1)            
+            silence_indices = numpy.nonzero(silence_flag == 1)
             ## nonzero returns a tuple of arrays, one for each dimension of input array
             silence_indices = silence_indices[0]
             every_nth = 100  / percent_to_keep
             silence_indices_to_keep = silence_indices[::every_nth]  ## every_nth used +as step value in slice
                         ## -1 due to weird error with STRAIGHT features at line 144:
-                        ## IndexError: index 445 is out of bounds for axis 0 with size 445 
+                        ## IndexError: index 445 is out of bounds for axis 0 with size 445
             if len(silence_indices_to_keep) == 0:
                 silence_indices_to_keep = numpy.array([1]) ## avoid errors in case there is no silence
-            print '   Restore %s%% (every %sth frame: %s frames) of silent frames'%(percent_to_keep, every_nth, len(silence_indices_to_keep))
+            print('   Restore %s%% (every %sth frame: %s frames) of silent frames'%(percent_to_keep, every_nth, len(silence_indices_to_keep)))
 
             ## Append to end of utt -- same function used for labels and audio
             ## means that violation of temporal order doesn't matter -- will be consistent.
             ## Later, frame shuffling will disperse silent frames evenly across minibatches:
-            non_silence_indices = ( numpy.hstack( [non_silence_indices[0], silence_indices_to_keep] ) ) 
+            non_silence_indices = ( numpy.hstack( [non_silence_indices[0], silence_indices_to_keep] ) )
                                                     ##  ^---- from tuple and back (see nonzero note above)
-        
+
         trimmed_data = data[non_silence_indices, :]  ## advanced integer indexing
-        io_funcs.array_to_binary_file(trimmed_data, outfile)  
-    
+        io_funcs.array_to_binary_file(trimmed_data, outfile)
+
 
 if  __name__ == '__main__':
-    
+
     cmp_file_list_name = ''
     lab_file_list_name = ''
     align_file_list_name = ''
@@ -296,10 +296,9 @@ if  __name__ == '__main__':
     in_cmp_list = ['/group/project/dnn_tts/data/nick/nn_cmp/nick/herald_001.cmp']
     in_lab_list = ['/group/project/dnn_tts/data/nick/nn_new_lab/herald_001.lab']
     in_align_list = ['/group/project/dnn_tts/data/cassia/nick_lab/herald_001.lab']
-    
+
     out_cmp_list = ['/group/project/dnn_tts/data/nick/nn_new_lab/herald_001.tmp.cmp']
     out_lab_list = ['/group/project/dnn_tts/data/nick/nn_new_lab/herald_001.tmp.no.lab']
-    
+
     remover = SilenceRemover(in_cmp_list, in_align_list, n_cmp, out_cmp_list)
     remover.remove_silence()
-

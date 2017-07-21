@@ -1,0 +1,8 @@
+Build your own voice
+--------------------
+
+Each subdirectory of this directory contains the scripts for a sequence of experiments.
+
+  s1: To run your_own_voice with WORLD vocoder and radio phoneset
+
+

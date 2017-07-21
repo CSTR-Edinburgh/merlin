@@ -1,17 +1,26 @@
-#!/bin/sh
+#!/bin/bash
+
+if test "$#" -ne 4; then
+    echo "Usage: "
+    echo "bash extract_features_for_merlin.sh <path_to_merlin_dir> <path_to_wav_dir> <path_to_feat_dir> <sampling frequency>"
+    exit 1
+fi
 
 # top merlin directory
-merlin_dir="/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin"
-
-# tools directory
-world="${merlin_dir}/tools/WORLD/build"
-sptk="${merlin_dir}/tools/SPTK-3.7/bin"
+merlin_dir=$1
 
 # input audio directory
-wav_dir="${merlin_dir}/dnn_baseline_practice/cmu_us_slt_arctic/wav"
+wav_dir=$2
 
 # Output features directory
-out_dir="${merlin_dir}/dnn_baseline_practice/cmu_us_slt_arctic/data"
+out_dir=$3
+
+# initializations
+fs=$4
+
+# tools directory
+world="${merlin_dir}/tools/bin/WORLD"
+sptk="${merlin_dir}/tools/bin/SPTK-3.9"
 
 sp_dir="${out_dir}/sp"
 mgc_dir="${out_dir}/mgc"
@@ -27,9 +36,6 @@ mkdir -p ${bap_dir}
 mkdir -p ${f0_dir}
 mkdir -p ${lf0_dir}
 
-# initializations
-fs=16000
-
 if [ "$fs" -eq 16000 ]
 then
 nFFTHalf=1024 
@@ -42,8 +48,8 @@ nFFTHalf=2048
 alpha=0.77
 fi
 
+#bap order depends on sampling freq.
 mcsize=59
-order=24
 
 for file in $wav_dir/*.wav #.wav
 do

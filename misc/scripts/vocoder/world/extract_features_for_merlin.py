@@ -72,6 +72,7 @@ def get_wav_filelist(wav_dir):
 
 get_wav_filelist(wav_dir)
 
+
 def process(filename):
     '''
     The function decomposes a wav file into F0, mel-cepstral coefficients, and aperiodicity

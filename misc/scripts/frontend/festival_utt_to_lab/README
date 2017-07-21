@@ -1,0 +1,16 @@
+################################################
+#####  Make HTS labels from Festival utts  #####
+################################################
+
+FESTDIR="/afs/inf.ed.ac.uk/group/cstr/projects/phd/s1432486/work/test/merlin/tools/festival"
+
+./make_labels ./test/labels/ ./test/utts  $FESTDIR/examples/dumpfeats .
+
+
+### the args are:
+# ./test/labels/     ## Put the newly made labels here.
+# ./test/utts      ## Look for existing utterances here.
+# dumpfeats         ## This needs to point to Festival's dumpfeats script, usually in .festival/examples
+#  .                # Following scirpts must be here: extra_feats.scm label.feats label-full.awk  label-mono.awk
+ 
+#### Change label-full.awk according to the separators you need in output labels. 

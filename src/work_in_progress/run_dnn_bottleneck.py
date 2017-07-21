@@ -1,44 +1,44 @@
 ################################################################################
 #           The Neural Network (NN) based Speech Synthesis System
 #                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/
-#                
-#                Centre for Speech Technology Research                 
-#                     University of Edinburgh, UK                       
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
 #                      Copyright (c) 2014-2015
-#                        All Rights Reserved.                           
-#                                                                       
+#                        All Rights Reserved.
+#
 # The system as a whole and most of the files in it are distributed
 # under the following copyright and conditions
 #
-#  Permission is hereby granted, free of charge, to use and distribute  
-#  this software and its documentation without restriction, including   
-#  without limitation the rights to use, copy, modify, merge, publish,  
-#  distribute, sublicense, and/or sell copies of this work, and to      
-#  permit persons to whom this work is furnished to do so, subject to   
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
 #  the following conditions:
-#  
-#   - Redistributions of source code must retain the above copyright  
-#     notice, this list of conditions and the following disclaimer.   
-#   - Redistributions in binary form must reproduce the above         
-#     copyright notice, this list of conditions and the following     
-#     disclaimer in the documentation and/or other materials provided 
-#     with the distribution.                                          
-#   - The authors' names may not be used to endorse or promote products derived 
-#     from this software without specific prior written permission.   
-#                                  
-#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        
-#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      
-#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   
-#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     
-#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    
-#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   
-#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          
-#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 ################################################################################
 
 
-import cPickle
+import pickle
 import gzip
 import os, sys, errno
 import time
@@ -48,7 +48,7 @@ import math
 import numpy
 # we need to explicitly import this in some cases, not sure why this doesn't get imported with numpy itself
 import numpy.distutils.__config__
-# and only after that can we import theano 
+# and only after that can we import theano
 import theano
 
 from utils.providers import ListDataProvider
@@ -84,7 +84,7 @@ from utils.learn_rates import ExpDecreaseLearningRate
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
 import logging.config
-import StringIO
+import io
 
 
 def extract_file_id_list(file_list):
@@ -132,13 +132,13 @@ def prepare_file_path_list(file_id_list, file_dir, file_extension, new_dir_switc
 
     return  file_name_list
 
-    
+
 
 def visualize_dnn(dnn):
 
     layer_num = len(dnn.params) / 2     ## including input and output
 
-    for i in xrange(layer_num):
+    for i in range(layer_num):
         fig_name = 'Activation weights W' + str(i)
         fig_title = 'Activation weights of W' + str(i)
         xlabel = 'Neuron index of hidden layer ' + str(i)
@@ -155,7 +155,7 @@ def visualize_dnn(dnn):
 
 def train_DNN(train_xy_file_list, valid_xy_file_list, \
               nnets_file_name, n_ins, n_outs, ms_outs, hyper_params, buffer_size, plot=False):
-    
+
     # get loggers for this function
     # this one writes to both console and file
     logger = logging.getLogger("main.train_DNN")
@@ -183,8 +183,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     warmup_epoch    = int(hyper_params['warmup_epoch'])
     momentum        = float(hyper_params['momentum'])
     warmup_momentum = float(hyper_params['warmup_momentum'])
-    
-    hidden_layers_sizes = hyper_params['hidden_layers_sizes']    
+
+    hidden_layers_sizes = hyper_params['hidden_layers_sizes']
 
     stream_weights       = hyper_params['stream_weights']
     private_hidden_sizes = hyper_params['private_hidden_sizes']
@@ -194,12 +194,12 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
     hidden_activation = hyper_params['hidden_activation']
     output_activation = hyper_params['output_activation']
-    
+
     stream_lr_weights = hyper_params['stream_lr_weights']
     use_private_hidden = hyper_params['use_private_hidden']
 
     model_type = hyper_params['model_type']
-    
+
     ## use a switch to turn on pretraining
     ## pretraining may not help too much, if this case, we turn it off to save time
     do_pretraining = hyper_params['do_pretraining']
@@ -242,18 +242,18 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     valid_model = None ## valid_fn and valid_model are the same. reserve to computer multi-stream distortion
     if model_type == 'DNN':
         dnn_model = DNN(numpy_rng=numpy_rng, n_ins=n_ins, n_outs = n_outs,
-                        l1_reg = l1_reg, l2_reg = l2_reg, 
-                         hidden_layers_sizes = hidden_layers_sizes, 
-                          hidden_activation = hidden_activation, 
+                        l1_reg = l1_reg, l2_reg = l2_reg,
+                         hidden_layers_sizes = hidden_layers_sizes,
+                          hidden_activation = hidden_activation,
                           output_activation = output_activation)
         train_fn, valid_fn = dnn_model.build_finetune_functions(
                     (train_set_x, train_set_y), (valid_set_x, valid_set_y), batch_size=batch_size)
 
-    elif model_type == 'SDAE': 
+    elif model_type == 'SDAE':
         ##basic model is ready.
         ##if corruption levels is set to zero. it becomes normal autoencoder
         dnn_model = StackedDenoiseAutoEncoder(numpy_rng=numpy_rng, n_ins=n_ins, n_outs = n_outs,
-                          l1_reg = l1_reg, l2_reg = l2_reg, 
+                          l1_reg = l1_reg, l2_reg = l2_reg,
                           hidden_layers_sizes = hidden_layers_sizes)
 
         if do_pretraining:
@@ -262,29 +262,29 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         train_fn, valid_fn = dnn_model.build_finetune_functions(
                     (train_set_x, train_set_y), (valid_set_x, valid_set_y), batch_size=batch_size)
 
-    elif model_type == 'MSDNN': ##model is ready, but the hyper-parameters are not optimised. 
-        dnn_model = MultiStreamDNN(numpy_rng=numpy_rng, n_ins=n_ins, ms_outs=ms_outs, 
+    elif model_type == 'MSDNN': ##model is ready, but the hyper-parameters are not optimised.
+        dnn_model = MultiStreamDNN(numpy_rng=numpy_rng, n_ins=n_ins, ms_outs=ms_outs,
                           l1_reg = l1_reg, l2_reg = l2_reg,
-                          hidden_layers_sizes = hidden_layers_sizes, 
-                          stream_weights = stream_weights, 
-                          hidden_activation = hidden_activation, 
+                          hidden_layers_sizes = hidden_layers_sizes,
+                          stream_weights = stream_weights,
+                          hidden_activation = hidden_activation,
                           output_activation = output_activation)
 
         train_fn, valid_fn = dnn_model.build_finetune_functions(
-                    (train_set_x, train_set_y), (valid_set_x, valid_set_y), 
+                    (train_set_x, train_set_y), (valid_set_x, valid_set_y),
                     batch_size=batch_size, lr_weights = stream_lr_weights)
     elif model_type == 'MSDNN_GV':  ## not fully ready
-        dnn_model = MultiStreamDNNGv(numpy_rng=numpy_rng, n_ins=n_ins, ms_outs=ms_outs, 
+        dnn_model = MultiStreamDNNGv(numpy_rng=numpy_rng, n_ins=n_ins, ms_outs=ms_outs,
                           l1_reg = l1_reg, l2_reg = l2_reg,
-                          hidden_layers_sizes = hidden_layers_sizes, 
-                          stream_weights = stream_weights, 
-                          hidden_activation = hidden_activation, 
+                          hidden_layers_sizes = hidden_layers_sizes,
+                          stream_weights = stream_weights,
+                          hidden_activation = hidden_activation,
                           output_activation = output_activation)
 
         train_fn, valid_fn = dnn_model.build_finetune_functions(
-                    (train_set_x, train_set_y), (valid_set_x, valid_set_y), 
+                    (train_set_x, train_set_y), (valid_set_x, valid_set_y),
                     batch_size=batch_size, lr_weights = stream_lr_weights)
-    else: 
+    else:
         logger.critical('%s type NN model is not supported!' %(model_type))
         raise
 
@@ -299,8 +299,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
         corruption_level = 0.0
         ## in SDAE we do layer-wise pretraining using autoencoders
-        for i in xrange(dnn_model.n_layers):
-            for epoch in xrange(pretraining_epochs):
+        for i in range(dnn_model.n_layers):
+            for epoch in range(pretraining_epochs):
                 sub_start_time = time.clock()
 
                 pretrain_loss = []
@@ -310,7 +310,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
                     n_train_batches = pretrain_set_x.get_value().shape[0] / batch_size
 
-                    for batch_index in xrange(n_train_batches):
+                    for batch_index in range(n_train_batches):
                         pretrain_loss.append(pretraining_fn[i](index=batch_index,
                                                                corruption=corruption_level,
                                                                learning_rate=pretraining_lr))
@@ -333,7 +333,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     previous_finetune_lr = finetune_lr
     while (epoch < training_epochs):
         epoch = epoch + 1
-        
+
         current_momentum = momentum
         current_finetune_lr = finetune_lr
         if epoch <= warmup_epoch:
@@ -341,9 +341,9 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
             current_momentum = warmup_momentum
         else:
             current_finetune_lr = previous_finetune_lr * 0.5
-        
+
         previous_finetune_lr = current_finetune_lr
-        
+
         train_error = []
         sub_start_time = time.clock()
 
@@ -351,20 +351,20 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
             shared_train_set_xy, temp_train_set_x, temp_train_set_y = train_data_reader.load_next_partition()
             train_set_x.set_value(numpy.asarray(temp_train_set_x, dtype=theano.config.floatX), borrow=True)
             train_set_y.set_value(numpy.asarray(temp_train_set_y, dtype=theano.config.floatX), borrow=True)
-            
+
             n_train_batches = train_set_x.get_value().shape[0] / batch_size
 
             logger.debug('this partition: %d frames (divided into %d batches of size %d)' %(train_set_x.get_value(borrow=True).shape[0], n_train_batches, batch_size) )
 
-            for minibatch_index in xrange(n_train_batches):
+            for minibatch_index in range(n_train_batches):
                 this_train_error = train_fn(minibatch_index, current_finetune_lr, current_momentum)
                 train_error.append(this_train_error)
-                
+
                 if numpy.isnan(this_train_error):
                     logger.warning('training error over minibatch %d of %d was %s' % (minibatch_index+1,n_train_batches,this_train_error) )
 
         train_data_reader.reset()
-        
+
         logger.debug('calculating validation loss')
         validation_losses = valid_fn()
         this_validation_loss = numpy.mean(validation_losses)
@@ -400,19 +400,19 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
         if math.isnan(this_validation_loss):
             break
-        
+
         previous_loss = this_validation_loss
 
     end_time = time.clock()
-    cPickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
-            
+    pickle.dump(best_dnn_model, open(nnets_file_name, 'wb'))
+
     logger.info('overall  training time: %.2fm validation error %f' % ((end_time - start_time) / 60., best_validation_loss))
 
     if plot:
         plotlogger.save_plot('training convergence',title='Final training and validation error',xlabel='epochs',ylabel='error')
-    
+
     return  best_validation_loss
-    
+
 
 def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list):
     logger = logging.getLogger("dnn_generation")
@@ -420,13 +420,13 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
-    
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
+
 #    visualize_dnn(dbn)
 
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -434,8 +434,8 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         features = features[:(n_ins * (features.size / n_ins))]
         features = features.reshape((-1, n_ins))
         temp_set_x = features.tolist()
-        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX)) 
-        
+        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX))
+
         predicted_parameter = dnn_model.parameter_prediction(test_set_x=test_set_x)
 #        predicted_parameter = test_out()
 
@@ -446,7 +446,7 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         predicted_parameter.tofile(fid)
         logger.debug('saved to %s' % out_file_list[i])
         fid.close()
-        
+
 ##generate bottleneck layer as festures
 def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list, bottleneck_index):
     logger = logging.getLogger("dnn_generation")
@@ -454,11 +454,11 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
     plotlogger = logging.getLogger("plotting")
 
-    dnn_model = cPickle.load(open(nnets_file_name, 'rb'))
-    
+    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
+
     file_number = len(valid_file_list)
 
-    for i in xrange(file_number):
+    for i in range(file_number):
         logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
         fid_lab = open(valid_file_list[i], 'rb')
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -466,8 +466,8 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
         features = features[:(n_ins * (features.size / n_ins))]
         features = features.reshape((-1, n_ins))
         temp_set_x = features.tolist()
-        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX)) 
-        
+        test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX))
+
         predicted_parameter = dnn_model.generate_top_hidden_layer(test_set_x=test_set_x, bn_layer_index=bottleneck_index)
 
         ### write to cmp file
@@ -479,12 +479,12 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
         fid.close()
 
 
-def main_function(cfg):    
-    
-    
+def main_function(cfg):
+
+
     # get a logger for this main function
     logger = logging.getLogger("main")
-    
+
     # get another logger to handle plotting duties
     plotlogger = logging.getLogger("plotting")
 
@@ -492,13 +492,13 @@ def main_function(cfg):
     # using the standard config mechanism of the logging module
     # but for now we need to do it manually
     plotlogger.set_plot_path(cfg.plot_dir)
-    
+
     #### parameter setting########
     hidden_layers_sizes = cfg.hyper_params['hidden_layers_sizes']
-    
-    
+
+
     ####prepare environment
-    
+
     try:
         file_id_list = read_file_list(cfg.file_id_scp)
         logger.debug('Loaded file id list from %s' % cfg.file_id_scp)
@@ -506,21 +506,21 @@ def main_function(cfg):
         # this means that open(...) threw an error
         logger.critical('Could not load file id list from %s' % cfg.file_id_scp)
         raise
-    
+
     ###total file number including training, development, and testing
     total_file_number = len(file_id_list)
-    
+
     data_dir = cfg.data_dir
 
     nn_cmp_dir       = os.path.join(data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
     nn_cmp_norm_dir   = os.path.join(data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
-    
+
     model_dir = os.path.join(cfg.work_dir, 'nnets_model')
-    gen_dir   = os.path.join(cfg.work_dir, 'gen')    
+    gen_dir   = os.path.join(cfg.work_dir, 'gen')
 
     in_file_list_dict = {}
 
-    for feature_name in cfg.in_dir_dict.keys():
+    for feature_name in list(cfg.in_dir_dict.keys()):
         in_file_list_dict[feature_name] = prepare_file_path_list(file_id_list, cfg.in_dir_dict[feature_name], cfg.file_extension_dict[feature_name], False)
 
     nn_cmp_file_list         = prepare_file_path_list(file_id_list, nn_cmp_dir, cfg.cmp_ext)
@@ -528,11 +528,11 @@ def main_function(cfg):
 
     ###normalisation information
     norm_info_file = os.path.join(data_dir, 'norm_info' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim) + '_' + cfg.output_feature_normalisation + '.dat')
-	
+
     ### normalise input full context label
 
     # currently supporting two different forms of lingustic features
-    # later, we should generalise this 
+    # later, we should generalise this
 
     if cfg.label_style == 'HTS':
         label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name)
@@ -559,18 +559,18 @@ def main_function(cfg):
     binary_label_file_list   = prepare_file_path_list(file_id_list, binary_label_dir, cfg.lab_ext)
     nn_label_file_list       = prepare_file_path_list(file_id_list, nn_label_dir, cfg.lab_ext)
     nn_label_norm_file_list  = prepare_file_path_list(file_id_list, nn_label_norm_dir, cfg.lab_ext)
-    
+
     # to do - sanity check the label dimension here?
-    
-    
-    
+
+
+
     min_max_normaliser = None
     label_norm_file = 'label_norm_%s.dat' %(cfg.label_style)
     label_norm_file = os.path.join(label_data_dir, label_norm_file)
-    
+
     if cfg.NORMLAB and (cfg.label_style == 'HTS'):
-        # simple HTS labels 
-    	logger.info('preparing label data (input) using standard HTS style labels')
+        # simple HTS labels
+        logger.info('preparing label data (input) using standard HTS style labels')
 #        label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list)
 
 #        remover = SilenceRemover(n_cmp = lab_dim, silence_pattern = ['*-#+*'])
@@ -584,25 +584,25 @@ def main_function(cfg):
 
     if cfg.NORMLAB and (cfg.label_style == 'composed'):
         # new flexible label preprocessor
-        
-    	logger.info('preparing label data (input) using "composed" style labels')
+
+        logger.info('preparing label data (input) using "composed" style labels')
         label_composer = LabelComposer()
         label_composer.load_label_configuration(cfg.label_config_file)
-    
+
         logger.info('Loaded label configuration')
         # logger.info('%s' % label_composer.configuration.labels )
 
         lab_dim=label_composer.compute_label_dimension()
         logger.info('label dimension will be %d' % lab_dim)
-        
+
         if cfg.precompile_xpaths:
             label_composer.precompile_xpaths()
-        
+
         # there are now a set of parallel input label files (e.g, one set of HTS and another set of Ossian trees)
         # create all the lists of these, ready to pass to the label composer
 
         in_label_align_file_list = {}
-        for label_style, label_style_required in label_composer.label_styles.iteritems():
+        for label_style, label_style_required in label_composer.label_styles.items():
             if label_style_required:
                 logger.info('labels of style %s are required - constructing file paths for them' % label_style)
                 if label_style == 'xpath':
@@ -612,21 +612,21 @@ def main_function(cfg):
                 else:
                     logger.critical('unsupported label style %s specified in label configuration' % label_style)
                     raise Exception
-        
-            # now iterate through the files, one at a time, constructing the labels for them 
+
+            # now iterate through the files, one at a time, constructing the labels for them
             num_files=len(file_id_list)
             logger.info('the label styles required are %s' % label_composer.label_styles)
-            
-            for i in xrange(num_files):
+
+            for i in range(num_files):
                 logger.info('making input label features for %4d of %4d' % (i+1,num_files))
 
                 # iterate through the required label styles and open each corresponding label file
 
                 # a dictionary of file descriptors, pointing at the required files
                 required_labels={}
-                
-                for label_style, label_style_required in label_composer.label_styles.iteritems():
-                    
+
+                for label_style, label_style_required in label_composer.label_styles.items():
+
                     # the files will be a parallel set of files for a single utterance
                     # e.g., the XML tree and an HTS label file
                     if label_style_required:
@@ -635,25 +635,25 @@ def main_function(cfg):
 
                 logger.debug('label styles with open files: %s' % required_labels)
                 label_composer.make_labels(required_labels,out_file_name=binary_label_file_list[i],fill_missing_values=cfg.fill_missing_values,iterate_over_frames=cfg.iterate_over_frames)
-                    
+
                 # now close all opened files
-                for fd in required_labels.itervalues():
+                for fd in required_labels.values():
                     fd.close()
-        
-        
+
+
         # silence removal
         if cfg.remove_silence_using_binary_labels:
             silence_feature = 0 ## use first feature in label -- hardcoded for now
             logger.info('Silence removal from label using silence feature: %s'%(label_composer.configuration.labels[silence_feature]))
             logger.info('Silence will be removed from CMP files in same way')
-            ## Binary labels have 2 roles: both the thing trimmed and the instructions for trimming: 
+            ## Binary labels have 2 roles: both the thing trimmed and the instructions for trimming:
             trim_silence(binary_label_file_list, nn_label_file_list, lab_dim, \
                                 binary_label_file_list, lab_dim, silence_feature)
         else:
             logger.info('No silence removal done')
             # start from the labels we have just produced, not trimmed versions
             nn_label_file_list = binary_label_file_list
-        
+
         min_max_normaliser = MinMaxNormalisation(feature_dimension = lab_dim, min_value = 0.01, max_value = 0.99)
         ###use only training data to find min-max information, then apply on the whole dataset
         min_max_normaliser.find_min_max_values(nn_label_file_list[0:cfg.train_file_number])
@@ -664,7 +664,7 @@ def main_function(cfg):
         label_min_vector = min_max_normaliser.min_vector
         label_max_vector = min_max_normaliser.max_vector
         label_norm_info = numpy.concatenate((label_min_vector, label_max_vector), axis=0)
-    
+
         label_norm_info = numpy.array(label_norm_info, 'float32')
         fid = open(label_norm_file, 'wb')
         label_norm_info.tofile(fid)
@@ -676,10 +676,10 @@ def main_function(cfg):
 
     ### make output acoustic data
     if cfg.MAKECMP:
-    	logger.info('creating acoustic (output) features')
+        logger.info('creating acoustic (output) features')
         delta_win = [-0.5, 0.0, 0.5]
         acc_win = [1.0, -2.0, 1.0]
-        
+
         acoustic_worker = AcousticComposition(delta_win = delta_win, acc_win = acc_win)
         acoustic_worker.prepare_nn_data(in_file_list_dict, nn_cmp_file_list, cfg.in_dimension_dict, cfg.out_dimension_dict)
 
@@ -688,14 +688,14 @@ def main_function(cfg):
             label_composer = LabelComposer()
             label_composer.load_label_configuration(cfg.label_config_file)
             lab_dim=label_composer.compute_label_dimension()
-        
+
             silence_feature = 0 ## use first feature in label -- hardcoded for now
-            logger.info('Silence removal from CMP using binary label file') 
+            logger.info('Silence removal from CMP using binary label file')
 
             ## overwrite the untrimmed audio with the trimmed version:
             trim_silence(nn_cmp_file_list, nn_cmp_file_list, cfg.cmp_dim, \
                                 binary_label_file_list, lab_dim, silence_feature)
-                                
+
         else: ## back off to previous method using HTS labels:
             remover = SilenceRemover(n_cmp = cfg.cmp_dim, silence_pattern = ['*-#+*'])
             remover.remove_silence(nn_cmp_file_list, in_label_align_file_list, nn_cmp_file_list) # save to itself
@@ -706,12 +706,12 @@ def main_function(cfg):
         os.makedirs(var_dir)
 
     var_file_dict = {}
-    for feature_name in cfg.out_dimension_dict.keys():
+    for feature_name in list(cfg.out_dimension_dict.keys()):
         var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
-        
+
     ### normalise output acoustic data
     if cfg.NORMCMP:
-    	logger.info('normalising acoustic (output) features using method %s' % cfg.output_feature_normalisation)
+        logger.info('normalising acoustic (output) features using method %s' % cfg.output_feature_normalisation)
         cmp_norm_info = None
         if cfg.output_feature_normalisation == 'MVN':
             normaliser = MeanVarianceNorm(feature_dimension=cfg.cmp_dim)
@@ -722,7 +722,7 @@ def main_function(cfg):
             normaliser.feature_normalisation(nn_cmp_file_list, nn_cmp_norm_file_list)
             cmp_norm_info = numpy.concatenate((global_mean_vector, global_std_vector), axis=0)
 
-        elif cfg.output_feature_normalisation == 'MINMAX':        
+        elif cfg.output_feature_normalisation == 'MINMAX':
             min_max_normaliser = MinMaxNormalisation(feature_dimension = cfg.cmp_dim)
             global_mean_vector = min_max_normaliser.compute_mean(nn_cmp_file_list[0:cfg.train_file_number])
             global_std_vector = min_max_normaliser.compute_std(nn_cmp_file_list[0:cfg.train_file_number], global_mean_vector)
@@ -738,16 +738,16 @@ def main_function(cfg):
         else:
             logger.critical('Normalisation type %s is not supported!\n' %(cfg.output_feature_normalisation))
             raise
- 
+
         cmp_norm_info = numpy.array(cmp_norm_info, 'float32')
         fid = open(norm_info_file, 'wb')
         cmp_norm_info.tofile(fid)
         fid.close()
         logger.info('saved %s vectors to %s' %(cfg.output_feature_normalisation, norm_info_file))
         # logger.debug(' value was\n%s' % cmp_norm_info)
-        
+
         feature_index = 0
-        for feature_name in cfg.out_dimension_dict.keys():
+        for feature_name in list(cfg.out_dimension_dict.keys()):
             feature_std_vector = numpy.array(global_std_vector[:,feature_index:feature_index+cfg.out_dimension_dict[feature_name]], 'float32')
 
             fid = open(var_file_dict[feature_name], 'w')
@@ -761,9 +761,9 @@ def main_function(cfg):
 
     train_x_file_list = nn_label_norm_file_list[0:cfg.train_file_number]
     train_y_file_list = nn_cmp_norm_file_list[0:cfg.train_file_number]
-    valid_x_file_list = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number]    
+    valid_x_file_list = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number]
     valid_y_file_list = nn_cmp_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number]
-    test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
+    test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
     test_y_file_list  = nn_cmp_norm_file_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
 
@@ -785,20 +785,20 @@ def main_function(cfg):
     combined_model_arch = str(len(hidden_layers_sizes))
     for hid_size in hidden_layers_sizes:
         combined_model_arch += '_' + str(hid_size)
-    
+
 #    nnets_file_name = '%s/%s_%s_%d.%d.%d.%d.%d.train.%d.model' \
-#                       %(model_dir, cfg.model_type, cfg.combined_feature_name, int(cfg.multistream_switch), 
-#                        len(hidden_layers_sizes), hidden_layers_sizes[0], 
+#                       %(model_dir, cfg.model_type, cfg.combined_feature_name, int(cfg.multistream_switch),
+#                        len(hidden_layers_sizes), hidden_layers_sizes[0],
 #                        lab_dim, cfg.cmp_dim, cfg.train_file_number)
 
     nnets_file_name = '%s/%s_%s_%d_%s_%d.%d.train.%d.model' \
-                      %(model_dir, cfg.model_type, cfg.combined_feature_name, int(cfg.multistream_switch), 
+                      %(model_dir, cfg.model_type, cfg.combined_feature_name, int(cfg.multistream_switch),
                         combined_model_arch, lab_dim, cfg.cmp_dim, cfg.train_file_number)
 
     ### DNN model training
     if cfg.TRAINDNN:
 
-    	logger.info('training DNN')
+        logger.info('training DNN')
 
         try:
             os.makedirs(model_dir)
@@ -826,7 +826,7 @@ def main_function(cfg):
         except:
             logger.critical('train_DNN threw an exception')
             raise
-            
+
     ### generate parameters from DNN
 
     if cfg.GENBNFEA:
@@ -840,11 +840,11 @@ def main_function(cfg):
 
         bottleneck_size = min(hidden_layers_sizes)
         bottleneck_index = 0
-        for i in xrange(len(hidden_layers_sizes)):
+        for i in range(len(hidden_layers_sizes)):
             if hidden_layers_sizes[i] == bottleneck_size:
                 bottleneck_index = i
 
-    	logger.info('generating from DNN')
+        logger.info('generating from DNN')
 
         try:
             os.makedirs(gen_dir)
@@ -858,15 +858,15 @@ def main_function(cfg):
                 raise
 
         gen_file_id_list = file_id_list[0:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
-        test_x_file_list  = nn_label_norm_file_list[0:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
+        test_x_file_list  = nn_label_norm_file_list[0:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
         gen_file_list = prepare_file_path_list(gen_file_id_list, gen_dir, cfg.cmp_ext)
-    
+
         dnn_hidden_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list, bottleneck_index)
 
 
     gen_file_id_list = file_id_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
-    test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
+    test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
 
     temp_dir_name = '%s_%s_%d_%d_%d_%d_%d_%d_%d' \
@@ -876,7 +876,7 @@ def main_function(cfg):
     gen_dir = os.path.join(gen_dir, temp_dir_name)
 
     if cfg.DNNGEN:
-    	logger.info('generating from DNN')
+        logger.info('generating from DNN')
 
         try:
             os.makedirs(gen_dir)
@@ -890,23 +890,23 @@ def main_function(cfg):
                 raise
 
         gen_file_list = prepare_file_path_list(gen_file_id_list, gen_dir, cfg.cmp_ext)
-    
+
 #        dnn_generation(valid_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
         dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
 
-    	logger.debug('denormalising generated output using method %s' % cfg.output_feature_normalisation)
+        logger.debug('denormalising generated output using method %s' % cfg.output_feature_normalisation)
 
         fid = open(norm_info_file, 'rb')
         cmp_min_max = numpy.fromfile(fid, dtype=numpy.float32)
         fid.close()
         cmp_min_max = cmp_min_max.reshape((2, -1))
-        cmp_min_vector = cmp_min_max[0, ] 
+        cmp_min_vector = cmp_min_max[0, ]
         cmp_max_vector = cmp_min_max[1, ]
 
         if cfg.output_feature_normalisation == 'MVN':
             denormaliser = MeanVarianceNorm(feature_dimension = cfg.cmp_dim)
             denormaliser.feature_denormalisation(gen_file_list, gen_file_list, cmp_min_vector, cmp_max_vector)
-        
+
         elif cfg.output_feature_normalisation == 'MINMAX':
             denormaliser = MinMaxNormalisation(cfg.cmp_dim, min_value = 0.01, max_value = 0.99, min_vector = cmp_min_vector, max_vector = cmp_max_vector)
             denormaliser.denormalise_data(gen_file_list, gen_file_list)
@@ -915,19 +915,19 @@ def main_function(cfg):
             raise
 
         ##perform MLPG to smooth parameter trajectory
-        ## lf0 is included, the output features much have vuv. 
+        ## lf0 is included, the output features much have vuv.
         generator = ParameterGeneration(gen_wav_features = cfg.gen_wav_features)
-        generator.acoustic_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict, var_file_dict)    
+        generator.acoustic_decomposition(gen_file_list, cfg.cmp_dim, cfg.out_dimension_dict, cfg.file_extension_dict, var_file_dict)
 
     ### generate wav
     if cfg.GENWAV:
-    	logger.info('reconstructing waveform(s)')
-    	generate_wav(gen_dir, gen_file_id_list, cfg)     # generated speech
-#    	generate_wav(nn_cmp_dir, gen_file_id_list)  # reference copy synthesis speech
-    	
-    ### evaluation: calculate distortion        
+        logger.info('reconstructing waveform(s)')
+        generate_wav(gen_dir, gen_file_id_list, cfg)     # generated speech
+#       generate_wav(nn_cmp_dir, gen_file_id_list)  # reference copy synthesis speech
+
+    ### evaluation: calculate distortion
     if cfg.CALMCD:
-    	logger.info('calculating MCD')
+        logger.info('calculating MCD')
 
         ref_data_dir = os.path.join(data_dir, 'ref_data')
 
@@ -942,7 +942,7 @@ def main_function(cfg):
         bap_mse             = 0.0
         f0_mse              = 0.0
         vuv_error           = 0.0
-        
+
         valid_file_id_list = file_id_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number]
         test_file_id_list  = file_id_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
@@ -954,12 +954,12 @@ def main_function(cfg):
 
             ## use first feature in label -- hardcoded for now
             silence_feature = 0
-            
+
             ## Use these to trim silence:
-            untrimmed_test_labels = binary_label_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]    
+            untrimmed_test_labels = binary_label_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
 
-        if cfg.in_dimension_dict.has_key('mgc'):
+        if 'mgc' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_mgc_list, cfg.mgc_dim, \
@@ -972,8 +972,8 @@ def main_function(cfg):
             valid_spectral_distortion *= (10 /numpy.log(10)) * numpy.sqrt(2.0)    ##MCD
             test_spectral_distortion  *= (10 /numpy.log(10)) * numpy.sqrt(2.0)    ##MCD
 
-            
-        if cfg.in_dimension_dict.has_key('bap'):
+
+        if 'bap' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_bap_list, cfg.bap_dim, \
@@ -985,8 +985,8 @@ def main_function(cfg):
             test_bap_mse         = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
             valid_bap_mse = valid_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
             test_bap_mse  = test_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
-                
-        if cfg.in_dimension_dict.has_key('lf0'):
+
+        if 'lf0' in cfg.in_dimension_dict:
             if cfg.remove_silence_using_binary_labels:
                 untrimmed_reference_data = in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_lf0_list, cfg.lf0_dim, \
@@ -1001,9 +1001,9 @@ def main_function(cfg):
                     %(valid_spectral_distortion, valid_bap_mse, valid_f0_mse, valid_vuv_error*100.))
         logger.info('Test   : DNN -- MCD: %.3f dB; BAP: %.3f dB; F0: %.3f Hz; VUV: %.3f%%' \
                     %(test_spectral_distortion , test_bap_mse , test_f0_mse , test_vuv_error*100.))
-        
+
         # this can be removed
-        # 
+        #
         if  0: #to calculate distortion of HMM baseline
             hmm_gen_no_silence_dir = '/afs/inf.ed.ac.uk/group/project/dnn_tts/data/nick/nick_hmm_pf_2400_no_silence'
             hmm_gen_dir = '/afs/inf.ed.ac.uk/group/project/dnn_tts/data/nick/nick_hmm_pf_2400'
@@ -1012,11 +1012,11 @@ def main_function(cfg):
                 hmm_mgc_list = prepare_file_path_list(gen_file_id_list, hmm_gen_dir, cfg.mgc_ext)
                 hmm_bap_list = prepare_file_path_list(gen_file_id_list, hmm_gen_dir, cfg.bap_ext)
                 hmm_lf0_list = prepare_file_path_list(gen_file_id_list, hmm_gen_dir, cfg.lf0_ext)
-                
+
                 hmm_mgc_no_silence_list = prepare_file_path_list(gen_file_id_list, hmm_gen_no_silence_dir, cfg.mgc_ext)
                 hmm_bap_no_silence_list = prepare_file_path_list(gen_file_id_list, hmm_gen_no_silence_dir, cfg.bap_ext)
                 hmm_lf0_no_silence_list = prepare_file_path_list(gen_file_id_list, hmm_gen_no_silence_dir, cfg.lf0_ext)
-                
+
                 in_gen_label_align_file_list = in_label_align_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 remover = SilenceRemover(n_cmp = cfg.mgc_dim, silence_pattern = ['*-#+*'])
                 remover.remove_silence(hmm_mgc_list, in_gen_label_align_file_list, hmm_mgc_no_silence_list)
@@ -1028,7 +1028,7 @@ def main_function(cfg):
                 remover.remove_silence(hmm_lf0_list, in_gen_label_align_file_list, hmm_lf0_no_silence_list)
 
             calculator = IndividualDistortionComp()
-            
+
             spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, hmm_gen_no_silence_dir, cfg.mgc_ext, cfg.mgc_dim)
             bap_mse             = calculator.compute_distortion(valid_file_id_list, ref_data_dir, hmm_gen_no_silence_dir, cfg.bap_ext, cfg.bap_dim)
             f0_mse, vuv_error   = calculator.compute_distortion(valid_file_id_list, ref_data_dir, hmm_gen_no_silence_dir, cfg.lf0_ext, cfg.lf0_dim)
@@ -1048,9 +1048,9 @@ def main_function(cfg):
             logger.info('Test   : HMM -- MCD: %.3f dB; BAP: %.3f dB; F0: %.3f Hz; VUV: %.3f%%' %(spectral_distortion, bap_mse, f0_mse, vuv_error*100.))
 
 if __name__ == '__main__':
-    
-    
-    
+
+
+
     # these things should be done even before trying to parse the command line
 
     # create a configuration instance
@@ -1072,14 +1072,14 @@ if __name__ == '__main__':
 
     config_file = os.path.abspath(config_file)
     cfg.configure(config_file)
-    
+
     if cfg.profile:
         logger.info('profiling is activated')
         import cProfile, pstats
         cProfile.run('main_function(cfg)', 'mainstats')
 
         # create a stream for the profiler to write to
-        profiling_output = StringIO.StringIO()
+        profiling_output = io.StringIO()
         p = pstats.Stats('mainstats', stream=profiling_output)
 
         # print stats to that stream
@@ -1090,8 +1090,8 @@ if __name__ == '__main__':
         logger.info('---Profiling result follows---\n%s' %  profiling_output.getvalue() )
         profiling_output.close()
         logger.info('---End of profiling result---')
-        
+
     else:
         main_function(cfg)
-        
+
     sys.exit(0)

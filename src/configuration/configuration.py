@@ -1,62 +1,66 @@
 ################################################################################
 #           The Neural Network (NN) based Speech Synthesis System
 #                https://svn.ecdf.ed.ac.uk/repo/inf/dnn_tts/
-#                
-#                Centre for Speech Technology Research                 
-#                     University of Edinburgh, UK                       
+#
+#                Centre for Speech Technology Research
+#                     University of Edinburgh, UK
 #                      Copyright (c) 2014-2015
-#                        All Rights Reserved.                           
-#                                                                       
+#                        All Rights Reserved.
+#
 # The system as a whole and most of the files in it are distributed
 # under the following copyright and conditions
 #
-#  Permission is hereby granted, free of charge, to use and distribute  
-#  this software and its documentation without restriction, including   
-#  without limitation the rights to use, copy, modify, merge, publish,  
-#  distribute, sublicense, and/or sell copies of this work, and to      
-#  permit persons to whom this work is furnished to do so, subject to   
+#  Permission is hereby granted, free of charge, to use and distribute
+#  this software and its documentation without restriction, including
+#  without limitation the rights to use, copy, modify, merge, publish,
+#  distribute, sublicense, and/or sell copies of this work, and to
+#  permit persons to whom this work is furnished to do so, subject to
 #  the following conditions:
-#  
-#   - Redistributions of source code must retain the above copyright  
-#     notice, this list of conditions and the following disclaimer.   
-#   - Redistributions in binary form must reproduce the above         
-#     copyright notice, this list of conditions and the following     
-#     disclaimer in the documentation and/or other materials provided 
-#     with the distribution.                                          
-#   - The authors' names may not be used to endorse or promote products derived 
-#     from this software without specific prior written permission.   
-#                                  
-#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK        
-#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      
-#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   
-#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE     
-#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    
-#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   
-#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          
-#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       
+#
+#   - Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#   - Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#   - The authors' names may not be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THE UNIVERSITY OF EDINBURGH AND THE CONTRIBUTORS TO THIS WORK
+#  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+#  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+#  SHALL THE UNIVERSITY OF EDINBURGH NOR THE CONTRIBUTORS BE LIABLE
+#  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+#  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+#  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+#  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 #  THIS SOFTWARE.
 ################################################################################
 
 
 import math
-import ConfigParser
+import sys
+if sys.version_info.major >= 3:
+    import configparser
+else:
+    import ConfigParser as configparser
 import os
 import logging
-import StringIO
+import io
 import sys
 import textwrap
 import datetime
 
 class configuration(object):
-    
+
     """Configuration settings. Any user-specific values are read from an external file
     and parsed by an instance of the built-in ConfigParser class"""
-    
+
     def __init__(self):
         # doesn't do anything
         pass
-    
-    
+
+
     def configure(self, configFile=None, use_logging=True):
 
         # get a logger
@@ -66,7 +70,7 @@ class configuration(object):
         # because we haven't loaded it yet!
         #
         # so, just use simple console-only logging
-        logger.setLevel(logging.DEBUG) # this level is hardwired here - should change it to INFO 
+        logger.setLevel(logging.DEBUG) # this level is hardwired here - should change it to INFO
         # add a handler & its formatter - will write only to console
         ch = logging.StreamHandler()
         logger.addHandler(ch)
@@ -80,12 +84,12 @@ class configuration(object):
         # next, load in any user-supplied configuration values
         # that might over-ride the default values
         self.user_configuration(configFile)
-        
-        # now that we have loaded the user's configuration, we can load the 
+
+        # now that we have loaded the user's configuration, we can load the
         # separate config file for logging (the name of that file will be specified in the config file)
         if use_logging:
             self.logging_configuration()
-        
+
         # finally, set up all remaining configuration values
         # that depend upon either default or user-supplied values
         self.complete_configuration()
@@ -113,25 +117,25 @@ class configuration(object):
         if not configFile:
             logger.warn('no user configuration file provided; using only built-in default settings')
             return
-        
+
         # load the config file
         try:
-            configparser = ConfigParser.ConfigParser()
-            configparser.readfp(open(configFile))
+            cfgparser = configparser.ConfigParser()
+            cfgparser.readfp(open(configFile))
             logger.debug('successfully read and parsed user configuration file %s' % configFile)
         except:
             logger.fatal('error reading user configuration file %s' % configFile)
             raise
-            
-            
+
+
         #work_dir must be provided before initialising other directories
         self.work_dir = None
-        
+
         if self.work_dir == None:
             try:
-                self.work_dir = configparser.get('Paths', 'work')
+                self.work_dir = cfgparser.get('Paths', 'work')
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            except (configparser.NoSectionError, configparser.NoOptionError):
                 if self.work_dir == None:
                     logger.critical('Paths:work has no value!')
                     raise Exception
@@ -139,6 +143,18 @@ class configuration(object):
         # look for those items that are user-configurable, and get their values
         # sptk_bindir= ....
 
+        # default place for some data
+        self.data_dir       = os.path.join(self.work_dir, 'data')
+        self.inter_data_dir = os.path.join(self.work_dir, 'inter_module')
+
+        self.keras_dir   = os.path.join(self.work_dir, 'keras')
+        self.gen_dir     = os.path.join(self.keras_dir, 'gen')
+        self.model_dir   = os.path.join(self.keras_dir, 'models')
+        self.stats_dir   = os.path.join(self.keras_dir, 'stats')
+
+        self.inter_data_dir = os.path.join(self.work_dir, 'inter_module')
+        self.def_inp_dir    = os.path.join(self.inter_data_dir, 'nn_no_silence_lab_norm_425')
+        self.def_out_dir    = os.path.join(self.inter_data_dir, 'nn_norm_mgc_lf0_vuv_bap_187')
 
 
         # a list instead of a dict because OrderedDict is not available until 2.7
@@ -148,17 +164,26 @@ class configuration(object):
         # the type of the default value is important and controls the type that the corresponding
         # variable will have
         #
-        # to set a default value of 'undefined' use an empty string 
+        # to set a default value of 'undefined' use an empty string
         # or the special value 'impossible', as appropriate
         #
         impossible_int=int(-99999)
         impossible_float=float(-99999.0)
-        
+
         user_options = [
 
             ('work_dir', self.work_dir, 'Paths','work'),
-            ('data_dir', '', 'Paths','data'),
+            ('data_dir', self.data_dir, 'Paths','data'),
+            ('inter_data_dir', self.inter_data_dir, 'Paths','inter_data'),
             ('plot_dir', '', 'Paths','plot'),
+
+            ('inp_feat_dir', self.def_inp_dir, 'Paths', 'inp_feat'),
+            ('out_feat_dir', self.def_out_dir, 'Paths', 'out_feat'),
+
+            ('model_dir', self.model_dir, 'Paths', 'models'),
+            ('stats_dir', self.stats_dir, 'Paths', 'stats'),
+            ('gen_dir'  ,   self.gen_dir, 'Paths', 'gen'),
+            ('pred_feat_dir',self.gen_dir, 'Paths', 'pred_feat'),
 
             ('plot',      False, 'Utility', 'plot'),
             ('profile',   False, 'Utility', 'profile'),
@@ -174,8 +199,18 @@ class configuration(object):
             ('in_bap_dir'   , os.path.join(self.work_dir, 'data/bap')  , 'Paths', 'in_bap_dir'),
             ('in_sp_dir'    , os.path.join(self.work_dir, 'data/sp' )  , 'Paths', 'in_sp_dir'),
             ('in_seglf0_dir', os.path.join(self.work_dir, 'data/lf03') , 'Paths', 'in_seglf0_dir'),
-            
-	    ## for glottHMM
+
+            # Input-Output
+            ('inp_dim', 425, 'Input-Output', 'inp_dim'),
+            ('out_dim', 187, 'Input-Output', 'out_dim'),
+
+            ('inp_file_ext', '.lab', 'Input-Output', 'inp_file_ext'),
+            ('out_file_ext', '.cmp', 'Input-Output', 'out_file_ext'),
+
+            ('inp_norm', 'MINMAX', 'Input-Output', 'inp_norm'),
+            ('out_norm', 'MINMAX', 'Input-Output', 'out_norm'),
+
+            ## for glottHMM
             ('in_F0_dir'   , os.path.join(self.work_dir, 'data/F0')  , 'Paths', 'in_F0_dir'),
             ('in_Gain_dir'   , os.path.join(self.work_dir, 'data/Gain')  , 'Paths', 'in_Gain_dir'),
             ('in_HNR_dir'   , os.path.join(self.work_dir, 'data/HNR')  , 'Paths', 'in_HNR_dir'),
@@ -185,7 +220,7 @@ class configuration(object):
             ## for joint duration
             ('in_seq_dur_dir' , os.path.join(self.work_dir, 'data/S2S_dur')  , 'Paths', 'in_seq_dur_dir'),
             ('in_dur_dir'     , os.path.join(self.work_dir, 'data/dur')      , 'Paths', 'in_dur_dir'),
-            
+
 
             ('nn_norm_temp_dir', os.path.join(self.work_dir, 'data/step_hidden9'), 'Paths', 'nn_norm_temp_dir'),
 
@@ -193,12 +228,13 @@ class configuration(object):
 
 
 
-            ('label_style', 'HTS'   , 'Labels', 'label_style'),
-            ('label_type', 'state_align'   , 'Labels', 'label_type'),
-            ('in_label_align_dir', os.path.join(self.work_dir, 'data/label_state_align')  ,    'Labels', 'label_align'),
-            ('question_file_name', os.path.join(self.work_dir, 'data/questions.hed')      ,    'Labels', 'question_file_name'),
-            ('silence_pattern'   , ['*-#+*']                                              ,    'Labels', 'silence_pattern'),
-            ('subphone_feats', 'full'   , 'Labels', 'subphone_feats'),
+            ('label_style'        , 'HTS'                                                 ,    'Labels', 'label_style'),
+            ('label_type'         , 'state_align'                                         ,    'Labels', 'label_type'),
+            ('in_label_align_dir' , os.path.join(self.work_dir, 'data/label_state_align') ,    'Labels', 'label_align'),
+            ('question_file_name' , os.path.join(self.work_dir, 'data/questions.hed')     ,    'Labels', 'question_file_name'),
+            ('silence_pattern'    , ['*-#+*']                                             ,    'Labels', 'silence_pattern'),
+            ('subphone_feats'     , 'full'                                                ,    'Labels', 'subphone_feats'),
+            ('additional_features', {}                                                    ,    'Labels', 'additional_features'),
 
             ('xpath_file_name',      os.path.join(self.work_dir, 'data/xml_labels/xpaths.txt'), 'Labels', 'xpath_file_name'),
 
@@ -224,9 +260,9 @@ class configuration(object):
             ('log_file', '', 'Paths','log_file'),
             ('log_config_file', 'configuration/exampleloggingconfigfile.conf', 'Paths', 'log_config_file'),
 
-            ('sptk_bindir', 'tools/SPTK-3.7/bin', 'Paths','sptk'),
-            ('straight_bindir', 'tools/straight/bin', 'Paths','straight'),
-            ('world_bindir', 'tools/WORLD/build', 'Paths','world'),
+            ('sptk_bindir', 'tools/bin/SPTK-3.9', 'Paths','sptk'),
+            ('straight_bindir', 'tools/bin/straight', 'Paths','straight'),
+            ('world_bindir', 'tools/bin/WORLD', 'Paths','world'),
 
             ('network_type'           , 'RNN'                                           , 'Architecture', 'network_type'),
             ('model_type'           , 'DNN'                                             , 'Architecture', 'model_type'),
@@ -234,18 +270,41 @@ class configuration(object):
             ('output_layer_type'    , 'LINEAR'                                          , 'Architecture', 'output_layer_type'),
             ('sequential_training'  , False                                           , 'Architecture', 'sequential_training'),
             ('dropout_rate'         , 0.0                                               , 'Architecture', 'dropout_rate'),
-	    
-	    ## some config variables for token projection DNN
+            ('switch_to_keras'      , False                                           , 'Architecture', 'switch_to_keras'),
+
+            ## some config variables for token projection DNN
             ('scheme'               , 'stagewise'                   , 'Architecture', 'scheme'),
-            ('index_to_project'    , 0       , 'Architecture', 'index_to_project'),            
+            ('index_to_project'    , 0       , 'Architecture', 'index_to_project'),
             ('projection_insize'    , 10000        , 'Architecture', 'projection_insize'),
             ('projection_outsize'    , 10        , 'Architecture', 'projection_outsize'),
-            ('initial_projection_distrib'    , 'gaussian'    , 'Architecture', 'initial_projection_distrib'),           
+            ('initial_projection_distrib'    , 'gaussian'    , 'Architecture', 'initial_projection_distrib'),
             ('projection_weights_output_dir'    , 'some_path', 'Architecture', 'projection_weights_output_dir'),
-            ('layers_with_projection_input'    , [0], 'Architecture', 'layers_with_projection_input'),            
-            ('projection_learning_rate_scaling'    , 1.0, 'Architecture', 'projection_learning_rate_scaling'), 	             
-	             
-	    
+            ('layers_with_projection_input'    , [0], 'Architecture', 'layers_with_projection_input'),
+            ('projection_learning_rate_scaling'    , 1.0, 'Architecture', 'projection_learning_rate_scaling'),
+
+            ('num_of_epochs',   1, 'Architecture', 'training_epochs'),
+
+            ('optimizer'        ,   'adam', 'Architecture', 'optimizer'),
+            ('loss_function'    ,    'mse', 'Architecture', 'loss_function'),
+
+            # RNN
+            ('stateful'           , False, 'Architecture', 'stateful'),
+            ('use_high_batch_size', False, 'Architecture', 'use_high_batch_size'),
+
+            ('training_algo',   1, 'Architecture', 'training_algo'),
+            ('merge_size'   ,   1, 'Architecture', 'merge_size'),
+            ('seq_length'   , 200, 'Architecture', 'seq_length'),
+            ('bucket_range' , 100, 'Architecture', 'bucket_range'),
+
+            # Data
+            ('shuffle_data', True, 'Data', 'shuffle_data'),
+
+            # Keras Processes
+            ('NORMDATA'  , False, 'Processes', 'NORMDATA'),
+            ('TRAINMODEL', False, 'Processes', 'TRAINMODEL'),
+            ('TESTMODEL' , False, 'Processes', 'TESTMODEL'),
+
+
             ('learning_rate'        , 0.0002                          , 'Architecture', 'learning_rate'),
             ('l2_reg'               , 0.00001                      , 'Architecture', 'L2_regularization'),
             ('l1_reg'               , 0.0                           , 'Architecture', 'L1_regularization'),
@@ -269,8 +328,8 @@ class configuration(object):
             ('mean_log_det',        -100.0                        , 'Architecture', 'mean_log_det'),
             ('start_from_trained_model',  '_'                     , 'Architecture', 'start_from_trained_model'),
             ('use_rprop',           0                             , 'Architecture', 'use_rprop'),
-                       
-            
+
+
             ('mgc_dim' ,60     ,'Outputs','mgc'),
             ('dmgc_dim',60 * 3 ,'Outputs','dmgc'),
             ('vuv_dim' ,1      ,'Outputs','vuv'),
@@ -287,7 +346,7 @@ class configuration(object):
             ('do_MLPG'          , True              , 'Outputs', 'do_MLPG'),
 
 
-	    ## for GlottHMM
+            ## for GlottHMM
             ('F0_dim' ,1     ,'Outputs','F0'),
             ('dF0_dim',1 * 3 ,'Outputs','dF0'),
             ('Gain_dim' ,1     ,'Outputs','Gain'),
@@ -313,48 +372,6 @@ class configuration(object):
 
             ('output_features' , ['mgc','lf0', 'vuv', 'bap'], 'Streams', 'output_features'),
             ('gen_wav_features', ['mgc', 'bap', 'lf0']      , 'Streams', 'gen_wav_features'),
-            
-#            ('stream_mgc_hidden_size'   ,  192 , 'Streams', 'stream_mgc_hidden_size'),
-#            ('stream_lf0_hidden_size'   ,  32  , 'Streams', 'stream_lf0_hidden_size'),
-#            ('stream_vuv_hidden_size'   ,  32  , 'Streams', 'stream_vuv_hidden_size'),
-#            ('stream_bap_hidden_size'   ,  128 , 'Streams', 'stream_bap_hidden_size'),
-#            ('stream_stepw_hidden_size' ,  64  , 'Streams', 'stream_stepw_hidden_size'),
-#            ('stream_seglf0_hidden_size',  64  , 'Streams', 'stream_seglf0_hidden_size'), 
-#            ('stream_cmp_hidden_size'   ,  256 , 'Streams', 'stream_cmp_hidden_size'),  #when multi-stream is disabled, use this to indicate the final hidden layer size
-                                                                                        #if this is also not provided, use the top common hidden layer size
-
-            ## Glott HMM -- dummy values -- haven't used private streams:--
-#            ('stream_F0_hidden_size'   ,  192 , 'Streams', 'stream_F0_hidden_size'),
-#            ('stream_Gain_hidden_size'   ,  192 , 'Streams', 'stream_Gain_hidden_size'),
-#            ('stream_HNR_hidden_size'   ,  192 , 'Streams', 'stream_HNR_hidden_size'),
-#            ('stream_LSF_hidden_size'   ,  192 , 'Streams', 'stream_LSF_hidden_size'),
-#            ('stream_LSFsource_hidden_size'   ,  192 , 'Streams', 'stream_LSFsource_hidden_size'),
-
-            ## joint dur -- dummy values -- haven't used private streams:--
-#            ('stream_dur_hidden_size'   ,  192 , 'Streams', 'stream_dur_hidden_size'),
-
-#            ('stream_sp_hidden_size'    , 1024, 'Streams', 'stream_sp_hidden_size'),
-            
-#            ('stream_weight_mgc'   , 1.0, 'Streams', 'stream_weight_mgc'),
-#            ('stream_weight_lf0'   , 3.0, 'Streams', 'stream_weight_lf0'),
-#            ('stream_weight_vuv'   , 1.0, 'Streams', 'stream_weight_vuv'),
-#            ('stream_weight_bap'   , 1.0, 'Streams', 'stream_weight_bap'),
-#            ('stream_weight_stepw' , 0.0, 'Streams', 'stream_weight_stepw'),
-#            ('stream_weight_seglf0', 1.0, 'Streams', 'stream_weight_seglf0'),
-#            ('stream_weight_sp'    , 1.0, 'Streams', 'stream_weight_sp'),
-            
-            
-            ## Glott HMM - unused?
-#            ('stream_weight_F0'   , 1.0, 'Streams', 'stream_weight_F0'),
-#            ('stream_weight_Gain'   , 1.0, 'Streams', 'stream_weight_Gain'),
-#            ('stream_weight_HNR'   , 1.0, 'Streams', 'stream_weight_HNR'),
-#            ('stream_weight_LSF'   , 1.0, 'Streams', 'stream_weight_LSF'),
-#            ('stream_weight_LSFsource'   , 1.0, 'Streams', 'stream_weight_LSFsource'),
-
-            ## dur - unused?
-#            ('stream_weight_dur'   , 1.0, 'Streams', 'stream_weight_dur'),
-#            ('stream_lf0_lr'       , 0.5, 'Streams', 'stream_lf0_lr'),
-#            ('stream_vuv_lr'       , 0.5, 'Streams', 'stream_vuv_lr'),
 
             ('vocoder_type'     ,'STRAIGHT'            ,'Waveform'  , 'vocoder_type'),
             ('sr'               ,48000                 ,'Waveform'  , 'samplerate'),
@@ -366,14 +383,14 @@ class configuration(object):
             ('pf_coef'          ,1.4                   ,'Waveform'  , 'postfilter_coef'),
             ('co_coef'          ,2047                  ,'Waveform'  , 'minimum_phase_order'),
             ('use_cep_ap'       ,True                  ,'Waveform'  , 'use_cep_ap'),
-            ('do_post_filtering',True                  ,'Waveform'  , 'do_post_filtering'), 
-            ('apply_GV'         ,False                 ,'Waveform'  , 'apply_GV'), 
+            ('do_post_filtering',True                  ,'Waveform'  , 'do_post_filtering'),
+            ('apply_GV'         ,False                 ,'Waveform'  , 'apply_GV'),
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
-            
+
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),
             ('GenTestList'          , False, 'Processes', 'GenTestList'),
-            
+
             ('NORMLAB'         , False, 'Processes', 'NORMLAB'),
             ('MAKEDUR'         , False, 'Processes', 'MAKEDUR'),
             ('MAKECMP'         , False, 'Processes', 'MAKECMP'),
@@ -407,18 +424,18 @@ class configuration(object):
 
         ]
 
-        
+
         # this uses exec(...) which is potentially dangerous since arbitrary code could be executed
         for (variable,default,section,option) in user_options:
             value=None
 
             try:
                 # first, look for a user-set value for this variable in the config file
-                value = configparser.get(section,option)
+                value = cfgparser.get(section,option)
                 user_or_default='user'
 
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                # use default value, if there is one 
+            except (configparser.NoSectionError, configparser.NoOptionError):
+                # use default value, if there is one
                 if (default == None) or \
                    (default == '')   or \
                    ((type(default) == int) and (default == impossible_int)) or \
@@ -429,7 +446,7 @@ class configuration(object):
                     value = default
                     user_or_default='default'
 
-                
+
             if   type(default) == str:
                 exec('self.%s = "%s"'      % (variable,value))
             elif type(default) == int:
@@ -440,32 +457,34 @@ class configuration(object):
                 exec('self.%s = bool(%s)'  % (variable,value))
             elif type(default) == list:
                 exec('self.%s = list(%s)'  % (variable,value))
+            elif type(default) == dict:
+                exec('self.%s = dict(%s)'  % (variable,value))
             else:
                 logger.critical('Variable %s has default value of unsupported type %s',variable,type(default))
                 raise Exception('Internal error in configuration settings: unsupported default type')
-                
+
             logger.info('%20s has %7s value %s' % (section+":"+option,user_or_default,value) )
-        
-        
+
+
         self.combined_feature_name = ''
         for feature_name in self.output_features:
             self.combined_feature_name += '_'
             self.combined_feature_name += feature_name
-            
+
         self.combined_model_name = self.model_type
         for hidden_type in self.hidden_layer_type:
             self.combined_model_name += '_' + hidden_type
-            
+
         self.combined_model_name += '_' + self.output_layer_type
 
 
     def complete_configuration(self):
         # to be called after reading any user-specific settings
         # because the values set here depend on those user-specific settings
-        
+
         # get a logger
         logger = logging.getLogger("configuration")
-        
+
         # tools
         self.SPTK = {
             'X2X'    : os.path.join(self.sptk_bindir,'x2x'),
@@ -482,11 +501,7 @@ class configuration(object):
             'MC2B'   : os.path.join(self.sptk_bindir,'mc2b'),
             'B2MC'  : os.path.join(self.sptk_bindir,'b2mc')
             }
-#        self.NND = {
-#            'FEATN'  : os.path.join(self.nndata_bindir,'FeatureNormalization'),
-#            'LF0IP'  : os.path.join(self.nndata_bindir,'F0Interpolation'),
-#            'F0VUV'  : os.path.join(self.nndata_bindir,'F0VUVComposition')
-#            }
+
         self.STRAIGHT = {
             'SYNTHESIS_FFT' : os.path.join(self.straight_bindir, 'synthesis_fft'),
             'BNDAP2AP'      : os.path.join(self.straight_bindir, 'bndap2ap'),
@@ -496,18 +511,87 @@ class configuration(object):
             'SYNTHESIS'     : os.path.join(self.world_bindir, 'synth'),
             'ANALYSIS'      : os.path.join(self.world_bindir, 'analysis'),
             }
-        
+
         # STILL TO DO - test that all the above tools exist and are executable
-        
+
+        if self.switch_to_keras:
+            ## create directories if not exists
+            if not os.path.exists(self.model_dir):
+                os.makedirs(self.model_dir)
+
+            if not os.path.exists(self.stats_dir):
+                os.makedirs(self.stats_dir)
+
+            if not os.path.exists(self.gen_dir):
+                os.makedirs(self.gen_dir)
+
+            # input-output normalization stat files
+            self.inp_stats_file = os.path.join(self.stats_dir, "input_%d_%s_%d.norm" %(int(self.train_file_number), self.inp_norm, self.inp_dim))
+            self.out_stats_file = os.path.join(self.stats_dir, "output_%d_%s_%d.norm" %(int(self.train_file_number), self.out_norm, self.out_dim))
+
+            # define model file name
+            if self.sequential_training:
+                self.combined_model_arch = 'RNN'+str(self.training_algo)
+            else:
+                self.combined_model_arch = 'DNN'
+
+            self.combined_model_arch += '_'+str(len(self.hidden_layer_size))
+            self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_size))
+            self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_type))
+
+            self.nnets_file_name = '%s_%d_train_%d_%d_%d_%d_%d_model' \
+                              %(self.combined_model_arch, int(self.shuffle_data),
+                                 self.inp_dim, self.out_dim, self.train_file_number, self.batch_size, self.num_of_epochs)
+
+            logger.info('model file: %s' % (self.nnets_file_name))
+
+            # model files
+            self.json_model_file = os.path.join(self.model_dir, self.nnets_file_name+'.json')
+            self.h5_model_file   = os.path.join(self.model_dir, self.nnets_file_name+'.h5')
+
+            # predicted features directory
+            self.pred_feat_dir = os.path.join(self.gen_dir, self.nnets_file_name)
+            if not os.path.exists(self.pred_feat_dir):
+                os.makedirs(self.pred_feat_dir)
+
+            # string.lower for some architecture values
+            self.output_layer_type = self.output_layer_type.lower()
+            self.optimizer         = self.optimizer.lower()
+            self.loss_function     = self.loss_function.lower()
+            for i in range(len(self.hidden_layer_type)):
+                self.hidden_layer_type[i] = self.hidden_layer_type[i].lower()
+
+            # set sequential training True if using LSTMs
+            if 'lstm' in self.hidden_layer_type:
+                self.sequential_training = True
+
+            # set/limit batch size to 25
+            if self.sequential_training and self.batch_size>50:
+                if not self.use_high_batch_size:
+                    logger.info('reducing the batch size from %s to 25' % (self.batch_size))
+                    self.batch_size = 25 ## num. of sentences in this case
+
+            # set default seq length for duration model
+            if self.DurationModel and self.training_algo == 1 and self.seq_length>50:
+                self.seq_length = 20
+
+            # rnn params
+            self.rnn_params = {}
+            self.rnn_params['merge_size']   = self.merge_size
+            self.rnn_params['seq_length']   = self.seq_length
+            self.rnn_params['bucket_range'] = self.bucket_range
+            self.rnn_params['stateful']     = self.stateful
 
 
-        
+
+
+
         ###dimensions for the output features
-        ### key name must follow the self.in_dimension_dict. 
+        ### key name must follow the self.in_dimension_dict.
         ### If do not want to include dynamic feature, just use the same dimension as that self.in_dimension_dict
         ### if lf0 is one of the acoustic featues, the out_dimension_dict must have an additional 'vuv' key
         ### a bit confusing
-        
+
         ###need to control the order of the key?
         self.in_dir_dict  = {}          ##dimensions for each raw acoustic (output of NN) feature
         self.out_dimension_dict = {}
@@ -515,12 +599,12 @@ class configuration(object):
 
         self.private_hidden_sizes = []
         self.stream_weights = []
-        
+
         logger.debug('setting up output features')
         self.cmp_dim = 0
         for feature_name in self.output_features:
             logger.debug(' %s' % feature_name)
-            
+
             in_dimension = 0
             out_dimension = 0
             in_directory = ''
@@ -531,7 +615,7 @@ class configuration(object):
                 in_dimension  = self.mgc_dim
                 out_dimension = self.dmgc_dim
                 in_directory  = self.in_mgc_dir
-                
+
 #                current_stream_hidden_size = self.stream_mgc_hidden_size
 #                current_stream_weight      = self.stream_weight_mgc
             elif feature_name == 'bap':
@@ -572,7 +656,7 @@ class configuration(object):
                 in_dimension = self.seglf0_dim
                 out_dimension = self.seglf0_dim
                 in_directory = self.in_seglf0_dir
-            
+
 #                current_stream_hidden_size = self.stream_seglf0_hidden_size
 #                current_stream_weight      = self.stream_weight_seglf0
 
@@ -633,13 +717,13 @@ class configuration(object):
             else:
                 logger.critical('%s feature is not supported right now. Please change the configuration.py to support it' %(feature_name))
                 raise
-            
+
             logger.info('  in_dimension: %d' % in_dimension)
             logger.info('  out_dimension : %d' % out_dimension)
             logger.info('  in_directory : %s' %  in_directory)
 #            logger.info('  current_stream_hidden_size: %d' % current_stream_hidden_size)
 #            logger.info('  current_stream_weight: %d' % current_stream_weight)
-            
+
             if in_dimension > 0:
                 self.in_dimension_dict[feature_name] = in_dimension
                 if in_directory == '':
@@ -654,7 +738,7 @@ class configuration(object):
 
             if out_dimension > 0:
                 self.out_dimension_dict[feature_name] = out_dimension
-                
+
 #                if (current_stream_hidden_size <= 0 or current_stream_weight <= 0.0) and self.multistream_switch:
 #                    logger.critical('the hidden layer size or stream weight is not corrected setted for %s feature' %(feature_name))
 #                    raise
@@ -665,7 +749,7 @@ class configuration(object):
 
                 self.cmp_dim += out_dimension
 
-        
+
 
 #        if not self.multistream_switch:
 #            self.private_hidden_sizes = []
@@ -677,12 +761,12 @@ class configuration(object):
 #            self.stream_weights.append(1.0)
 
         self.stream_lr_weights = []
-        
+
         self.multistream_outs = []
         if self.multistream_switch:
-            for feature_name in self.out_dimension_dict.keys():
+            for feature_name in list(self.out_dimension_dict.keys()):
                 self.multistream_outs.append(self.out_dimension_dict[feature_name])
-                
+
 #                stream_lr_ratio = 0.5
 #                if feature_name == 'lf0':
 #                    stream_lr_ratio = self.stream_lf0_lr
@@ -744,33 +828,27 @@ class configuration(object):
         self.hyper_params['hidden_layer_size']   = self.hidden_layer_size
         self.hyper_params['warmup_epoch']          = self.warmup_epoch
         self.hyper_params['use_rprop']             = self.use_rprop
-        
-#        self.hyper_params['private_hidden_sizes']  = self.private_hidden_sizes
-#        self.hyper_params['stream_weights']        = self.stream_weights
-#        self.hyper_params['private_l2_reg']        = self.private_l2_reg
-#        self.hyper_params['stream_lr_weights']     = self.stream_lr_weights
-#        self.hyper_params['use_private_hidden']    = self.use_private_hidden
 
         self.hyper_params['model_type']            = self.model_type
         self.hyper_params['hidden_layer_type']     = self.hidden_layer_type
-    
+
         self.hyper_params['index_to_project']     = self.index_to_project
         self.hyper_params['projection_insize']    = self.projection_insize
         self.hyper_params['projection_outsize']   = self.projection_outsize
-        self.hyper_params['initial_projection_distrib']   = self.initial_projection_distrib         
-        self.hyper_params['layers_with_projection_input']   = self.layers_with_projection_input   
-        self.hyper_params['projection_learning_rate_scaling']   = self.projection_learning_rate_scaling       
-        
+        self.hyper_params['initial_projection_distrib']   = self.initial_projection_distrib
+        self.hyper_params['layers_with_projection_input']   = self.layers_with_projection_input
+        self.hyper_params['projection_learning_rate_scaling']   = self.projection_learning_rate_scaling
+
         self.hyper_params['sequential_training'] = self.sequential_training
         self.hyper_params['dropout_rate'] = self.dropout_rate
-        
+
         for hidden_type in self.hidden_layer_type:
             if 'LSTM' in hidden_type or 'RNN' in hidden_type or 'GRU' in hidden_type:
                 self.hyper_params['sequential_training'] = self.sequential_training
-        
+
 
         #To be recorded in the logging file for reference
-        for param_name in self.hyper_params.keys():
+        for param_name in list(self.hyper_params.keys()):
             logger.info('%s : %s' %(param_name, str(self.hyper_params[param_name])))
 
                 # input files
@@ -792,23 +870,23 @@ class configuration(object):
         else:
             logger.critical('unsupported label style requested: %s' % self.label_style)
             raise Exception
-            
-        
+
+
     def logging_configuration(self):
-    
+
         # get a logger
         logger = logging.getLogger("configuration")
-    
+
         # logging configuration, see here for format description
         # https://docs.python.org/2/library/logging.config.html#logging-config-fileformat
 
-    
-        # what we really want to do is this dicitonary-based configuration, but it's only available from Python 2.7 onwards 
+
+        # what we really want to do is this dicitonary-based configuration, but it's only available from Python 2.7 onwards
         #    logging.config.dictConfig(cfg.logging_configuration)
         # so we will settle for this file-based configuration procedure instead
 
         try:
-            # open the logging configuration file 
+            # open the logging configuration file
             fp = open(self.log_config_file,'r')
             logger.debug("loading logging configuration from %s" % self.log_config_file)
             # load the logging configuration file into a string
@@ -831,21 +909,21 @@ class configuration(object):
             # and a formatter
             formatter = logging.Formatter('%(asctime)s %(levelname)8s%(name)15s: %(message)s')
             ch.setFormatter(formatter)
-    
+
         except IOError:
             # this means that open(...) threw an error
             logger.critical('could not load logging configuration file %s' % self.log_config_file)
             raise
-    
+
         else:
 
             # inject the config lines for the file handler, now that we know the name of the file it will write to
 
             if not os.path.exists(self.log_path):
-                os.makedirs(self.log_path, 0755)
-            log_file_name = '%s_%s_%d_%d_%d_%d_%f_%s.log' %(self.combined_model_name, self.combined_feature_name, self.train_file_number, 
-                                                                      self.cmp_dim, len(self.hidden_layer_size), 
-                                                                      self.hidden_layer_size[-1], self.learning_rate, 
+                os.makedirs(self.log_path, 0o755)
+            log_file_name = '%s_%s_%d_%d_%d_%d_%f_%s.log' %(self.combined_model_name, self.combined_feature_name, self.train_file_number,
+                                                                      self.cmp_dim, len(self.hidden_layer_size),
+                                                                      self.hidden_layer_size[-1], self.learning_rate,
                                                                       datetime.datetime.now().strftime("%I_%M%p_%B_%d_%Y"))
 
             self.log_file = os.path.join(self.log_path, log_file_name)
@@ -863,7 +941,9 @@ class configuration(object):
 
             try:
                 # pass that string as a filehandle
-                fh = StringIO.StringIO(config_string)
+                if sys.version_info.major < 3:
+                    config_string = unicode(config_string, "utf-8")
+                fh = io.StringIO(config_string)
                 logging.config.fileConfig(fh)
                 fh.close()
                 logger.info("logging is now fully configured")
@@ -871,6 +951,3 @@ class configuration(object):
             except IOError:
                 logger.critical('could not configure logging: perhaps log file path is wrong?')
                 sys.exit(1)
-    
-    
-

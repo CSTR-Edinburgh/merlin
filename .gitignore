@@ -1,1 +1,16 @@
+# Global compiled file
 *.pyc
+
+# Auto generated conf
+egs/**/conf/*
+!egs/**/conf/dnn
+!egs/**/conf/logging_config.conf
+
+# Running part
+experiments/
+*data*
+
+# Tools
+SPTK*
+build/
+bin/
