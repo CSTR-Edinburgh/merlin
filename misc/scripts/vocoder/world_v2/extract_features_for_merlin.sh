@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if test "$#" -ne 1; then
+if test "$#" -ne 4; then
     echo "Usage: "
     echo "bash extract_features_for_merlin.sh <path_to_merlin_dir> <path_to_wav_dir> <path_to_feat_dir> <sampling frequency>"
     exit 1

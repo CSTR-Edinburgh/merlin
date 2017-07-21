@@ -2,11 +2,12 @@ import os
 import sys
 import shutil
 import glob
+import time
 import multiprocessing as mp
 
 if len(sys.argv)!=5:
     print("Usage: ")
-    print("python extract_features_for_merlin.py <path_to_merlin_dir> <path_to_wav_dir> <path_to_feat_dir> <sampling frequency>")
+    print("python extract_features_for_merlin.py <path_to_merlin_dir> <path_to_wav_dir> <path_to_feat_dir> <sampling rate>")
     sys.exit(1)
 
 # top merlin directory
@@ -54,24 +55,30 @@ if fs == 16000:
     nFFTHalf = 1024
     alpha = 0.58
 
-if fs == 48000:
+elif fs == 48000:
     nFFTHalf = 2048
     alpha = 0.77
 
-#bap order depends on sampling freq.
+else:
+    print("As of now, we don't support %d Hz sampling rate." %(fs))
+    print("Please consider either downsampling to 16000 Hz or upsampling to 48000 Hz")
+    sys.exit(1)
+
+#bap order depends on sampling rate.
 mcsize=59
 
-wav_files = []
 def get_wav_filelist(wav_dir):
+    wav_files = []
     for file in os.listdir(wav_dir):
         whole_filepath = os.path.join(wav_dir,file)
         if os.path.isfile(whole_filepath) and str(whole_filepath).endswith(".wav"):
             wav_files.append(whole_filepath)
         elif os.path.isdir(whole_filepath):
-            wav_files.append(get_wav_filelist(whole_filepath))
+            wav_files += get_wav_filelist(whole_filepath)
 
-get_wav_filelist(wav_dir)
+    wav_files.sort()
 
+    return wav_files
 
 def process(filename):
     '''
@@ -118,9 +125,15 @@ def process(filename):
                                             os.path.join(bap_dir, file_id + '.bap'))
     os.system(sptk_x2x_df_cmd2)
 
+print("--- Feature extraction started ---")
+start_time = time.time()
+
+# get wav files list
+wav_files = get_wav_filelist(wav_dir)
+
 # do multi-processing
-with mp.Pool(mp.cpu_count()) as pool:
-    pool.map(process, wav_files)
+pool = mp.Pool(mp.cpu_count())
+pool.map(process, wav_files)
 
 # clean temporal files
 shutil.rmtree(sp_dir, ignore_errors=True)
@@ -129,3 +142,7 @@ for zippath in glob.iglob(os.path.join(bap_dir, '*.bapd')):
     os.remove(zippath)
 
 print("You should have your features ready in: "+out_dir)    
+
+(m, s) = divmod(int(time.time() - start_time), 60)
+print(("--- Feature extraction completion time: %d min. %d sec ---" % (m, s)))
+
