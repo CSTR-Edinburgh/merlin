@@ -43,7 +43,7 @@ import time
 import tensorflow as tf
 from tensorflow_lib import configuration
 from tensorflow_lib import data_utils
-from tensorflow_lib.train1 import TrainTensorflowModels,Train_Encoder_Decoder_Models
+from tensorflow_lib.train import TrainTensorflowModels,Train_Encoder_Decoder_Models
 
 class TensorflowClass(object):
 
@@ -82,7 +82,7 @@ class TensorflowClass(object):
         self.sequential_training = cfg.sequential_training
         self.encoder_decoder=cfg.encoder_decoder
         self.attention=cfg.attention
-
+        self.cbhg=cfg.cbhg
         #self.stateful      = cfg.stateful
         self.batch_size    = cfg.batch_size
         #self.seq_length    = cfg.seq_length
@@ -115,6 +115,8 @@ class TensorflowClass(object):
         self.TRAINMODEL = cfg.TRAINMODEL
         self.TESTMODEL  = cfg.TESTMODEL
 
+        ### Define the work directory###
+        self.model_dir=cfg.model_dir
         ###################################################
         ####### End of user-defined conf variables ########
         ###################################################
@@ -140,7 +142,8 @@ class TensorflowClass(object):
                                                 rnn_params=self.rnn_params)
         else:
             self.encoder_decoder_models=Train_Encoder_Decoder_Models(self.inp_dim,self.hidden_layer_size,self.out_dim,self.hidden_layer_type,output_type=self.output_layer_type,\
-                                                                     dropout_rate=self.dropout_rate,loss_function=self.loss_function,optimizer=self.optimizer,attention=self.attention)
+                                                                     dropout_rate=self.dropout_rate,loss_function=self.loss_function,optimizer=self.optimizer,\
+                                                                     attention=self.attention,cbhg=self.cbhg)
     def normlize_data(self):
         ### normalize train data ###
         if os.path.isfile(self.inp_stats_file) and os.path.isfile(self.out_stats_file):
