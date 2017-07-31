@@ -181,9 +181,9 @@ class configuration(object):
             #encoder_decoder
             ('encoder_decoder'      , False                                           ,  'Architecture','encoder_decoder'),
             ('attention'            , False                                           ,  'Architecture', 'attention'),
-
+            ("cbhg"                 , False                                           ,   "Architecture", "cbhg"),
             # Data
-            ('shuffle_data', True, 'Data', 'shuffle_data'),
+            ('shuffle_data', False, 'Data', 'shuffle_data'),
 
             ('train_file_number', impossible_int, 'Data','train_file_number'),
             ('valid_file_number', impossible_int, 'Data','valid_file_number'),
