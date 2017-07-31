@@ -42,7 +42,7 @@ import tensorflow as tf
 import numpy as np
 import random, os ,sys
 from io_funcs.binary_io import BinaryIOCollection
-from tensorflow_lib.model1 import TensorflowModels, Encoder_Decoder_Models
+from tensorflow_lib.model import TensorflowModels, Encoder_Decoder_Models
 from tensorflow_lib import data_utils
 
 class TrainTensorflowModels(TensorflowModels):
