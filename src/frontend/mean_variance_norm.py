@@ -110,6 +110,19 @@ class   MeanVarianceNorm(FeatureNormBase):
 
             io_funcs.array_to_binary_file(norm_features, out_file_list[i])
 
+    def load_mean_std_values(self, acoustic_norm_file):
+
+        logger = logging.getLogger('feature_normalisation')
+
+        io_funcs = BinaryIOCollection()
+        mean_std_vector, frame_number = io_funcs.load_binary_file_frame(acoustic_norm_file, 1)
+        mean_std_vector = numpy.reshape(mean_std_vector, (-1, ))
+        self.mean_vector = mean_std_vector[0:frame_number//2]
+        self.std_vector = mean_std_vector[frame_number//2:]
+
+        logger.info('Loaded mean std values from the trained data for feature dimension of %d' % self.feature_dimension)
+        return self.mean_vector, self.std_vector
+
     def compute_mean(self, file_list, start_index, end_index):
 
         logger = logging.getLogger('feature_normalisation')

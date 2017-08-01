@@ -18,6 +18,12 @@ You can check this [tutorial](http://speech.zone/exercises/dtw-in-python) for DT
 
 To convert source voice to target voice, `cd egs/voice_conversion/s1` and follow the below steps:
 
+## Demo data
+
+You can download the data from [here](http://104.131.174.95/downloads/voice_conversion/).
+- Source: bdl (300 utterances)
+- Target: slt (300 utterances)
+
 ## Setting up
 
 The first step is to run setup as it creates directories.

@@ -531,6 +531,8 @@ def main_function(cfg):
     label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name, add_frame_features=cfg.add_frame_features, subphone_feats=cfg.subphone_feats)
     add_feat_dim = sum(cfg.additional_features.values())
     lab_dim = label_normaliser.dimension + add_feat_dim + cfg.appended_input_dim
+    if cfg.VoiceConversion:
+        lab_dim = cfg.cmp_dim
     logger.info('Input label dimension is %d' % lab_dim)
     suffix=str(lab_dim)
 
@@ -566,7 +568,7 @@ def main_function(cfg):
 
         in_label_align_file_list = prepare_file_path_list(test_id_list, cfg.in_label_align_dir, cfg.lab_ext, False)
 
-        if cfg.test_synth_dir!="None":
+        if cfg.test_synth_dir!="None" and not cfg.VoiceConversion:
             binary_label_file_list   = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
             nn_label_file_list       = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
             nn_label_norm_file_list  = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
@@ -638,6 +640,12 @@ def main_function(cfg):
         delta_win = cfg.delta_win #[-0.5, 0.0, 0.5]
         acc_win = cfg.acc_win     #[1.0, -2.0, 1.0]
 
+        if cfg.GenTestList:
+            for feature_name in list(cfg.in_dir_dict.keys()):
+                in_file_list_dict[feature_name] = prepare_file_path_list(test_id_list, cfg.in_dir_dict[feature_name], cfg.file_extension_dict[feature_name], False)
+            nn_cmp_file_list      = prepare_file_path_list(test_id_list, nn_cmp_dir, cfg.cmp_ext)
+            nn_cmp_norm_file_list = prepare_file_path_list(test_id_list, nn_cmp_norm_dir, cfg.cmp_ext)
+        
         acoustic_worker = AcousticComposition(delta_win = delta_win, acc_win = acc_win)
         if 'dur' in list(cfg.in_dir_dict.keys()) and cfg.AcousticModel:
             lf0_file_list = prepare_file_path_list(file_id_list, cfg.in_lf0_dir, cfg.lf0_ext)
@@ -657,7 +665,8 @@ def main_function(cfg):
             trim_silence(nn_cmp_file_list, nn_cmp_file_list, cfg.cmp_dim,
                                 binary_label_file_list, lab_dim, silence_feature)
 
-        else: ## back off to previous method using HTS labels:
+        elif cfg.remove_silence_using_hts_labels: 
+            ## back off to previous method using HTS labels:
             remover = SilenceRemover(n_cmp = cfg.cmp_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type, remove_frame_features = cfg.add_frame_features, subphone_feats = cfg.subphone_feats)
             remover.remove_silence(nn_cmp_file_list, in_label_align_file_list, nn_cmp_file_list) # save to itself
 
@@ -676,20 +685,22 @@ def main_function(cfg):
         cmp_norm_info = None
         if cfg.output_feature_normalisation == 'MVN':
             normaliser = MeanVarianceNorm(feature_dimension=cfg.cmp_dim)
-            ###calculate mean and std vectors on the training data, and apply on the whole dataset
-            global_mean_vector = normaliser.compute_mean(nn_cmp_file_list[0:cfg.train_file_number], 0, cfg.cmp_dim)
-            global_std_vector = normaliser.compute_std(nn_cmp_file_list[0:cfg.train_file_number], global_mean_vector, 0, cfg.cmp_dim)
-
+            if cfg.GenTestList:
+                # load mean std values
+                global_mean_vector, global_std_vector = normaliser.load_mean_std_values(norm_info_file)
+            else:
+                ###calculate mean and std vectors on the training data, and apply on the whole dataset
+                global_mean_vector = normaliser.compute_mean(nn_cmp_file_list[0:cfg.train_file_number], 0, cfg.cmp_dim)
+                global_std_vector = normaliser.compute_std(nn_cmp_file_list[0:cfg.train_file_number], global_mean_vector, 0, cfg.cmp_dim)
             normaliser.feature_normalisation(nn_cmp_file_list, nn_cmp_norm_file_list)
             cmp_norm_info = numpy.concatenate((global_mean_vector, global_std_vector), axis=0)
 
         elif cfg.output_feature_normalisation == 'MINMAX':
-            min_max_normaliser = MinMaxNormalisation(feature_dimension = cfg.cmp_dim)
-            global_mean_vector = min_max_normaliser.compute_mean(nn_cmp_file_list[0:cfg.train_file_number])
-            global_std_vector = min_max_normaliser.compute_std(nn_cmp_file_list[0:cfg.train_file_number], global_mean_vector)
-
             min_max_normaliser = MinMaxNormalisation(feature_dimension = cfg.cmp_dim, min_value = 0.01, max_value = 0.99)
-            min_max_normaliser.find_min_max_values(nn_cmp_file_list[0:cfg.train_file_number])
+            if cfg.GenTestList:
+                min_max_normaliser.load_min_max_values(norm_info_file)
+            else:
+                min_max_normaliser.find_min_max_values(nn_cmp_file_list[0:cfg.train_file_number])
             min_max_normaliser.normalise_data(nn_cmp_file_list, nn_cmp_norm_file_list)
 
             cmp_min_vector = min_max_normaliser.min_vector
@@ -700,24 +711,25 @@ def main_function(cfg):
             logger.critical('Normalisation type %s is not supported!\n' %(cfg.output_feature_normalisation))
             raise
 
-        cmp_norm_info = numpy.array(cmp_norm_info, 'float32')
-        fid = open(norm_info_file, 'wb')
-        cmp_norm_info.tofile(fid)
-        fid.close()
-        logger.info('saved %s vectors to %s' %(cfg.output_feature_normalisation, norm_info_file))
-
-        feature_index = 0
-        for feature_name in list(cfg.out_dimension_dict.keys()):
-            feature_std_vector = numpy.array(global_std_vector[:,feature_index:feature_index+cfg.out_dimension_dict[feature_name]], 'float32')
-
-            fid = open(var_file_dict[feature_name], 'w')
-            feature_var_vector = feature_std_vector**2
-            feature_var_vector.tofile(fid)
+        if not cfg.GenTestList:
+            cmp_norm_info = numpy.array(cmp_norm_info, 'float32')
+            fid = open(norm_info_file, 'wb')
+            cmp_norm_info.tofile(fid)
             fid.close()
+            logger.info('saved %s vectors to %s' %(cfg.output_feature_normalisation, norm_info_file))
 
-            logger.info('saved %s variance vector to %s' %(feature_name, var_file_dict[feature_name]))
+            feature_index = 0
+            for feature_name in list(cfg.out_dimension_dict.keys()):
+                feature_std_vector = numpy.array(global_std_vector[:,feature_index:feature_index+cfg.out_dimension_dict[feature_name]], 'float32')
 
-            feature_index += cfg.out_dimension_dict[feature_name]
+                fid = open(var_file_dict[feature_name], 'w')
+                feature_var_vector = feature_std_vector**2
+                feature_var_vector.tofile(fid)
+                fid.close()
+
+                logger.info('saved %s variance vector to %s' %(feature_name, var_file_dict[feature_name]))
+
+                feature_index += cfg.out_dimension_dict[feature_name]
 
     train_x_file_list = nn_label_norm_file_list[0:cfg.train_file_number]
     train_y_file_list = nn_cmp_norm_file_list[0:cfg.train_file_number]
@@ -733,6 +745,8 @@ def main_function(cfg):
     label_normaliser = HTSLabelNormalisation(question_file_name=cfg.question_file_name, add_frame_features=cfg.add_frame_features, subphone_feats=cfg.subphone_feats)
     add_feat_dim = sum(cfg.additional_features.values())
     lab_dim = label_normaliser.dimension + add_feat_dim + cfg.appended_input_dim
+    if cfg.VoiceConversion:
+        lab_dim = cfg.cmp_dim
 
     logger.info('label dimension is %d' % lab_dim)
 
@@ -997,9 +1011,11 @@ def main_function(cfg):
                 untrimmed_reference_data = in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_mgc_list, cfg.mgc_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
-            else:
+            elif cfg.remove_silence_using_hts_labels: 
                 remover = SilenceRemover(n_cmp = cfg.mgc_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_mgc_list)
+            else:
+                ref_data_dir = os.path.join(data_dir, 'mgc')
             valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.mgc_ext, cfg.mgc_dim)
             test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.mgc_ext, cfg.mgc_dim)
             valid_spectral_distortion *= (10 /numpy.log(10)) * numpy.sqrt(2.0)    ##MCD
@@ -1011,9 +1027,11 @@ def main_function(cfg):
                 untrimmed_reference_data = in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_bap_list, cfg.bap_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
-            else:
+            elif cfg.remove_silence_using_hts_labels: 
                 remover = SilenceRemover(n_cmp = cfg.bap_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_bap_list)
+            else:
+                ref_data_dir = os.path.join(data_dir, 'bap')
             valid_bap_mse        = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
             test_bap_mse         = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
             valid_bap_mse = valid_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
@@ -1024,9 +1042,11 @@ def main_function(cfg):
                 untrimmed_reference_data = in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_lf0_list, cfg.lf0_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
-            else:
+            elif cfg.remove_silence_using_hts_labels: 
                 remover = SilenceRemover(n_cmp = cfg.lf0_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_lf0_list)
+            else:
+                ref_data_dir = os.path.join(data_dir, 'lf0')
             valid_f0_mse, valid_f0_corr, valid_vuv_error   = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.lf0_ext, cfg.lf0_dim)
             test_f0_mse , test_f0_corr, test_vuv_error    = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.lf0_ext, cfg.lf0_dim)
 
