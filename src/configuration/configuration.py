@@ -245,7 +245,7 @@ class configuration(object):
 
             ('enforce_silence', False, 'Labels', 'enforce_silence'),
             ('remove_silence_using_binary_labels', False, 'Labels', 'remove_silence_using_binary_labels'),
-            ('remove_silence_using_hts_labels', False, 'Labels', 'remove_silence_using_hts_labels'),
+            ('remove_silence_using_hts_labels', True, 'Labels', 'remove_silence_using_hts_labels'),
 
             ('precompile_xpaths', True, 'Labels', 'precompile_xpaths'),
             ('iterate_over_frames', True, 'Labels', 'iterate_over_frames'),
@@ -516,6 +516,10 @@ class configuration(object):
             }
 
         # STILL TO DO - test that all the above tools exist and are executable
+
+        if self.VoiceConversion:
+            self.lab_ext = self.cmp_ext
+            self.remove_silence_using_hts_labels = False
 
         if self.switch_to_keras:
             ## create directories if not exists

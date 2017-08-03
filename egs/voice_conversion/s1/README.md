@@ -24,6 +24,13 @@ You can download the data from [here](http://104.131.174.95/downloads/voice_conv
 - Source: bdl (300 utterances)
 - Target: slt (300 utterances)
 
+To run voice conversion on demo data
+```sh
+./run_demo_vc.sh
+```
+
+However, we recommend using step-by-step procedure to correct any errors if raised. 
+
 ## Setting up
 
 The first step is to run setup as it creates directories.

@@ -8,7 +8,8 @@ if test "$#" -ne 1; then
     echo "Usage:"
     echo "$0 <path_to_acoustic_conf_file>"
     echo ""
-    echo "Default path to acoustic conf file: conf/acoustic_${Voice}.conf"
+    echo "Default path to acoustic source conf file: conf/acoustic_${Source}.conf"
+    echo "Default path to acoustic voice conf file: conf/acoustic_${Voice}.conf"
     echo "################################"
     exit 1
 fi
