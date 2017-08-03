@@ -57,7 +57,7 @@ if [ "$align_feats" = true ]; then
     echo "Step 3:" 
     echo "Align source acoustic features with target acoustic features..."
     bap_dim=$(get_bap_dimension)
-    python ${MerlinDir}/misc/scripts/voice_conversion/dtw_aligner_festvox.py ${MerlinDir} ${src_feat_dir} ${tgt_feat_dir} ${src_aligned_feat_dir} ${bap_dim}
+    python ${MerlinDir}/misc/scripts/voice_conversion/dtw_aligner_festvox.py ${MerlinDir}/tools ${src_feat_dir} ${tgt_feat_dir} ${src_aligned_feat_dir} ${bap_dim}
 fi
 
 if [ "$copy" = true ]; then
