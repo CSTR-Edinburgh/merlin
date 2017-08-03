@@ -245,6 +245,8 @@ class configuration(object):
 
             ('enforce_silence', False, 'Labels', 'enforce_silence'),
             ('remove_silence_using_binary_labels', False, 'Labels', 'remove_silence_using_binary_labels'),
+            ('remove_silence_using_hts_labels', False, 'Labels', 'remove_silence_using_hts_labels'),
+
             ('precompile_xpaths', True, 'Labels', 'precompile_xpaths'),
             ('iterate_over_frames', True, 'Labels', 'iterate_over_frames'),
 
@@ -386,7 +388,8 @@ class configuration(object):
             ('do_post_filtering',True                  ,'Waveform'  , 'do_post_filtering'),
             ('apply_GV'         ,False                 ,'Waveform'  , 'apply_GV'),
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
-
+            
+            ('VoiceConversion'      , False, 'Processes', 'VoiceConversion'),
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),
             ('GenTestList'          , False, 'Processes', 'GenTestList'),
