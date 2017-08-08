@@ -179,23 +179,34 @@ class SigmoidLayer(object):
 
 class GeneralLayer(object):
 
-    def __init__(self, rng, input, n_in, n_out, W = None, b = None, activation = 'linear'):
-
-        self.input = input
-        self.n_in = n_in
-        self.n_out = n_out
-
+    def __init__(self, rng, x, n_in, n_out, W = None, b = None, activation = 'linear', p=0.0, training=0):
+        '''
+        General feed-forward layer with any activation
+        '''
         logger = logging.getLogger('general_layer')
+        
+        n_in  = int(n_in)  # ensure sizes have integer type
+        n_out = int(n_out)# ensure sizes have integer type
 
-        # randomly initialise the activation weights based on the input size, as advised by the 'tricks of neural network book'
+        self.x = x
+
+        if p > 0.0:
+            if training==1:
+                srng = RandomStreams(seed=123456)
+                self.x = T.switch(srng.binomial(size=x.shape, p=p), x, 0)
+            else:
+                self.x =  (1-p) * x
+        
+        # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
         if W is None:
-            W_values = numpy.asarray(rng.normal(0.0, 1.0/numpy.sqrt(n_in),
-                    size=(n_in, n_out)), dtype=theano.config.floatX)
-            W = theano.shared(value=W_values, name='W', borrow=True)
-
+            W_value = numpy.asarray(rng.normal(0.0, 1.0/numpy.sqrt(n_in),
+                      size=(n_in, n_out)), dtype=theano.config.floatX)
+            W = theano.shared(value=W_value,
+                              name='W', borrow=True)
         if b is None:
-            b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
-            b = theano.shared(value=b_values, name='b', borrow=True)
+            b = theano.shared(value=numpy.zeros((n_out,),
+                              dtype=theano.config.floatX),
+                              name='b', borrow=True)
 
         self.W = W
         self.b = b
@@ -206,31 +217,34 @@ class GeneralLayer(object):
         self.delta_b = theano.shared(value = numpy.zeros_like(self.b.get_value(borrow=True),
                                      dtype=theano.config.floatX), name='delta_b')
 
-        lin_output = T.dot(input, self.W) + self.b
+        self.output = T.dot(self.x, self.W) + self.b
+
         if activation == 'sigmoid':
-            self.output = T.nnet.sigmoid(lin_output)
+            self.output = T.nnet.sigmoid(self.output)
+
+        elif activation == 'softmax':
+            self.output = T.nnet.softmax(self.output)
 
         elif activation == 'tanh':
-            self.output = T.tanh(lin_output)
+            self.output = T.tanh(self.output)
+
+        elif activation == 'relu':  ## rectifier linear unit
+            self.output = T.maximum(0.0, self.output)
+
+        elif activation == 'resu':  ## rectifier smooth unit
+            self.output = numpy.log(1.0 + numpy.exp(self.output))
 
         elif activation == 'linear':
-            self.output = lin_output
-
-        elif activation == 'ReLU':  ## rectifier linear unit
-            self.output = T.maximum(0.0, lin_output)
-
-        elif activation == 'ReSU':  ## rectifier smooth unit
-            self.output = numpy.log(1.0 + numpy.exp(lin_output))
+            pass;
 
         else:
             logger.critical('the input activation function: %s is not supported right now. Please modify layers.py to support' % (activation))
             raise
 
         # parameters of the model
-
         self.params = [self.W, self.b]
         self.delta_params = [self.delta_W, self.delta_b]
-
+    
     def errors(self, y):
         errors = T.mean(T.sum((self.output-y)**2, axis=1))
 

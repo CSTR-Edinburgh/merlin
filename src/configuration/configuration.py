@@ -270,9 +270,10 @@ class configuration(object):
             ('model_type'           , 'DNN'                                             , 'Architecture', 'model_type'),
             ('hidden_layer_type'    , ['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH']  , 'Architecture', 'hidden_layer_type'),
             ('output_layer_type'    , 'LINEAR'                                          , 'Architecture', 'output_layer_type'),
-            ('sequential_training'  , False                                           , 'Architecture', 'sequential_training'),
+            ('sequential_training'  , False                                             , 'Architecture', 'sequential_training'),
+            ('rnn_batch_training'   , False                                             , 'Architecture', 'rnn_batch_training'),
             ('dropout_rate'         , 0.0                                               , 'Architecture', 'dropout_rate'),
-            ('switch_to_keras'      , False                                           , 'Architecture', 'switch_to_keras'),
+            ('switch_to_keras'      , False                                             , 'Architecture', 'switch_to_keras'),
 
             ## some config variables for token projection DNN
             ('scheme'               , 'stagewise'                   , 'Architecture', 'scheme'),
@@ -290,6 +291,7 @@ class configuration(object):
             ('loss_function'    ,    'mse', 'Architecture', 'loss_function'),
 
             # RNN
+            ('model_file_name'    , 'dnn','Architecture', 'model_file_name'),
             ('stateful'           , False, 'Architecture', 'stateful'),
             ('use_high_batch_size', False, 'Architecture', 'use_high_batch_size'),
 
@@ -308,6 +310,7 @@ class configuration(object):
 
 
             ('learning_rate'        , 0.0002                          , 'Architecture', 'learning_rate'),
+            ('lr_decay'             , -1                              , 'Architecture', 'lr_decay'),
             ('l2_reg'               , 0.00001                      , 'Architecture', 'L2_regularization'),
             ('l1_reg'               , 0.0                           , 'Architecture', 'L1_regularization'),
             ('batch_size'           , 16                            , 'Architecture', 'batch_size'),
@@ -388,10 +391,10 @@ class configuration(object):
             ('do_post_filtering',True                  ,'Waveform'  , 'do_post_filtering'),
             ('apply_GV'         ,False                 ,'Waveform'  , 'apply_GV'),
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
-            
-            ('VoiceConversion'      , False, 'Processes', 'VoiceConversion'),
+
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),
+            ('VoiceConversion'      , False, 'Processes', 'VoiceConversion'),
             ('GenTestList'          , False, 'Processes', 'GenTestList'),
 
             ('NORMLAB'         , False, 'Processes', 'NORMLAB'),
@@ -515,12 +518,19 @@ class configuration(object):
             'ANALYSIS'      : os.path.join(self.world_bindir, 'analysis'),
             }
 
-        # STILL TO DO - test that all the above tools exist and are executable
-
+        # set input extension same as output for voice conversion
         if self.VoiceConversion:
-            self.lab_ext = self.cmp_ext
             self.remove_silence_using_hts_labels = False
+            self.lab_ext = self.cmp_ext
 
+        # check if any hidden layer is recurrent layer 
+        list_of_RNNs = ['RNN', 'LSTM', 'GRU', 'BLSTM', 'SLSTM', 'SGRU', 'BSLSTM']
+        for hidden_type in self.hidden_layer_type:
+            if hidden_type in list_of_RNNs:
+                self.sequential_training = True
+                break
+
+        # switch to keras
         if self.switch_to_keras:
             ## create directories if not exists
             if not os.path.exists(self.model_dir):
@@ -572,12 +582,6 @@ class configuration(object):
             if 'lstm' in self.hidden_layer_type:
                 self.sequential_training = True
 
-            # set/limit batch size to 25
-            if self.sequential_training and self.batch_size>50:
-                if not self.use_high_batch_size:
-                    logger.info('reducing the batch size from %s to 25' % (self.batch_size))
-                    self.batch_size = 25 ## num. of sentences in this case
-
             # set default seq length for duration model
             if self.DurationModel and self.training_algo == 1 and self.seq_length>50:
                 self.seq_length = 20
@@ -589,9 +593,18 @@ class configuration(object):
             self.rnn_params['bucket_range'] = self.bucket_range
             self.rnn_params['stateful']     = self.stateful
 
+    
+        ### RNN params
+        if self.sequential_training:
+            # batch training for RNNs
+            if self.batch_size>1:
+                self.rnn_batch_training = True
 
-
-
+            # set/limit batch size to 25
+            if self.batch_size>50:
+                if not self.use_high_batch_size:
+                    logger.info('reducing the batch size from %s to 25' % (self.batch_size))
+                    self.batch_size = 25 ## num. of sentences in this case
 
         ###dimensions for the output features
         ### key name must follow the self.in_dimension_dict.
@@ -848,10 +861,6 @@ class configuration(object):
 
         self.hyper_params['sequential_training'] = self.sequential_training
         self.hyper_params['dropout_rate'] = self.dropout_rate
-
-        for hidden_type in self.hidden_layer_type:
-            if 'LSTM' in hidden_type or 'RNN' in hidden_type or 'GRU' in hidden_type:
-                self.hyper_params['sequential_training'] = self.sequential_training
 
 
         #To be recorded in the logging file for reference

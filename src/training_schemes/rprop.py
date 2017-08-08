@@ -47,14 +47,11 @@ matplotlib.use('Agg')
 import  matplotlib.pyplot as plt
 from collections import OrderedDict
 
-def compile_RPROP_train_function(model, gparams, params_to_update=[]):
+def compile_RPROP_train_function(model, gparams, learning_rate=0.001, rprop_algo=2, params_to_update=[]):
 
     if params_to_update == []:  ## then update all by default
         params_to_update = list(range(len(gparams)))
 
-
-    assert model.use_rprop in [2,4], 'RPROP version %s not implemented'%(use_rprop)
-    ## 0 = don't use RPROP
     ## 1, 2, 3, 4: Rprop+ Rprop- iRprop+ iRprop-
     ##    in Igel 2003 'Empirical evaluation of the improved Rprop learning algorithms'
 
@@ -63,10 +60,14 @@ def compile_RPROP_train_function(model, gparams, params_to_update=[]):
     ## Also, make some or all
     ## rprop_init_update is configured during __init__, all of the others are hardcoded here
     ## for now:-
+
     model.eta_plus = 1.2
     model.eta_minus = 0.5
     model.max_update = 50.0
     model.min_update = 0.0000001
+
+    model.use_rprop = rprop_algo
+    model.rprop_init_update = learning_rate
 
     model.previous_gparams = []
     model.update_values = []

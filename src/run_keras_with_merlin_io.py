@@ -125,16 +125,21 @@ class KerasClass(object):
         file_id_list = data_utils.read_file_list(file_id_scp)
 
         train_id_list = file_id_list[0: train_file_number]
-        valid_id_list = file_id_list[train_file_number: train_file_number + valid_file_number + test_file_number]
+        valid_id_list = file_id_list[train_file_number: train_file_number + valid_file_number]
         test_id_list  = file_id_list[train_file_number + valid_file_number: train_file_number + valid_file_number + test_file_number]
+        
+        valid_test_id_list = file_id_list[train_file_number: train_file_number + valid_file_number + test_file_number]
 
         self.inp_train_file_list = data_utils.prepare_file_path_list(train_id_list, inp_feat_dir, inp_file_ext)
         self.out_train_file_list = data_utils.prepare_file_path_list(train_id_list, out_feat_dir, out_file_ext)
 
-        self.inp_test_file_list = data_utils.prepare_file_path_list(valid_id_list, inp_feat_dir, inp_file_ext)
-        self.out_test_file_list = data_utils.prepare_file_path_list(valid_id_list, out_feat_dir, out_file_ext)
+        self.inp_valid_file_list = data_utils.prepare_file_path_list(valid_id_list, inp_feat_dir, inp_file_ext)
+        self.out_valid_file_list = data_utils.prepare_file_path_list(valid_id_list, out_feat_dir, out_file_ext)
 
-        self.gen_test_file_list = data_utils.prepare_file_path_list(valid_id_list, pred_feat_dir, out_file_ext)
+        self.inp_test_file_list = data_utils.prepare_file_path_list(valid_test_id_list, inp_feat_dir, inp_file_ext)
+        self.out_test_file_list = data_utils.prepare_file_path_list(valid_test_id_list, out_feat_dir, out_file_ext)
+
+        self.gen_test_file_list = data_utils.prepare_file_path_list(valid_test_id_list, pred_feat_dir, out_file_ext)
 
         if self.GenTestList:
             test_id_list = data_utils.read_file_list(test_id_scp)
@@ -177,20 +182,25 @@ class KerasClass(object):
         print('preparing train_x, train_y from input and output feature files...')
         train_x, train_y, train_flen = data_utils.read_data_from_file_list(self.inp_train_file_list, self.out_train_file_list,
                                                                             self.inp_dim, self.out_dim, sequential_training=self.sequential_training)
+        print('preparing valid_x, valid_y from input and output feature files...')
+        valid_x, valid_y, valid_flen = data_utils.read_data_from_file_list(self.inp_valid_file_list, self.out_valid_file_list,
+                                                                            self.inp_dim, self.out_dim, sequential_training=self.sequential_training)
 
         #### normalize the data ####
         data_utils.norm_data(train_x, self.inp_scaler, sequential_training=self.sequential_training)
         data_utils.norm_data(train_y, self.out_scaler, sequential_training=self.sequential_training)
+        data_utils.norm_data(valid_x, self.inp_scaler, sequential_training=self.sequential_training)
+        data_utils.norm_data(valid_y, self.out_scaler, sequential_training=self.sequential_training)
 
         #### train the model ####
         print('training...')
         if not self.sequential_training:
             ### Train feedforward model ###
-            self.keras_models.train_feedforward_model(train_x, train_y, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs, shuffle_data=self.shuffle_data)
+            self.keras_models.train_feedforward_model(train_x, train_y, valid_x, valid_y, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs, shuffle_data=self.shuffle_data)
         else:
             ### Train recurrent model ###
             print(('training algorithm: %d' % (self.training_algo)))
-            self.keras_models.train_sequence_model(train_x, train_y, train_flen, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs,
+            self.keras_models.train_sequence_model(train_x, train_y, valid_x, valid_y, train_flen, batch_size=self.batch_size, num_of_epochs=self.num_of_epochs,
                                                                                         shuffle_data=self.shuffle_data, training_algo=self.training_algo)
 
         #### store the model ####

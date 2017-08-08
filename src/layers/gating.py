@@ -12,7 +12,7 @@ class VanillaRNN(object):
     """ This class implements a standard recurrent neural network: h_{t} = f(W^{hx}x_{t} + W^{hh}h_{t-1}+b_{h})
 
     """
-    def __init__(self, rng, x, n_in, n_h, p, training):
+    def __init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training=False):
         """ This is to initialise a standard RNN hidden unit
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -32,7 +32,9 @@ class VanillaRNN(object):
                 self.input =  (1-p) * x #(1-p) *
 
         self.n_in = int(n_in)
-        self.n_h = int(n_h)
+        self.n_h  = int(n_h)
+
+        self.rnn_batch_training = rnn_batch_training
 
         # random initialisation
         Wx_value = np.asarray(rng.normal(0.0, 1.0/np.sqrt(n_in), size=(n_in, n_h)), dtype=config.floatX)
@@ -47,8 +49,15 @@ class VanillaRNN(object):
 
 
         # initial value of hidden and cell state
-        self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
-        self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
+        if self.rnn_batch_training:
+            self.h0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'c0')
+
+            self.h0 = T.repeat(self.h0, x.shape[1], 0)
+            self.c0 = T.repeat(self.c0, x.shape[1], 0)
+        else:
+            self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
 
 
         self.Wix = T.dot(self.input, self.W_xi)
@@ -74,7 +83,7 @@ class VanillaRNN(object):
         :returns: h_t is the hidden activation of current time step
         """
 
-        h_t = T.tanh(Wix + T.dot(self.W_hi, h_tm1) + self.b_i)  #
+        h_t = T.tanh(Wix + T.dot(h_tm1, self.W_hi) + self.b_i)  #
 
         c_t = h_t
 
@@ -86,7 +95,7 @@ class VanillaRNNDecoder(object):
         y_{t} = g(h_{t}W^{hy} + b_{y})
 
     """
-    def __init__(self, rng, x, n_in, n_h, n_out, p, training):
+    def __init__(self, rng, x, n_in, n_h, n_out, p, training, rnn_batch_training=False):
         """ This is to initialise a standard RNN hidden unit
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -106,9 +115,11 @@ class VanillaRNNDecoder(object):
             else:
                 self.input =  (1-p) * x #(1-p) *
 
-        self.n_in = int(n_in)
-        self.n_h = int(n_h)
+        self.n_in  = int(n_in)
+        self.n_h   = int(n_h)
         self.n_out = int(n_out)
+
+        self.rnn_batch_training = rnn_batch_training
 
         # random initialisation
         Wx_value = np.asarray(rng.normal(0.0, 1.0/np.sqrt(n_in), size=(n_in, n_h)), dtype=config.floatX)
@@ -134,9 +145,18 @@ class VanillaRNNDecoder(object):
 
 
         # initial value of hidden and cell state and output
-        self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
-        self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
-        self.y0 = theano.shared(value=np.zeros((n_out, ), dtype = config.floatX), name = 'y0')
+        if self.rnn_batch_training:
+            self.h0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'c0')
+            self.y0 = theano.shared(value=np.zeros((1, n_out), dtype = config.floatX), name = 'y0')
+
+            self.h0 = T.repeat(self.h0, x.shape[1], 0)
+            self.c0 = T.repeat(self.c0, x.shape[1], 0)
+            self.y0 = T.repeat(self.c0, x.shape[1], 0)
+        else:
+            self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
+            self.y0 = theano.shared(value=np.zeros((n_out, ), dtype = config.floatX), name = 'y0')
 
 
         self.Wix = T.dot(self.input, self.W_xi)
@@ -165,7 +185,7 @@ class VanillaRNNDecoder(object):
         :returns: h_t is the hidden activation of current time step
         """
 
-        h_t = T.tanh(Wix + T.dot(self.W_hi, h_tm1) + T.dot(y_tm1, self.W_yi) + self.b_i)  #
+        h_t = T.tanh(Wix + T.dot(h_tm1, self.W_hi) + T.dot(y_tm1, self.W_yi) + self.b_i)  #
 
         y_t = T.dot(h_t, self.U_hi) + self.b
 
@@ -183,7 +203,7 @@ class LstmBase(object):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise all the components in a LSTM block, including input gate, output gate, forget gate, peephole connections
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -209,7 +229,9 @@ class LstmBase(object):
                 self.input =  (1-p) * x
 
         self.n_in = int(n_in)
-        self.n_h = int(n_h)
+        self.n_h  = int(n_h)
+
+        self.rnn_batch_training = rnn_batch_training
 
         # random initialisation
         Wx_value = np.asarray(rng.normal(0.0, 1.0/np.sqrt(n_in), size=(n_in, n_h)), dtype=config.floatX)
@@ -259,8 +281,15 @@ class LstmBase(object):
         ### make a layer
 
         # initial value of hidden and cell state
-        self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
-        self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
+        if self.rnn_batch_training:
+            self.h0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'c0')
+
+            self.h0 = T.repeat(self.h0, x.shape[1], 0)
+            self.c0 = T.repeat(self.c0, x.shape[1], 0)
+        else:
+            self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
 
 
         self.Wix = T.dot(self.input, self.W_xi)
@@ -303,7 +332,7 @@ class LstmDecoderBase(object):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise all the components in a LSTM block, including input gate, output gate, forget gate, peephole connections
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -326,7 +355,9 @@ class LstmDecoderBase(object):
                 self.input =  (1-p) * x
 
         self.n_in = int(n_in)
-        self.n_h = int(n_h)
+        self.n_h  = int(n_h)
+
+        self.rnn_batch_training = rnn_batch_training
 
         # random initialisation
         Wx_value = np.asarray(rng.normal(0.0, 1.0/np.sqrt(n_in), size=(n_in, n_h)), dtype=config.floatX)
@@ -385,9 +416,18 @@ class LstmDecoderBase(object):
         ### make a layer
 
         # initial value of hidden and cell state
-        self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
-        self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
-        self.y0 = theano.shared(value=np.zeros((n_out, ), dtype = config.floatX), name = 'y0')
+        if self.rnn_batch_training:
+            self.h0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'c0')
+            self.y0 = theano.shared(value=np.zeros((1, n_out), dtype = config.floatX), name = 'y0')
+
+            self.h0 = T.repeat(self.h0, x.shape[1], 0)
+            self.c0 = T.repeat(self.c0, x.shape[1], 0)
+            self.y0 = T.repeat(self.c0, x.shape[1], 0)
+        else:
+            self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
+            self.y0 = theano.shared(value=np.zeros((n_out, ), dtype = config.floatX), name = 'y0')
 
 
         self.Wix = T.dot(self.input, self.W_xi)
@@ -430,7 +470,7 @@ class VanillaLstm(LstmBase):
     """
 
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a vanilla LSTM block
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -441,7 +481,7 @@ class VanillaLstm(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xi, self.W_hi, self.w_ci,
                        self.W_xf, self.W_hf, self.w_cf,
@@ -472,7 +512,7 @@ class VanillaLstmDecoder(LstmDecoderBase):
     """
 
 
-    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a vanilla LSTM block
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -485,7 +525,7 @@ class VanillaLstmDecoder(LstmDecoderBase):
 
         self.n_out = int(n_out)
 
-        LstmDecoderBase.__init__(self, rng, x, n_in, n_h, n_out, p, training)
+        LstmDecoderBase.__init__(self, rng, x, n_in, n_h, n_out, p, training, rnn_batch_training)
 
         self.params = [self.W_xi, self.W_hi, self.w_ci, self.W_yi,
                        self.W_xf, self.W_hf, self.w_cf,
@@ -517,7 +557,7 @@ class LstmNFG(LstmBase):
     """ This class implements a LSTM block without the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
 
     """
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a LSTM with the forget gate
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -528,7 +568,7 @@ class LstmNFG(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xi, self.W_hi, self.w_ci,
                        self.W_xo, self.W_ho, self.w_co,
@@ -556,7 +596,7 @@ class LstmNIG(LstmBase):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a LSTM with the input gate
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -567,7 +607,7 @@ class LstmNIG(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xf, self.W_hf, self.w_cf,
                        self.W_xo, self.W_ho, self.w_co,
@@ -596,7 +636,7 @@ class LstmNOG(LstmBase):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a LSTM with the output gate
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -607,7 +647,7 @@ class LstmNOG(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xi, self.W_hi, self.w_ci,
                        self.W_xf, self.W_hf, self.w_cf,
@@ -636,7 +676,7 @@ class LstmNoPeepholes(LstmBase):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a LSTM with the peephole connections
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -647,7 +687,7 @@ class LstmNoPeepholes(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xi, self.W_hi, #self.W_ci,
                        self.W_xf, self.W_hf, #self.W_cf,
@@ -679,7 +719,7 @@ class SimplifiedLstm(LstmBase):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a LSTM with only the forget gate
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -690,7 +730,7 @@ class SimplifiedLstm(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xf, self.W_hf,
                        self.W_xc, self.W_hc,
@@ -717,7 +757,7 @@ class SimplifiedGRU(LstmBase):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a LSTM with the the forget gate
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -728,7 +768,7 @@ class SimplifiedGRU(LstmBase):
         :type n_h: integer
         """
 
-        LstmBase.__init__(self, rng, x, n_in, n_h, p, training)
+        LstmBase.__init__(self, rng, x, n_in, n_h, p, training, rnn_batch_training)
 
         self.params = [self.W_xf, self.W_hf, self.w_cf,
                        self.W_xc, self.W_hc,
@@ -758,10 +798,10 @@ class SimplifiedGRU(LstmBase):
 
 class BidirectionSLstm(SimplifiedLstm):
 
-    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0, rnn_batch_training=False):
 
-        fwd = SimplifiedLstm(rng, x, n_in, n_h, p, training)
-        bwd = SimplifiedLstm(rng, x[::-1], n_in, n_h, p, training)
+        fwd = SimplifiedLstm(rng, x, n_in, n_h, p, training, rnn_batch_training)
+        bwd = SimplifiedLstm(rng, x[::-1], n_in, n_h, p, training, rnn_batch_training)
 
         self.params = fwd.params + bwd.params
 
@@ -769,10 +809,10 @@ class BidirectionSLstm(SimplifiedLstm):
 
 class BidirectionLstm(VanillaLstm):
 
-    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0, rnn_batch_training=False):
 
-        fwd = VanillaLstm(rng, x, n_in, n_h, p, training)
-        bwd = VanillaLstm(rng, x[::-1], n_in, n_h, p, training)
+        fwd = VanillaLstm(rng, x, n_in, n_h, p, training, rnn_batch_training)
+        bwd = VanillaLstm(rng, x[::-1], n_in, n_h, p, training, rnn_batch_training)
 
         self.params = fwd.params + bwd.params
 
@@ -780,7 +820,7 @@ class BidirectionLstm(VanillaLstm):
 
 
 class RecurrentOutput(object):
-    def __init__(self, rng, x, n_in, n_out, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_out, p=0.0, training=0, rnn_batch_training=False):
 
         self.W_h = theano.shared(value=np.asarray(rng.normal(0.0, 1.0/np.sqrt(n_out), size=(n_in, n_out)), dtype=config.floatX), name='W_h')
         self.W_y = theano.shared(value=np.asarray(rng.normal(0.0, 1.0/np.sqrt(n_out), size=(n_out, n_out)), dtype=config.floatX), name='W_y')
@@ -796,7 +836,7 @@ class GatedRecurrentUnit(object):
 
     """
 
-    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0):
+    def __init__(self, rng, x, n_in, n_h, p=0.0, training=0, rnn_batch_training=False):
         """ Initialise a gated recurrent unit
 
         :param rng: random state, fixed value for randome state for reproducible objective results
@@ -810,7 +850,9 @@ class GatedRecurrentUnit(object):
         """
 
         self.n_in = int(n_in)
-        self.n_h = int(n_h)
+        self.n_h  = int(n_h)
+
+        self.rnn_batch_training = rnn_batch_training
 
         self.input = x
 
@@ -842,8 +884,15 @@ class GatedRecurrentUnit(object):
 
         self.b_h = theano.shared(value = np.zeros((n_h, ), dtype = config.floatX), name = 'b_h')
 
-        self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
-        self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
+        if self.rnn_batch_training:
+            self.h0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((1, n_h), dtype = config.floatX), name = 'c0')
+
+            self.h0 = T.repeat(self.h0, x.shape[1], 0)
+            self.c0 = T.repeat(self.c0, x.shape[1], 0)
+        else:
+            self.h0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'h0')
+            self.c0 = theano.shared(value=np.zeros((n_h, ), dtype = config.floatX), name = 'c0')
 
 
         ## pre-compute these for fast computation

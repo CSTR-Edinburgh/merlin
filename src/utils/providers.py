@@ -37,7 +37,7 @@
 #  THIS SOFTWARE.
 ################################################################################
 
-
+import os, sys
 import numpy, theano, random
 from io_funcs.binary_io import BinaryIOCollection
 import logging
@@ -59,7 +59,7 @@ class ListDataProvider(object):
     This provide assumes binary format with float32 precision without any header (e.g. HTK header).
 
     """
-    def __init__(self, x_file_list, y_file_list, dur_file_list=None, n_ins=0, n_outs=0, buffer_size = 500000, sequential=False, network_type=None, shuffle=False):
+    def __init__(self, x_file_list, y_file_list, dur_file_list=None, n_ins=0, n_outs=0, buffer_size=500000, sequential=False, network_type=None, shuffle=False):
         """Initialise a data provider
 
         :param x_file_list: list of file names for the input files to DNN
@@ -81,8 +81,10 @@ class ListDataProvider(object):
         self.sequential = sequential
         self.network_type = network_type
 
-        #remove potential empty lines and end of line signs
+        self.rnn_batch_training = False
+        self.reshape_io = False
 
+        #remove potential empty lines and end of line signs
 
         try:
             assert len(x_file_list) > 0
@@ -147,6 +149,10 @@ class ListDataProvider(object):
         self.end_reading = False
 
         self.remain_frame_number = 0
+        
+        self.bucket_index = 0
+        self.bucket_file_index = 0
+        self.current_bucket_size = 0
 
         self.logger.debug('reset')
 
@@ -161,12 +167,106 @@ class ListDataProvider(object):
 
         return  data_set
 
+    def set_rnn_params(self, training_algo=1, batch_size=25, seq_length=200, merge_size=1, bucket_range=100):
+        # get file lengths
+        self.get_file_lengths()
+
+        # set training algo
+        self.training_algo = training_algo
+
+        # set batch size
+        self.batch_size = batch_size
+
+        # set RNN batch training True
+        self.rnn_batch_training = True
+
+        # set params for each training algo
+        if(self.training_algo == 1):
+            self.merge_size = 1
+        elif(self.training_algo == 2):
+            self.merge_size = 1
+            self.bucket_index = 0
+            self.bucket_file_index = 0
+            self.current_bucket_size = 0
+            self.bucket_range = bucket_range
+            self.x_frame_list = numpy.array(list(self.file_length_dict['framenum2utt'].keys()))
+            self.list_of_buckets = list(range(min(self.x_frame_list), max(self.x_frame_list)+1, self.bucket_range))
+        elif(self.training_algo == 3):
+            self.seq_length = seq_length
+            self.merge_size = merge_size
+        else:
+            self.logger.critical("Choose training algorithm for batch training with RNNs:")
+            self.logger.critical("1. Padding model -- pad utterances with zeros to maximum sequence length")
+            self.logger.critical("2. Bucket model  -- form buckets with minimum and maximum sequence length")
+            self.logger.critical("3. Split model   -- split utterances to a fixed sequence length")
+            sys.exit(1)
+
+    def reshape_input_output(self):
+        self.reshape_io = True
+
+    def get_file_lengths(self):
+        io_funcs = BinaryIOCollection()
+
+        self.file_length_dict = {'framenum2utt':{}, 'utt2framenum':{}, 'utt2index':{}}
+
+        ### read file by file ###
+        while True:
+            if  self.file_index >= self.list_size:
+                self.end_reading = True
+                self.file_index = 0
+                break
+
+            in_features, lab_frame_number = io_funcs.load_binary_file_frame(self.x_files_list[self.file_index], self.n_ins)
+            out_features, out_frame_number = io_funcs.load_binary_file_frame(self.y_files_list[self.file_index], self.n_outs)
+         
+            base_file_name = os.path.basename(self.x_files_list[self.file_index]).split('.')[0]
+            if abs(lab_frame_number - out_frame_number) < 5:    ## we allow small difference here. may not be correct, but sometimes, there is one/two frames difference
+                frame_number = min(lab_frame_number, out_frame_number)
+            else:
+                self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d (%s)" %(lab_frame_number, out_frame_number, base_file_name))
+                raise
+
+            if frame_number not in self.file_length_dict['framenum2utt']:
+                self.file_length_dict['framenum2utt'][frame_number] = [base_file_name]
+            else:
+                self.file_length_dict['framenum2utt'][frame_number].append(base_file_name)
+
+            self.file_length_dict['utt2framenum'][base_file_name] = frame_number
+            self.file_length_dict['utt2index'][base_file_name] = self.file_index
+            self.file_index += 1
+
+        self.reset()
+
+    def set_seq_length_from_current_batch(self):
+        temp_list = []
+        for indx in range(self.batch_size):
+            if  self.file_index+indx >= self.list_size:
+                break
+            base_file_name = os.path.basename(self.x_files_list[self.file_index+indx]).split('.')[0]
+            temp_list.append(self.file_length_dict['utt2framenum'][base_file_name])
+
+        self.seq_length = max(temp_list)
+
+    def get_next_bucket(self):
+        min_seq_length = self.list_of_buckets[self.bucket_index]
+        max_seq_length = self.list_of_buckets[self.bucket_index] + self.bucket_range
+        
+        current_bucket = self.x_frame_list[(self.x_frame_list >= min_seq_length) & (self.x_frame_list < max_seq_length)]
+        self.current_bucket_list  = sum([self.file_length_dict['framenum2utt'][framenum] for framenum in current_bucket], [])
+        
+        self.bucket_file_index   = 0  
+        self.current_bucket_size = len(self.current_bucket_list)
+        
+        self.seq_length   = max_seq_length
+        self.bucket_index = self.bucket_index + 1
+
     def load_one_partition(self):
         if self.sequential == True:
-            if not self.network_type:
-                shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance()
-            elif self.network_type=="RNN":
-                shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance()
+            if not self.network_type or self.network_type=="RNN":
+                if self.rnn_batch_training:
+                    shared_set_xy, temp_set_x, temp_set_y = self.load_next_batch()
+                else:
+                    shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance()
             elif self.network_type=="CTC":
                 shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance_CTC()
             elif self.network_type=="S2S":
@@ -180,6 +280,88 @@ class ListDataProvider(object):
 
         return  shared_set_xy, temp_set_x, temp_set_y
 
+    def load_next_batch(self):
+        io_funcs = BinaryIOCollection()
+
+        ## set sequence length for batch training 
+        if(self.training_algo == 1):
+            # set seq length to maximum seq length from current batch
+            self.set_seq_length_from_current_batch()
+        elif(self.training_algo == 2):
+            # set seq length to maximum seq length from current bucket
+            while not self.current_bucket_size:
+                self.get_next_bucket()
+        elif(self.training_algo == 3):
+            # seq length is set based on default/user configuration 
+            pass;
+            
+        temp_set_x = numpy.zeros((self.buffer_size, self.n_ins))
+        temp_set_y = numpy.zeros((self.buffer_size, self.n_outs))
+
+        ### read file by file ###
+        current_index = 0
+        while True:
+            if current_index >= self.buffer_size:
+                print('buffer size reached by file index %d' %(self.file_index))
+                break
+
+            if self.training_algo == 2:
+                # choose utterance from current bucket list
+                base_file_name = self.current_bucket_list[self.bucket_file_index]
+                self.utt_index = self.file_length_dict['utt2index'][base_file_name] 
+            else: 
+                # choose utterance randomly from current file list 
+                #self.utt_index = numpy.random.randint(self.list_size)
+                ## choose utterance in serial order
+                self.utt_index = self.file_index 
+                base_file_name = os.path.basename(self.x_files_list[self.utt_index]).split('.')[0]
+
+            in_features, lab_frame_number = io_funcs.load_binary_file_frame(self.x_files_list[self.utt_index], self.n_ins)
+            out_features, out_frame_number = io_funcs.load_binary_file_frame(self.y_files_list[self.utt_index], self.n_outs)
+         
+            frame_number = self.file_length_dict['utt2framenum'][base_file_name]
+
+            temp_set_x[current_index:current_index+frame_number, ] = in_features
+            temp_set_y[current_index:current_index+frame_number, ] = out_features
+            current_index += frame_number
+
+            if((self.file_index+1)%self.merge_size == 0):
+                num_of_samples = int(numpy.ceil(float(current_index)/float(self.seq_length)))
+                current_index = self.seq_length * num_of_samples
+                
+            self.file_index += 1
+            
+            # break for any of the below conditions
+            if self.training_algo == 2:
+                self.bucket_file_index += 1
+                if(self.bucket_file_index >= self.current_bucket_size):
+                    self.current_bucket_size = 0
+                    break;
+                if(self.bucket_file_index%self.batch_size==0):
+                    break;
+            else:  
+                if(self.file_index%self.batch_size==0) or (self.file_index >= self.list_size):
+                    break
+        
+        if  self.file_index >= self.list_size:
+            self.end_reading = True
+            self.file_index = 0
+        
+        num_of_samples = int(numpy.ceil(float(current_index)/float(self.seq_length)))
+
+        temp_set_x = temp_set_x[0: num_of_samples*self.seq_length, ]
+        temp_set_y = temp_set_y[0: num_of_samples*self.seq_length, ]
+        
+        temp_set_x = temp_set_x.reshape(num_of_samples, self.seq_length, self.n_ins)
+        temp_set_y = temp_set_y.reshape(num_of_samples, self.seq_length, self.n_outs)
+
+        shared_set_x = self.make_shared(temp_set_x, 'x')
+        shared_set_y = self.make_shared(temp_set_y, 'y')
+
+        shared_set_xy = (shared_set_x, shared_set_y)
+
+        return shared_set_xy, temp_set_x, temp_set_y
+        
     def load_next_utterance(self):
         """Load the data for one utterance. This function will be called when utterance-by-utterance loading is required (e.g., sequential training).
 
@@ -198,7 +380,7 @@ class ListDataProvider(object):
             if lab_frame_number > out_frame_number:
                 frame_number = out_frame_number
         else:
-            base_file_name = self.x_files_list[self.file_index].split('/')[-1].split('.')[0]
+            base_file_name = os.path.basename(self.x_files_list[self.file_index]).split('.')[0]
             self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d (%s)" %(lab_frame_number, out_frame_number, base_file_name))
             raise
 
@@ -210,6 +392,14 @@ class ListDataProvider(object):
         if  self.file_index >= self.list_size:
             self.end_reading = True
             self.file_index = 0
+       
+        # reshape input-output
+        if self.reshape_io:
+            temp_set_x = numpy.reshape(temp_set_x, (1, temp_set_x.shape[0], self.n_ins))
+            temp_set_y = numpy.reshape(temp_set_y, (1, temp_set_y.shape[0], self.n_outs))
+        
+            temp_set_x = numpy.array(temp_set_x, 'float32')
+            temp_set_y = numpy.array(temp_set_y, 'float32')
 
         shared_set_x = self.make_shared(temp_set_x, 'x')
         shared_set_y = self.make_shared(temp_set_y, 'y')
@@ -325,7 +515,7 @@ class ListDataProvider(object):
                 if lab_frame_number > out_frame_number:
                     frame_number = out_frame_number
             else:
-                base_file_name = self.x_files_list[self.file_index].split('/')[-1].split('.')[0]
+                base_file_name = os.path.basename(self.x_files_list[self.file_index]).split('.')[0]
                 self.logger.critical("the number of frames in label and acoustic features are different: %d vs %d (%s)" %(lab_frame_number, out_frame_number, base_file_name))
                 raise
 

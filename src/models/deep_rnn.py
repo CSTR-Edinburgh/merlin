@@ -9,7 +9,10 @@ import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 
 from layers.gating import SimplifiedLstm, BidirectionSLstm, VanillaLstm, BidirectionLstm, VanillaRNN, SimplifiedGRU, GatedRecurrentUnit, LstmNoPeepholes, LstmNOG, LstmNIG, LstmNFG
-from layers.layers import LinearLayer, SigmoidLayer
+from layers.layers import GeneralLayer, LinearLayer, SigmoidLayer
+
+from training_schemes.rprop import compile_RPROP_train_function
+from training_schemes.adam_v2 import compile_ADAM_train_function
 
 import logging
 
@@ -20,7 +23,7 @@ class DeepRecurrentNetwork(object):
     """
 
 
-    def __init__(self, n_in, hidden_layer_size, n_out, L1_reg, L2_reg, hidden_layer_type, output_type='LINEAR', dropout_rate=0.0):
+    def __init__(self, n_in, hidden_layer_size, n_out, L1_reg, L2_reg, hidden_layer_type, output_type='LINEAR', dropout_rate=0.0, optimizer='sgd', rnn_batch_training=False):
         """ This function initialises a neural network
 
         :param n_in: Dimensionality of input features
@@ -44,13 +47,20 @@ class DeepRecurrentNetwork(object):
         self.n_layers = len(hidden_layer_size)
 
         self.dropout_rate = dropout_rate
+        self.optimizer = optimizer
         self.is_train = T.iscalar('is_train')
-
+        self.rnn_batch_training = rnn_batch_training
 
         assert len(hidden_layer_size) == len(hidden_layer_type)
 
-        self.x = T.matrix('x')
-        self.y = T.matrix('y')
+        self.list_of_activations = ['TANH', 'SIGMOID', 'SOFTMAX', 'RELU', 'RESU']
+
+        if self.rnn_batch_training:
+            self.x = T.tensor3('x')
+            self.y = T.tensor3('y')
+        else:
+            self.x = T.matrix('x')
+            self.y = T.matrix('y')
 
         self.L1_reg = L1_reg
         self.L2_reg = L2_reg
@@ -74,32 +84,33 @@ class DeepRecurrentNetwork(object):
                 if hidden_layer_type[i-1]  == 'BSLSTM' or hidden_layer_type[i-1]  == 'BLSTM':
                     input_size = hidden_layer_size[i-1]*2
 
-            if hidden_layer_type[i] == 'SLSTM':
-                hidden_layer = SimplifiedLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+            
+            if hidden_layer_type[i] in self.list_of_activations:
+                hidden_activation = hidden_layer_type[i].lower()
+                hidden_layer = GeneralLayer(rng, layer_input, input_size, hidden_layer_size[i], activation=hidden_activation, p=self.dropout_rate, training=self.is_train)
+            
+            elif hidden_layer_type[i] == 'SLSTM':
+                hidden_layer = SimplifiedLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'SGRU':
-                hidden_layer = SimplifiedGRU(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = SimplifiedGRU(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'GRU':
-                hidden_layer = GatedRecurrentUnit(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = GatedRecurrentUnit(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'LSTM_NFG':
-                hidden_layer = LstmNFG(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = LstmNFG(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'LSTM_NOG':
-                hidden_layer = LstmNOG(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = LstmNOG(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'LSTM_NIG':
-                hidden_layer = LstmNIG(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = LstmNIG(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'LSTM_NPH':
-                hidden_layer = LstmNoPeepholes(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = LstmNoPeepholes(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'LSTM':
-                hidden_layer = VanillaLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = VanillaLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'BSLSTM':
-                hidden_layer = BidirectionSLstm(rng, layer_input, input_size, hidden_layer_size[i], hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = BidirectionSLstm(rng, layer_input, input_size, hidden_layer_size[i], hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'BLSTM':
-                hidden_layer = BidirectionLstm(rng, layer_input, input_size, hidden_layer_size[i], hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
+                hidden_layer = BidirectionLstm(rng, layer_input, input_size, hidden_layer_size[i], hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'RNN':
-                hidden_layer = VanillaRNN(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train)
-            elif hidden_layer_type[i] == 'TANH':
-                hidden_layer = SigmoidLayer(rng, layer_input, input_size, hidden_layer_size[i], activation=T.tanh, p=self.dropout_rate, training=self.is_train)
-            elif hidden_layer_type[i] == 'SIGMOID':
-                hidden_layer = SigmoidLayer(rng, layer_input, input_size, hidden_layer_size[i], activation=T.nnet.sigmoid, p=self.dropout_rate, training=self.is_train)
+                hidden_layer = VanillaRNN(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             else:
                 logger.critical("This hidden layer type: %s is not supported right now! \n Please use one of the following: SLSTM, BSLSTM, TANH, SIGMOID\n" %(hidden_layer_type[i]))
                 sys.exit(1)
@@ -111,10 +122,8 @@ class DeepRecurrentNetwork(object):
         if hidden_layer_type[-1]  == 'BSLSTM' or hidden_layer_type[-1]  == 'BLSTM':
             input_size = hidden_layer_size[-1]*2
 
-        if output_type == 'LINEAR':
+        if output_type.lower() == 'linear':
             self.final_layer = LinearLayer(rng, self.rnn_layers[-1].output, input_size, self.n_out)
-#        elif output_type == 'BSLSTM':
-#            self.final_layer = BidirectionLSTM(rng, self.rnn_layers[-1].output, input_size, hidden_layer_size[-1], self.n_out)
         else:
             logger.critical("This output layer type: %s is not supported right now! \n Please use one of the following: LINEAR, BSLSTM\n" %(output_type))
             sys.exit(1)
@@ -126,10 +135,20 @@ class DeepRecurrentNetwork(object):
             self.updates[param] = theano.shared(value = np.zeros(param.get_value(borrow = True).shape,
                                                 dtype = theano.config.floatX), name = 'updates')
 
-        self.finetune_cost = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
-        self.errors = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
+        if self.rnn_batch_training:
+            self.y_mod = T.reshape(self.y, (-1, n_out))
+            self.final_layer_output = T.reshape(self.final_layer.output, (-1, n_out))
 
-#        self.L2_sqr = (self.W_hy ** 2).sum()
+            nonzero_rows = T.any(self.y_mod, 1).nonzero()
+            
+            self.y_mod = self.y_mod[nonzero_rows]
+            self.final_layer_output = self.final_layer_output[nonzero_rows]
+            
+            self.finetune_cost = T.mean(T.sum((self.final_layer_output - self.y_mod) ** 2, axis=1))
+            self.errors = T.mean(T.sum((self.final_layer_output - self.y_mod) ** 2, axis=1))
+        else:
+            self.finetune_cost = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
+            self.errors = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
 
     def build_finetune_functions(self, train_shared_xy, valid_shared_xy):
         """ This function is to build finetune functions and to update gradients
@@ -142,27 +161,35 @@ class DeepRecurrentNetwork(object):
 
         """
 
+        logger = logging.getLogger("DNN initialization")
+
         (train_set_x, train_set_y) = train_shared_xy
         (valid_set_x, valid_set_y) = valid_shared_xy
 
         lr = T.scalar('lr', dtype = theano.config.floatX)
         mom = T.scalar('mom', dtype = theano.config.floatX)  # momentum
-#        index = T.scalar('index', dtype='int32')
-#        batch_size = T.scalar('batch_size', dtype='int32')
 
         cost = self.finetune_cost #+ self.L2_reg * self.L2_sqr
 
         gparams = T.grad(cost, self.params)
 
+        # use optimizer
+        if self.optimizer=='sgd':
+            # zip just concatenate two lists
+            updates = OrderedDict()
 
-        # zip just concatenate two lists
-        updates = OrderedDict()
-
-        for param, gparam in zip(self.params, gparams):
-            weight_update = self.updates[param]
-            upd = mom * weight_update - lr * gparam
-            updates[weight_update] = upd
-            updates[param] = param + upd
+            for param, gparam in zip(self.params, gparams):
+                weight_update = self.updates[param]
+                upd = mom * weight_update - lr * gparam
+                updates[weight_update] = upd
+                updates[param] = param + upd
+        elif self.optimizer=='adam':
+            updates = compile_ADAM_train_function(self, gparams, learning_rate=lr)
+        elif self.optimizer=='rprop':
+            updates = compile_RPROP_train_function(self, gparams)
+        else: 
+            logger.critical("This optimizer: %s is not supported right now! \n Please use one of the following: sgd, adam, rprop\n" %(self.optimizer))
+            sys.exit(1)
 
         train_model = theano.function(inputs = [lr, mom],  #index, batch_size
                                       outputs = self.errors,
@@ -193,7 +220,7 @@ class DeepRecurrentNetwork(object):
         n_test_set_x = test_set_x.shape[0]
 
         test_out = theano.function([], self.final_layer.output,
-              givens={self.x: test_set_x[0:n_test_set_x], self.is_train: np.cast['int32'](0)}, on_unused_input='ignore')
+              givens={self.x: test_set_x, self.is_train: np.cast['int32'](0)}, on_unused_input='ignore')
 
         predict_parameter = test_out()
 

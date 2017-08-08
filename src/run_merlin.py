@@ -234,15 +234,21 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
     logger.debug('Creating training   data provider')
     train_data_reader = ListDataProvider(x_file_list = train_x_file_list, y_file_list = train_y_file_list,
-                            n_ins = n_ins, n_outs = n_outs, buffer_size = buffer_size, sequential = sequential_training, shuffle = True)
+                            n_ins = n_ins, n_outs = n_outs, buffer_size = buffer_size, 
+                            sequential = sequential_training, shuffle = True)
 
     logger.debug('Creating validation data provider')
     valid_data_reader = ListDataProvider(x_file_list = valid_x_file_list, y_file_list = valid_y_file_list,
-                            n_ins = n_ins, n_outs = n_outs, buffer_size = buffer_size, sequential = sequential_training, shuffle = False)
+                            n_ins = n_ins, n_outs = n_outs, buffer_size = buffer_size, 
+                            sequential = sequential_training, shuffle = False)
 
+    if cfg.rnn_batch_training:
+        train_data_reader.set_rnn_params(training_algo=cfg.training_algo, batch_size=cfg.batch_size, seq_length=cfg.seq_length, merge_size=cfg.merge_size, bucket_range=cfg.bucket_range)
+        valid_data_reader.reshape_input_output()
+    
     shared_train_set_xy, temp_train_set_x, temp_train_set_y = train_data_reader.load_one_partition()
     train_set_x, train_set_y = shared_train_set_xy
-    shared_valid_set_xy, valid_set_x, valid_set_y = valid_data_reader.load_one_partition()   #validation data is still read block by block
+    shared_valid_set_xy, temp_valid_set_x, temp_valid_set_y = valid_data_reader.load_one_partition() 
     valid_set_x, valid_set_y = shared_valid_set_xy
     train_data_reader.reset()
     valid_data_reader.reset()
@@ -263,7 +269,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     valid_model = None ## valid_fn and valid_model are the same. reserve to computer multi-stream distortion
     if model_type == 'DNN':
         dnn_model = DeepRecurrentNetwork(n_in= n_ins, hidden_layer_size = hidden_layer_size, n_out = n_outs,
-                                         L1_reg = l1_reg, L2_reg = l2_reg, hidden_layer_type = hidden_layer_type, dropout_rate = dropout_rate)
+                                         L1_reg = l1_reg, L2_reg = l2_reg, hidden_layer_type = hidden_layer_type, 
+                                         dropout_rate = dropout_rate, optimizer = cfg.optimizer, rnn_batch_training = cfg.rnn_batch_training)
         train_fn, valid_fn = dnn_model.build_finetune_functions(
                     (train_set_x, train_set_y), (valid_set_x, valid_set_y))  #, batch_size=batch_size
 
@@ -279,33 +286,54 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     best_validation_loss = sys.float_info.max
     previous_loss = sys.float_info.max
 
+    lr_decay  = cfg.lr_decay
+    if lr_decay>0:
+        early_stop_epoch *= lr_decay
+
     early_stop = 0
-    epoch = 0
+    val_loss_counter = 0
 
     previous_finetune_lr = finetune_lr
-    print(finetune_lr)
 
+    epoch = 0
     while (epoch < training_epochs):
         epoch = epoch + 1
-
-        current_momentum = momentum
-        current_finetune_lr = finetune_lr
-        if epoch <= warmup_epoch:
-            current_finetune_lr = finetune_lr
-            current_momentum = warmup_momentum
+        
+        if lr_decay==0:
+            # fixed learning rate 
+            reduce_lr = False
+        elif lr_decay<0:
+            # exponential decay
+            reduce_lr = False if epoch <= warmup_epoch else True
+        elif val_loss_counter > 0:
+            # linear decay
+            reduce_lr = False
+            if val_loss_counter%lr_decay==0:
+                reduce_lr = True
+                val_loss_counter = 0
         else:
-            current_finetune_lr = previous_finetune_lr * 0.5
+            # no decay
+            reduce_lr = False
 
+        if reduce_lr:
+            current_finetune_lr = previous_finetune_lr * 0.5
+            current_momentum    = momentum
+        else:
+            current_finetune_lr = previous_finetune_lr
+            current_momentum    = warmup_momentum
+        
         previous_finetune_lr = current_finetune_lr
 
         train_error = []
         sub_start_time = time.time()
 
+        logger.debug("training params -- learning rate: %f, early_stop: %d/%d" % (current_finetune_lr, early_stop, early_stop_epoch))
         while (not train_data_reader.is_finish()):
 
             shared_train_set_xy, temp_train_set_x, temp_train_set_y = train_data_reader.load_one_partition()
 
             # if sequential training, the batch size will be the number of frames in an utterance
+            # batch_size for sequential training is considered only when rnn_batch_training is set to True
             if sequential_training == True:
                 batch_size = temp_train_set_x.shape[0]
 
@@ -355,7 +383,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
 
         if this_validation_loss >= previous_loss:
             logger.debug('validation loss increased')
-            early_stop += 1
+            val_loss_counter+=1
+            early_stop+=1
 
         if epoch > 15 and early_stop > early_stop_epoch:
             logger.debug('stopping early')
@@ -376,7 +405,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     return  best_validation_loss
 
 
-def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list):
+def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list, reshape_io=False):
     logger = logging.getLogger("dnn_generation")
     logger.debug('Starting dnn_generation')
 
@@ -393,9 +422,16 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         fid_lab.close()
         features = features[:(n_ins * (features.size // n_ins))]
         test_set_x = features.reshape((-1, n_ins))
+        n_rows = test_set_x.shape[0]
+        
+        if reshape_io:
+            test_set_x = numpy.reshape(test_set_x, (1, test_set_x.shape[0], n_ins))
+            test_set_x = numpy.array(test_set_x, 'float32')
 
         predicted_parameter = dnn_model.parameter_prediction(test_set_x)
-
+        predicted_parameter = predicted_parameter.reshape(-1, n_outs)
+        predicted_parameter = predicted_parameter[0:n_rows]
+        
         ### write to cmp file
         predicted_parameter = numpy.array(predicted_parameter, 'float32')
         temp_parameter = predicted_parameter
@@ -535,6 +571,7 @@ def main_function(cfg):
         lab_dim = cfg.cmp_dim
     logger.info('Input label dimension is %d' % lab_dim)
     suffix=str(lab_dim)
+
 
     if cfg.process_labels_in_work_dir:
         inter_data_dir = cfg.work_dir
@@ -754,13 +791,9 @@ def main_function(cfg):
     for hid_size in hidden_layer_size:
         combined_model_arch += '_' + str(hid_size)
 
-    nnets_file_name = '%s/%s_%s_%d_%s_%d.%d.train.%d.%f.rnn.model' \
-                      %(model_dir, cfg.combined_model_name, cfg.combined_feature_name, int(cfg.multistream_switch),
-                        combined_model_arch, lab_dim, cfg.cmp_dim, cfg.train_file_number, cfg.hyper_params['learning_rate'])
-    temp_dir_name = '%s_%s_%d_%d_%d_%d_%d_%d_%d' \
-                    %(cfg.combined_model_name, cfg.combined_feature_name, int(cfg.do_post_filtering), \
-                      cfg.train_file_number, lab_dim, cfg.cmp_dim, \
-                      len(hidden_layer_size), hidden_layer_size[0], hidden_layer_size[-1])
+    nnets_file_name = '%s/%s.model' %(model_dir, cfg.model_file_name)
+    temp_dir_name   = cfg.model_file_name
+
     gen_dir = os.path.join(gen_dir, temp_dir_name)
 
     if cfg.switch_to_keras:
@@ -886,10 +919,12 @@ def main_function(cfg):
 
         gen_file_list = prepare_file_path_list(gen_file_id_list, gen_dir, cfg.cmp_ext)
 
+
         if cfg.switch_to_keras:
             keras_instance.test_keras_model()
         else:
-            dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
+            reshape_io = True if cfg.rnn_batch_training else False
+            dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list, reshape_io)
 
         logger.debug('denormalising generated output using method %s' % cfg.output_feature_normalisation)
 
@@ -1011,7 +1046,7 @@ def main_function(cfg):
                 untrimmed_reference_data = in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_mgc_list, cfg.mgc_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
-            elif cfg.remove_silence_using_hts_labels: 
+            elif cfg.remove_silence_using_hts_labels:
                 remover = SilenceRemover(n_cmp = cfg.mgc_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['mgc'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_mgc_list)
             else:
@@ -1027,13 +1062,13 @@ def main_function(cfg):
                 untrimmed_reference_data = in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_bap_list, cfg.bap_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
-            elif cfg.remove_silence_using_hts_labels: 
+            elif cfg.remove_silence_using_hts_labels:
                 remover = SilenceRemover(n_cmp = cfg.bap_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['bap'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_bap_list)
             else:
                 ref_data_dir = os.path.join(data_dir, 'bap')
-            valid_bap_mse        = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
-            test_bap_mse         = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
+            valid_bap_mse = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
+            test_bap_mse  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.bap_ext, cfg.bap_dim)
             valid_bap_mse = valid_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
             test_bap_mse  = test_bap_mse / 10.0    ##Cassia's bap is computed from 10*log|S(w)|. if use HTS/SPTK style, do the same as MGC
 
@@ -1042,7 +1077,7 @@ def main_function(cfg):
                 untrimmed_reference_data = in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
                 trim_silence(untrimmed_reference_data, ref_lf0_list, cfg.lf0_dim, \
                                     untrimmed_test_labels, lab_dim, silence_feature)
-            elif cfg.remove_silence_using_hts_labels: 
+            elif cfg.remove_silence_using_hts_labels:
                 remover = SilenceRemover(n_cmp = cfg.lf0_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
                 remover.remove_silence(in_file_list_dict['lf0'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_lf0_list)
             else:

@@ -43,7 +43,7 @@ import numpy as np
 import keras
 from keras.models import Sequential
 from keras.models import model_from_json
-from keras.layers import Dense, LSTM
+from keras.layers import Dense, SimpleRNN, GRU, LSTM
 from keras.layers import Dropout
 
 class kerasModels(object):
@@ -119,7 +119,17 @@ class kerasModels(object):
             else:
                 input_size = self.hidden_layer_size[i - 1]
 
-            if self.hidden_layer_type[i]=='lstm':
+            if self.hidden_layer_type[i]=='rnn':
+                self.model.add(SimpleRNN(
+                        units=self.hidden_layer_size[i],
+                        input_shape=(None, input_size),
+                        return_sequences=True))
+            elif self.hidden_layer_type[i]=='gru':
+                self.model.add(GRU(
+                        units=self.hidden_layer_size[i],
+                        input_shape=(None, input_size),
+                        return_sequences=True))
+            elif self.hidden_layer_type[i]=='lstm':
                 self.model.add(LSTM(
                         units=self.hidden_layer_size[i],
                         input_shape=(None, input_size),

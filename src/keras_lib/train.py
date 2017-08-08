@@ -61,16 +61,16 @@ class TrainKerasModels(kerasModels):
 
         pass;
 
-    def train_feedforward_model(self, train_x, train_y, batch_size=256, num_of_epochs=10, shuffle_data=True):
+    def train_feedforward_model(self, train_x, train_y, valid_x, valid_y, batch_size=256, num_of_epochs=10, shuffle_data=True):
         self.model.fit(train_x, train_y, batch_size=batch_size, epochs=num_of_epochs, shuffle=shuffle_data)
 
-    def train_sequence_model(self, train_x, train_y, train_flen, batch_size=1, num_of_epochs=10, shuffle_data=True, training_algo=1):
+    def train_sequence_model(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size=1, num_of_epochs=10, shuffle_data=True, training_algo=1):
         if batch_size == 1:
-            self.train_recurrent_model_batchsize_one(train_x, train_y, num_of_epochs, shuffle_data)
+            self.train_recurrent_model_batchsize_one(train_x, train_y, valid_x, valid_y, num_of_epochs, shuffle_data)
         else:
-            self.train_recurrent_model(train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data, training_algo)
+            self.train_recurrent_model(train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data, training_algo)
 
-    def train_recurrent_model_batchsize_one(self, train_x, train_y, num_of_epochs, shuffle_data):
+    def train_recurrent_model_batchsize_one(self, train_x, train_y, valid_x, valid_y, num_of_epochs, shuffle_data):
         ### if batch size is equal to 1 ###
         train_idx_list = list(train_x.keys())
         if shuffle_data:
@@ -93,38 +93,51 @@ class TrainKerasModels(kerasModels):
 
             sys.stdout.write("\n")
 
-    def train_recurrent_model(self, train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data, training_algo):
+    def train_recurrent_model(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data, training_algo):
         ### if batch size more than 1 ###
         if training_algo == 1:
-            self.train_truncated_model(train_x, train_y, batch_size, num_of_epochs, shuffle_data)
+            self.train_padding_model(train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data)
         elif training_algo == 2:
-            self.train_bucket_model_with_padding(train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data)
+            self.train_bucket_model(train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data)
         elif training_algo == 3:
-            self.train_bucket_model_without_padding(train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data)
+            self.train_split_model(train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data)
         else:
-            print("Chose training algo. for batch size more than 1:")
-            print("1) Truncated Model")
-            print("2) bucket Model (with padding)")
-            print("3) bucket Model (without padding)")
+            print("Choose training algorithm for batch training with RNNs:")
+            print("1. Padding model -- pad utterances with zeros to maximum sequence length")
+            print("2. Bucket model  -- form buckets with minimum and maximum sequence length")
+            print("3. Split model   -- split utterances to a fixed sequence length")
             sys.exit(1)
 
-    def train_truncated_model(self, train_x, train_y, batch_size, num_of_epochs, shuffle_data):
+    
+    def train_padding_model(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data):
         ### Method 1 ###
-        temp_train_x = data_utils.transform_data_to_3d_matrix(train_x, seq_length=self.seq_length, merge_size=self.merge_size, shuffle_data=shuffle_data)
-        print(("Input shape: "+str(temp_train_x.shape)))
+        train_id_list = list(train_flen['utt2framenum'].keys())
+        if shuffle_data:
+            random.seed(271638)
+            random.shuffle(train_id_list)
 
-        temp_train_y = data_utils.transform_data_to_3d_matrix(train_y, seq_length=self.seq_length, merge_size=self.merge_size, shuffle_data=shuffle_data)
-        print(("Output shape: "+str(temp_train_y.shape)))
+        train_file_number = len(train_id_list)
+        for epoch_num in range(num_of_epochs):
+            print(('Epoch: %d/%d ' %(epoch_num+1, num_of_epochs)))
+            file_num = 0
+            while file_num < train_file_number:
+                train_idx_list = train_id_list[file_num: file_num + batch_size]
+                seq_len_arr    = [train_flen['utt2framenum'][filename] for filename in train_idx_list]
+                max_seq_length = max(seq_len_arr)
+                sub_train_x    = dict((filename, train_x[filename]) for filename in train_idx_list)
+                sub_train_y    = dict((filename, train_y[filename]) for filename in train_idx_list)
+                temp_train_x   = data_utils.transform_data_to_3d_matrix(sub_train_x, max_length=max_seq_length)
+                temp_train_y   = data_utils.transform_data_to_3d_matrix(sub_train_y, max_length=max_seq_length)
+                self.model.train_on_batch(temp_train_x, temp_train_y)
+                file_num += len(train_idx_list)
+                data_utils.drawProgressBar(file_num, train_file_number)
 
-        if self.stateful:
-            temp_train_x, temp_train_y = data_utils.get_stateful_data(temp_train_x, temp_train_y, batch_size)
-
-        self.model.fit(temp_train_x, temp_train_y, batch_size=batch_size, epochs=num_of_epochs, shuffle=False, verbose=1)
-
-    def train_bucket_model_with_padding(self, train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data):
+            print(" Validation error: %.3f" % (self.get_validation_error(valid_x, valid_y)))
+    
+    def train_bucket_model(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data):
         ### Method 2 ###
         train_fnum_list  = np.array(list(train_flen['framenum2utt'].keys()))
-        train_range_list = list(range(min(train_fnum_list), max(train_fnum_list), self.bucket_range))
+        train_range_list = list(range(min(train_fnum_list), max(train_fnum_list)+1, self.bucket_range))
         if shuffle_data:
             random.seed(271638)
             random.shuffle(train_range_list)
@@ -136,23 +149,65 @@ class TrainKerasModels(kerasModels):
             for frame_num in train_range_list:
                 min_seq_length = frame_num
                 max_seq_length = frame_num+self.bucket_range
-                sub_train_list  = train_fnum_list[(train_fnum_list>min_seq_length) & (train_fnum_list<=max_seq_length)]
+                sub_train_list = train_fnum_list[(train_fnum_list>=min_seq_length) & (train_fnum_list<max_seq_length)]
                 if len(sub_train_list)==0:
                     continue;
-                train_idx_list  = sum([train_flen['framenum2utt'][framenum] for framenum in sub_train_list], [])
-                sub_train_x     = dict((filename, train_x[filename]) for filename in train_idx_list)
-                sub_train_y     = dict((filename, train_y[filename]) for filename in train_idx_list)
-                temp_train_x    = data_utils.transform_data_to_3d_matrix(sub_train_x, max_length=max_seq_length)
-                temp_train_y    = data_utils.transform_data_to_3d_matrix(sub_train_y, max_length=max_seq_length)
-                self.model.fit(temp_train_x, temp_train_y, batch_size=batch_size, epochs=1, verbose=0)
+                train_idx_list = sum([train_flen['framenum2utt'][framenum] for framenum in sub_train_list], [])
+                sub_train_x    = dict((filename, train_x[filename]) for filename in train_idx_list)
+                sub_train_y    = dict((filename, train_y[filename]) for filename in train_idx_list)
+                temp_train_x   = data_utils.transform_data_to_3d_matrix(sub_train_x, max_length=max_seq_length)
+                temp_train_y   = data_utils.transform_data_to_3d_matrix(sub_train_y, max_length=max_seq_length)
+                self.model.fit(temp_train_x, temp_train_y, batch_size=batch_size, shuffle=False, epochs=1, verbose=0)
 
                 file_num += len(train_idx_list)
                 data_utils.drawProgressBar(file_num, train_file_number)
 
-            sys.stdout.write("\n")
+            print(" Validation error: %.3f" % (self.get_validation_error(valid_x, valid_y)))
 
-    def train_bucket_model_without_padding(self, train_x, train_y, train_flen, batch_size, num_of_epochs, shuffle_data):
+    def train_split_model(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data):
         ### Method 3 ###
+        train_id_list = list(train_flen['utt2framenum'].keys())
+        if shuffle_data:
+            random.seed(271638)
+            random.shuffle(train_id_list)
+
+        train_file_number = len(train_id_list)
+        for epoch_num in range(num_of_epochs):
+            print(('Epoch: %d/%d ' %(epoch_num+1, num_of_epochs)))
+            file_num = 0
+            while file_num < train_file_number:
+                train_idx_list = train_id_list[file_num: file_num + batch_size]
+                sub_train_x    = dict((filename, train_x[filename]) for filename in train_idx_list)
+                sub_train_y    = dict((filename, train_y[filename]) for filename in train_idx_list)
+                temp_train_x   = data_utils.transform_data_to_3d_matrix(sub_train_x, seq_length=self.seq_length, merge_size=self.merge_size)
+                temp_train_y   = data_utils.transform_data_to_3d_matrix(sub_train_y, seq_length=self.seq_length, merge_size=self.merge_size)
+    
+                self.model.train_on_batch(temp_train_x, temp_train_y)
+
+                file_num += len(train_idx_list)
+                data_utils.drawProgressBar(file_num, train_file_number)
+
+            print(" Validation error: %.3f" % (self.get_validation_error(valid_x, valid_y)))
+
+    def train_split_model_keras_version(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data):
+        """This function is not used as of now 
+        """
+        ### Method 3 ###
+        temp_train_x = data_utils.transform_data_to_3d_matrix(train_x, seq_length=self.seq_length, merge_size=self.merge_size, shuffle_data=shuffle_data)
+        print(("Input shape: "+str(temp_train_x.shape)))
+        
+        temp_train_y = data_utils.transform_data_to_3d_matrix(train_y, seq_length=self.seq_length, merge_size=self.merge_size, shuffle_data=shuffle_data)
+        print(("Output shape: "+str(temp_train_y.shape)))
+        
+        if self.stateful:
+            temp_train_x, temp_train_y = data_utils.get_stateful_data(temp_train_x, temp_train_y, batch_size)
+    
+        self.model.fit(temp_train_x, temp_train_y, batch_size=batch_size, epochs=num_of_epochs)
+    
+    def train_bucket_model_without_padding(self, train_x, train_y, valid_x, valid_y, train_flen, batch_size, num_of_epochs, shuffle_data):
+        """This function is not used as of now
+        """
+        ### Method 4 ###
         train_count_list = list(train_flen['framenum2utt'].keys())
         if shuffle_data:
             random.seed(271638)
@@ -174,6 +229,32 @@ class TrainKerasModels(kerasModels):
                 data_utils.drawProgressBar(file_num, train_file_number)
 
             sys.stdout.write("\n")
+
+    def get_validation_error(self, valid_x, valid_y, sequential_training=True, stateful=False):
+        valid_id_list = list(valid_x.keys())
+        valid_id_list.sort()
+
+        valid_error = 0.0
+        valid_file_number = len(valid_id_list)
+        for utt_index in range(valid_file_number):
+            temp_valid_x = valid_x[valid_id_list[utt_index]]
+            temp_valid_y = valid_y[valid_id_list[utt_index]]
+            num_of_rows = temp_valid_x.shape[0]
+
+            if stateful:
+                temp_valid_x = data_utils.get_stateful_input(temp_valid_x, self.seq_length, self.batch_size)
+            elif sequential_training:
+                temp_valid_x = np.reshape(temp_valid_x, (1, num_of_rows, self.n_in))
+
+            predictions = self.model.predict(temp_valid_x)
+            if sequential_training:
+                predictions = np.reshape(predictions, (num_of_rows, self.n_out))
+
+            valid_error += np.mean(np.sum((predictions - temp_valid_y) ** 2, axis=1))
+
+        valid_error = valid_error/valid_file_number
+
+        return valid_error
 
     def predict(self, test_x, out_scaler, gen_test_file_list, sequential_training=False, stateful=False):
         #### compute predictions ####
