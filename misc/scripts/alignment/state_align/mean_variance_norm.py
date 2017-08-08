@@ -1,8 +1,9 @@
+import logging
 
-from htk_io import HTK_Parm_IO
-from htkmfc import HTKFeat_read,HTKFeat_write
-import  logging
-import  numpy
+import numpy
+
+from binary_io import BinaryIOCollection
+from htkmfc import HTKFeat_read, HTKFeat_write
 
 class   MeanVarianceNorm():
     '''
@@ -52,6 +53,7 @@ class   MeanVarianceNorm():
         return  self.mean_vector, self.std_vector
 
     def feature_denormalisation(self, in_file_list, out_file_list, mean_vector, std_vector):
+        global logger
         io_funcs = BinaryIOCollection()
         file_number = len(in_file_list)
         try:
