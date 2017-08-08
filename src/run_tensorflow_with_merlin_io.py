@@ -136,10 +136,9 @@ class TensorflowClass(object):
 
         self.gen_test_file_list  = data_utils.prepare_file_path_list(valid_id_list, pred_feat_dir, out_file_ext)
         if not self.encoder_decoder:
-          self.tensorflow_models=TrainTensorflowModels(self.inp_dim, self.hidden_layer_size, self.out_dim, self.hidden_layer_type,
+          self.tensorflow_models=TrainTensorflowModels(self.inp_dim, self.hidden_layer_size, self.out_dim, self.hidden_layer_type, self.model_dir, 
                                                 output_type=self.output_layer_type, dropout_rate=self.dropout_rate,
-                                                loss_function=self.loss_function, optimizer=self.optimizer,
-                                                rnn_params=self.rnn_params)
+                                                loss_function=self.loss_function, optimizer=self.optimizer)
         else:
             self.encoder_decoder_models=Train_Encoder_Decoder_Models(self.inp_dim,self.hidden_layer_size,self.out_dim,self.hidden_layer_type,output_type=self.output_layer_type,\
                                                                      dropout_rate=self.dropout_rate,loss_function=self.loss_function,optimizer=self.optimizer,\

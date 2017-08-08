@@ -42,12 +42,14 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.layers import fully_connected, batch_norm
 from tensorflow.contrib.layers import dropout
-from tensorflow.contrib.rnn import MultiRNNCell,RNNCell, BasicRNNCell, BasicLSTMCell,GRUCell, LayerNormBasicLSTMCell, DropoutWrapper
+from tensorflow.contrib.rnn import MultiRNNCell,RNNCell, BasicRNNCell, BasicLSTMCell,GRUCell, LayerNormBasicLSTMCell, DropoutWrapper,\
+ResidualWrapper
 from tensorflow.python.ops import rnn_cell_impl
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.framework import dtypes
 from tensorflow.python.ops import init_ops,math_ops
+import helper
 
 class TensorflowModels(object):
 
@@ -80,7 +82,7 @@ class TensorflowModels(object):
           bn_params={"is_training":is_training_batch,"decay":0.99,"updates_collections":None}
           g.add_to_collection("is_training_batch",is_training_batch)
           with tf.name_scope("input"):
-              input_layer=tf.placeholder(dtype=tf.float64,shape=(None,self.n_in),name="input_layer")
+              input_layer=tf.placeholder(dtype=tf.float32,shape=(None,self.n_in),name="input_layer")
               if self.dropout_rate!=0.0:
                  print "Using dropout to avoid overfitting and the dropout rate is",self.dropout_rate
                  is_training_drop=tf.placeholder(dtype=tf.bool,shape=(),name="is_training_drop")
@@ -119,14 +121,14 @@ class TensorflowModels(object):
               g.add_to_collection(name="output_layer",value=output_layer)
           with tf.name_scope("training_op"):
                if self.optimizer=="adam":
-                  self.training_op=tf.train.AdamOptimizer(0.002)
+                  self.training_op=tf.train.AdamOptimizer()
 
   def define_sequence_model(self):
       seed=12345
       np.random.seed(12345)
       layer_list=[]
       with self.graph.as_default() as g:
-          utt_length=tf.placeholder(tf.int64,shape=(None))
+          utt_length=tf.placeholder(tf.int32,shape=(None))
           g.add_to_collection(name="utt_length",value=utt_length)
           with tf.name_scope("input"):
                input_layer=tf.placeholder(dtype=tf.float32,shape=(None,None,self.n_in),name="input_layer")
@@ -168,15 +170,14 @@ class TensorflowModels(object):
              layer_list.append(rnn_outputs)
           with tf.name_scope("output_layer"):
                if self.output_type=="linear" :
-                  output_layer=tf.layers.dense(rnn_outputs,self.n_out)
-                  layer_list.append(output_layer)
-               if self.output_type=="tanh":
-                  output_layer=tf.layers.dense(rnn_outputs,self.n_out,activation_fn=tf.nn.tanh)
-                  layer_list.append(output_layer)
+                   output_layer=tf.layers.dense(rnn_outputs,self.n_out)
+                #  stacked_rnn_outputs=tf.reshape(rnn_outputs,[-1,self.n_out])
+                #  stacked_outputs=tf.layers.dense(stacked_rnn_outputs,self.n_out)
+                #  output_layer=tf.reshape(stacked_outputs,[-1,utt_length,self.n_out])
                g.add_to_collection(name="output_layer",value=output_layer)
           with tf.name_scope("training_op"):
                if self.optimizer=="adam":
-                   self.training_op=tf.train.AdamOptimizer(0.002)
+                   self.training_op=tf.train.AdamOptimizer()
 
   def get_max_step(self,max_step):
        ##This method is only used when a sequence model is TrainTensorflowModels
@@ -187,7 +188,6 @@ class MyDropoutWrapper(DropoutWrapper):
     def __init__(self, cell, is_training,input_keep_prob=1.0, output_keep_prob=1.0,
                state_keep_prob=1.0, variational_recurrent=False,
                 input_size=None, dtype=None, seed=None):
-
         DropoutWrapper.__init__(self, cell, input_keep_prob=1.0, output_keep_prob=1.0,
                state_keep_prob=1.0, variational_recurrent=False,
                input_size=None, dtype=None, seed=None)
@@ -216,7 +216,6 @@ class Encoder_Decoder_Models(TensorflowModels):
                   with tf.variable_scope("num_{0}".format(k)):
                     k_output=tf.layers.conv1d(inputs,self.n_in//2,k,padding="same",activation=tf.nn.relu)
                     outputs=tf.concat((outputs,k_output),-1)
-             # print outputs.shape
           return outputs
 
       def pooling(self,conv_outputs,pooling_window,stride,scope="pooling"):
@@ -318,7 +317,7 @@ class Encoder_Decoder_Models(TensorflowModels):
                   g.add_to_collection(name="decoder_outputs",value=outputs)
               with tf.name_scope("training_op"):
                    if self.optimizer=="adam":
-                       self.training_op=tf.train.AdamOptimizer(0.002)
+                      self.training_op=tf.train.AdamOptimizer(0.002)
 
 def layer_normalization(inputs,epsilon = 1e-5,scope=None):
     mean,var=tf.nn.moments(inputs,[1],keep_dims=True)
@@ -327,6 +326,7 @@ def layer_normalization(inputs,epsilon = 1e-5,scope=None):
           shift=tf.get_variable(name="shift",shape=[inputs.get_shape()[1]],initializer=tf.constant_initializer(0))
     LN_output=scale*(inputs-mean)/tf.sqrt(var + epsilon) + shift
     return LN_output
+
 
 class LayerNormGRUCell(RNNCell):
   """Gated Recurrent Unit cell (cf. http://arxiv.org/abs/1406.1078)."""

@@ -38,7 +38,6 @@
 ################################################################################
 
 import os, sys 
-import regex as re
 import time
 import random
 import numpy as np
