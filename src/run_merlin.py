@@ -533,6 +533,7 @@ def main_function(cfg):
 
     ###total file number including training, development, and testing
     total_file_number = len(file_id_list)
+    assert cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number == total_file_number, 'check train, valid, test file number'
 
     data_dir = cfg.data_dir
 
@@ -541,8 +542,8 @@ def main_function(cfg):
         os.makedirs(inter_data_dir)
 
 
-    nn_cmp_dir       = os.path.join(inter_data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
-    nn_cmp_norm_dir   = os.path.join(inter_data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
+    nn_cmp_dir      = os.path.join(inter_data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
+    nn_cmp_norm_dir = os.path.join(inter_data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
 
     model_dir = os.path.join(cfg.work_dir, 'nnets_model')
     gen_dir   = os.path.join(cfg.work_dir, 'gen')

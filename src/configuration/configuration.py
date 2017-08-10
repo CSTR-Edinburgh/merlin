@@ -152,7 +152,6 @@ class configuration(object):
         self.model_dir   = os.path.join(self.keras_dir, 'models')
         self.stats_dir   = os.path.join(self.keras_dir, 'stats')
 
-        self.inter_data_dir = os.path.join(self.work_dir, 'inter_module')
         self.def_inp_dir    = os.path.join(self.inter_data_dir, 'nn_no_silence_lab_norm_425')
         self.def_out_dir    = os.path.join(self.inter_data_dir, 'nn_norm_mgc_lf0_vuv_bap_187')
 
@@ -287,11 +286,11 @@ class configuration(object):
 
             ('num_of_epochs',   1, 'Architecture', 'training_epochs'),
 
-            ('optimizer'        ,   'adam', 'Architecture', 'optimizer'),
+            ('optimizer'        ,   'sgd', 'Architecture', 'optimizer'),
             ('loss_function'    ,    'mse', 'Architecture', 'loss_function'),
 
             # RNN
-            ('model_file_name'    , 'dnn','Architecture', 'model_file_name'),
+            ('model_file_name'    , 'feed_forward_6_tanh','Architecture', 'model_file_name'),
             ('stateful'           , False, 'Architecture', 'stateful'),
             ('use_high_batch_size', False, 'Architecture', 'use_high_batch_size'),
 
@@ -547,27 +546,14 @@ class configuration(object):
             self.out_stats_file = os.path.join(self.stats_dir, "output_%d_%s_%d.norm" %(int(self.train_file_number), self.out_norm, self.out_dim))
 
             # define model file name
-            if self.sequential_training:
-                self.combined_model_arch = 'RNN'+str(self.training_algo)
-            else:
-                self.combined_model_arch = 'DNN'
-
-            self.combined_model_arch += '_'+str(len(self.hidden_layer_size))
-            self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_size))
-            self.combined_model_arch += '_'+'_'.join(map(str, self.hidden_layer_type))
-
-            self.nnets_file_name = '%s_%d_train_%d_%d_%d_%d_%d_model' \
-                              %(self.combined_model_arch, int(self.shuffle_data),
-                                 self.inp_dim, self.out_dim, self.train_file_number, self.batch_size, self.num_of_epochs)
-
-            logger.info('model file: %s' % (self.nnets_file_name))
+            logger.info('model file: %s' % (self.model_file_name))
 
             # model files
-            self.json_model_file = os.path.join(self.model_dir, self.nnets_file_name+'.json')
-            self.h5_model_file   = os.path.join(self.model_dir, self.nnets_file_name+'.h5')
+            self.json_model_file = os.path.join(self.model_dir, self.model_file_name+'.json')
+            self.h5_model_file   = os.path.join(self.model_dir, self.model_file_name+'.h5')
 
             # predicted features directory
-            self.pred_feat_dir = os.path.join(self.gen_dir, self.nnets_file_name)
+            self.pred_feat_dir = os.path.join(self.gen_dir, self.model_file_name)
             if not os.path.exists(self.pred_feat_dir):
                 os.makedirs(self.pred_feat_dir)
 
@@ -578,12 +564,16 @@ class configuration(object):
             for i in range(len(self.hidden_layer_type)):
                 self.hidden_layer_type[i] = self.hidden_layer_type[i].lower()
 
+            # force optimizer to adam if set to sgd
+            if self.optimizer == "sgd":
+                self.optimizer = 'adam'
+
             # set sequential training True if using LSTMs
             if 'lstm' in self.hidden_layer_type:
                 self.sequential_training = True
 
             # set default seq length for duration model
-            if self.DurationModel and self.training_algo == 1 and self.seq_length>50:
+            if self.DurationModel and self.training_algo == 3 and self.seq_length>50:
                 self.seq_length = 20
 
             # rnn params
@@ -937,10 +927,7 @@ class configuration(object):
 
             if not os.path.exists(self.log_path):
                 os.makedirs(self.log_path, 0o755)
-            log_file_name = '%s_%s_%d_%d_%d_%d_%f_%s.log' %(self.combined_model_name, self.combined_feature_name, self.train_file_number,
-                                                                      self.cmp_dim, len(self.hidden_layer_size),
-                                                                      self.hidden_layer_size[-1], self.learning_rate,
-                                                                      datetime.datetime.now().strftime("%I_%M%p_%B_%d_%Y"))
+            log_file_name = '%s_%s.log' %(self.model_file_name, datetime.datetime.now().strftime("%I_%M%p_%B_%d_%Y"))
 
             self.log_file = os.path.join(self.log_path, log_file_name)
 

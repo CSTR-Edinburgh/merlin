@@ -35,8 +35,11 @@ if [ "$use_gpu_lock" = true ]; then
         python $@
     fi
 else
+    # Assign GPU manually...
+    gpu_id=0
+
     # Run the input command (run_merlin.py) with its arguments
-    THEANO_FLAGS="mode=FAST_RUN,device=gpu,"$MERLIN_THEANO_FLAGS
+    THEANO_FLAGS="mode=FAST_RUN,device=gpu$gpu_id,"$MERLIN_THEANO_FLAGS
     export THEANO_FLAGS
  
     python $@

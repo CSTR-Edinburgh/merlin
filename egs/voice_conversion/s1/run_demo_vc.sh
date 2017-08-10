@@ -13,7 +13,7 @@ unzip -q slt_arctic.zip
 
 # copy data
 mv bdl_arctic/wav/ database/bdl/
-mv bdl_arctic/wav/ database/slt/
+mv slt_arctic/wav/ database/slt/
 
 # step 2: extract acoustic features
 ./02_prepare_acoustic_features.sh database/bdl/wav/ database/bdl/feats
