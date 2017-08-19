@@ -70,7 +70,7 @@ class configuration(object):
         # because we haven't loaded it yet!
         #
         # so, just use simple console-only logging
-        logger.setLevel(logging.DEBUG) # this level is hardwired here - should change it to INFO
+        logger.setLevel(logging.INFO) # this level is hardwired here - should change it to INFO
         # add a handler & its formatter - will write only to console
         ch = logging.StreamHandler()
         logger.addHandler(ch)
