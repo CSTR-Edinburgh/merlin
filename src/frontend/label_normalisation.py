@@ -797,16 +797,18 @@ class HTSLabelNormalisation(LabelNormalisation):
         """
 
         ## handle HTK wildcards (and lack of them) at ends of label:
+        prefix = ""
+        postfix = ""
         if '*' in question:
             if not question.startswith('*'):
-                question = '\A' + question
+                prefix = "\A"
             if not question.endswith('*'):
-                question = question + '\Z'
+                postfix = "\Z"
         question = question.strip('*')
         question = re.escape(question)
         ## convert remaining HTK wildcards * and ? to equivalent regex:
         question = question.replace('\\*', '.*')
-        #question = question.replace('\\?', '.?')
+        question = prefix + question + postfix
 
         if convert_number_pattern:
             question = question.replace('\\(\\\\d\\+\\)', '(\d+)')
