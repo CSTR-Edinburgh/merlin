@@ -225,3 +225,23 @@ class DeepRecurrentNetwork(object):
         predict_parameter = test_out()
 
         return predict_parameter
+    
+    ## the function to output activations at a hidden layer
+    def generate_hidden_layer(self, test_set_x, bn_layer_index):
+        """ This function is to predict the bottleneck features of NN
+
+        :param test_set_x: input features for a testing sentence
+        :type test_set_x: python array variable
+        :returns: predicted bottleneck features
+
+        """
+
+        n_test_set_x = test_set_x.shape[0]
+
+        test_out = theano.function([], self.rnn_layers[bn_layer_index].output,
+                givens={self.x: test_set_x, self.is_train: np.cast['int32'](0)}, on_unused_input='ignore')
+
+        predict_parameter = test_out()
+
+        return predict_parameter
+

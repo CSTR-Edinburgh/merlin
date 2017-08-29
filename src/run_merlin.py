@@ -440,38 +440,8 @@ def dnn_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_lis
         logger.debug('saved to %s' % out_file_list[i])
         fid.close()
 
-def dnn_generation_lstm(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list):
-    logger = logging.getLogger("dnn_generation")
-    logger.debug('Starting dnn_generation')
-
-    plotlogger = logging.getLogger("plotting")
-
-    dnn_model = pickle.load(open(nnets_file_name, 'rb'))
-
-    visualize_dnn(dnn_model)
-
-    file_number = len(valid_file_list)
-
-    for i in range(file_number):  #file_number
-        logger.info('generating %4d of %4d: %s' % (i+1,file_number,valid_file_list[i]) )
-        fid_lab = open(valid_file_list[i], 'rb')
-        features = numpy.fromfile(fid_lab, dtype=numpy.float32)
-        fid_lab.close()
-        features = features[:(n_ins * (features.size // n_ins))]
-        test_set_x = features.reshape((-1, n_ins))
-
-        predicted_parameter = dnn_model.parameter_prediction_lstm(test_set_x)
-
-        ### write to cmp file
-        predicted_parameter = numpy.array(predicted_parameter, 'float32')
-        temp_parameter = predicted_parameter
-        fid = open(out_file_list[i], 'wb')
-        predicted_parameter.tofile(fid)
-        logger.debug('saved to %s' % out_file_list[i])
-        fid.close()
-
-##generate bottleneck layer as festures
-def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list):
+##generate bottleneck layer as features
+def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_file_list, bottleneck_index):
     logger = logging.getLogger("dnn_generation")
     logger.debug('Starting dnn_generation')
 
@@ -491,7 +461,7 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
         temp_set_x = features.tolist()
         test_set_x = theano.shared(numpy.asarray(temp_set_x, dtype=theano.config.floatX))
 
-        predicted_parameter = dnn_model.generate_top_hidden_layer(test_set_x=test_set_x)
+        predicted_parameter = dnn_model.generate_hidden_layer(test_set_x, bottleneck_index)
 
         ### write to cmp file
         predicted_parameter = numpy.array(predicted_parameter, 'float32')
@@ -862,16 +832,12 @@ def main_function(cfg):
 
     if cfg.GENBNFEA:
         # Please only tune on this step when you want to generate bottleneck features from DNN
-        temp_dir_name = '%s_%s_%d_%d_%d_%d_%s_hidden' \
-                        %(cfg.model_type, cfg.combined_feature_name, \
-                          cfg.train_file_number, lab_dim, cfg.cmp_dim, \
-                          len(hidden_layers_sizes), combined_model_arch)
-        gen_dir = os.path.join(gen_dir, temp_dir_name)
+        gen_dir = os.path.join(gen_dir, "bottleneck_features")
 
-        bottleneck_size = min(hidden_layers_sizes)
+        bottleneck_size = min(hidden_layer_size)
         bottleneck_index = 0
-        for i in range(len(hidden_layers_sizes)):
-            if hidden_layers_sizes(i) == bottleneck_size:
+        for i in range(len(hidden_layer_size)):
+            if hidden_layer_size[i] == bottleneck_size:
                 bottleneck_index = i
 
         logger.info('generating bottleneck features from DNN')
@@ -888,7 +854,7 @@ def main_function(cfg):
                 raise
 
         gen_file_id_list = file_id_list[0:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
-        test_x_file_list  = nn_label_norm_file_list[0:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+        test_x_file_list = nn_label_norm_file_list[0:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
         gen_file_list = prepare_file_path_list(gen_file_id_list, gen_dir, cfg.cmp_ext)
 
