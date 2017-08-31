@@ -170,7 +170,7 @@ class   ParameterGeneration(object):
                         vuv_feature = features[:, stream_start_index['vuv']:stream_start_index['vuv']+1]
 
                         for i in range(frame_number):
-                            if vuv_feature[i, 0] < 0.5:
+                            if vuv_feature[i, 0] < 0.5 or gen_features[i, 0] < numpy.log(20):
                                 gen_features[i, 0] = self.inf_float
 
                 new_file_name = os.path.join(dir_name, file_id + file_extension_dict[feature_name])
