@@ -85,6 +85,8 @@ from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWe
 import logging # as logging
 import logging.config
 import io
+from utils.file_paths import FilePaths
+from utils.utils import read_file_list, prepare_file_path_list
 
 
 def extract_file_id_list(file_list):
@@ -95,23 +97,6 @@ def extract_file_id_list(file_list):
 
     return  file_id_list
 
-def read_file_list(file_name):
-
-    logger = logging.getLogger("read_file_list")
-
-    file_lists = []
-    fid = open(file_name)
-    for line in fid.readlines():
-        line = line.strip()
-        if len(line) < 1:
-            continue
-        file_lists.append(line)
-    fid.close()
-
-    logger.debug('Read file list from %s' % file_name)
-    return  file_lists
-
-
 def make_output_file_list(out_dir, in_file_lists):
     out_file_lists = []
 
@@ -121,17 +106,6 @@ def make_output_file_list(out_dir, in_file_lists):
         out_file_lists.append(out_file_name)
 
     return  out_file_lists
-
-def prepare_file_path_list(file_id_list, file_dir, file_extension, new_dir_switch=True):
-    if not os.path.exists(file_dir) and new_dir_switch:
-        os.makedirs(file_dir)
-    file_name_list = []
-    for file_id in file_id_list:
-        file_name = file_dir + '/' + file_id + file_extension
-        file_name_list.append(file_name)
-
-    return  file_name_list
-
 
 def visualize_dnn(dnn):
 
@@ -473,6 +447,7 @@ def dnn_hidden_generation(valid_file_list, nnets_file_name, n_ins, n_outs, out_f
 
 
 def main_function(cfg):
+    file_paths = FilePaths(cfg)
 
     # get a logger for this main function
     logger = logging.getLogger("main")
@@ -508,26 +483,21 @@ def main_function(cfg):
     data_dir = cfg.data_dir
 
     inter_data_dir = cfg.inter_data_dir
-    if not os.path.exists(inter_data_dir):
-        os.makedirs(inter_data_dir)
-
-
-    nn_cmp_dir      = os.path.join(inter_data_dir, 'nn' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
-    nn_cmp_norm_dir = os.path.join(inter_data_dir, 'nn_norm'  + cfg.combined_feature_name + '_' + str(cfg.cmp_dim))
-
-    model_dir = os.path.join(cfg.work_dir, 'nnets_model')
-    gen_dir   = os.path.join(cfg.work_dir, 'gen')
+    nn_cmp_dir       = file_paths.nn_cmp_dir
+    nn_cmp_norm_dir   = file_paths.nn_cmp_norm_dir
+    model_dir = file_paths.model_dir
+    gen_dir   = file_paths.gen_dir
 
     in_file_list_dict = {}
 
     for feature_name in list(cfg.in_dir_dict.keys()):
         in_file_list_dict[feature_name] = prepare_file_path_list(file_id_list, cfg.in_dir_dict[feature_name], cfg.file_extension_dict[feature_name], False)
 
-    nn_cmp_file_list         = prepare_file_path_list(file_id_list, nn_cmp_dir, cfg.cmp_ext)
-    nn_cmp_norm_file_list    = prepare_file_path_list(file_id_list, nn_cmp_norm_dir, cfg.cmp_ext)
+    nn_cmp_file_list         = file_paths.get_nn_cmp_file_list()
+    nn_cmp_norm_file_list    = file_paths.get_nn_cmp_norm_file_list()
 
     ###normalisation information
-    norm_info_file = os.path.join(inter_data_dir, 'norm_info' + cfg.combined_feature_name + '_' + str(cfg.cmp_dim) + '_' + cfg.output_feature_normalisation + '.dat')
+    norm_info_file = file_paths.norm_info_file
 
     ### normalise input full context label
     # currently supporting two different forms of lingustic features
@@ -548,42 +518,23 @@ def main_function(cfg):
         inter_data_dir = cfg.work_dir
 
     # the number can be removed
-    binary_label_dir      = os.path.join(inter_data_dir, 'binary_label_'+str(label_normaliser.dimension))
-    nn_label_dir          = os.path.join(inter_data_dir, 'nn_no_silence_lab_'+suffix)
-    nn_label_norm_dir     = os.path.join(inter_data_dir, 'nn_no_silence_lab_norm_'+suffix)
+    file_paths.set_label_dir(label_normaliser.dimension, suffix, lab_dim)
+    file_paths.set_label_file_list()
 
-    in_label_align_file_list = prepare_file_path_list(file_id_list, cfg.in_label_align_dir, cfg.lab_ext, False)
-    binary_label_file_list   = prepare_file_path_list(file_id_list, binary_label_dir, cfg.lab_ext)
-    nn_label_file_list       = prepare_file_path_list(file_id_list, nn_label_dir, cfg.lab_ext)
-    nn_label_norm_file_list  = prepare_file_path_list(file_id_list, nn_label_norm_dir, cfg.lab_ext)
+    binary_label_dir      = file_paths.binary_label_dir
+    nn_label_dir          = file_paths.nn_label_dir
+    nn_label_norm_dir     = file_paths.nn_label_norm_dir
 
-    # to do - sanity check the label dimension here?
-
-
+    in_label_align_file_list = file_paths.in_label_align_file_list
+    binary_label_file_list   = file_paths.binary_label_file_list
+    nn_label_file_list       = file_paths.nn_label_file_list
+    nn_label_norm_file_list  = file_paths.nn_label_norm_file_list
 
     min_max_normaliser = None
-    label_norm_file = 'label_norm_%s_%d.dat' %(cfg.label_style, lab_dim)
-    label_norm_file = os.path.join(inter_data_dir, label_norm_file)
 
-    if cfg.GenTestList:
-        try:
-            test_id_list = read_file_list(cfg.test_id_scp)
-            logger.debug('Loaded file id list from %s' % cfg.test_id_scp)
-        except IOError:
-            # this means that open(...) threw an error
-            logger.critical('Could not load file id list from %s' % cfg.test_id_scp)
-            raise
+    label_norm_file = file_paths.label_norm_file
 
-        in_label_align_file_list = prepare_file_path_list(test_id_list, cfg.in_label_align_dir, cfg.lab_ext, False)
-
-        if cfg.test_synth_dir!="None" and not cfg.VoiceConversion:
-            binary_label_file_list   = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
-            nn_label_file_list       = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
-            nn_label_norm_file_list  = prepare_file_path_list(test_id_list, cfg.test_synth_dir, cfg.lab_ext)
-        else:
-            binary_label_file_list   = prepare_file_path_list(test_id_list, binary_label_dir, cfg.lab_ext)
-            nn_label_file_list       = prepare_file_path_list(test_id_list, nn_label_dir, cfg.lab_ext)
-            nn_label_norm_file_list  = prepare_file_path_list(test_id_list, nn_label_norm_dir, cfg.lab_ext)
+    test_id_list = file_paths.test_id_list
 
     if cfg.NORMLAB:
         # simple HTS labels
@@ -591,9 +542,9 @@ def main_function(cfg):
         label_normaliser.perform_normalisation(in_label_align_file_list, binary_label_file_list, label_type=cfg.label_type)
 
         if cfg.additional_features:
-            out_feat_dir  = os.path.join(inter_data_dir, 'binary_label_'+suffix)
-            out_feat_file_list = prepare_file_path_list(file_id_list, out_feat_dir, cfg.lab_ext)
+            out_feat_file_list = file_paths.out_feat_file_list
             in_dim = label_normaliser.dimension
+
             for new_feature, new_feature_dim in cfg.additional_features.items():
                 new_feat_dir  = os.path.join(data_dir, new_feature)
                 new_feat_file_list = prepare_file_path_list(file_id_list, new_feat_dir, '.'+new_feature)
@@ -608,16 +559,19 @@ def main_function(cfg):
         remover.remove_silence(binary_label_file_list, in_label_align_file_list, nn_label_file_list)
 
         min_max_normaliser = MinMaxNormalisation(feature_dimension = lab_dim, min_value = 0.01, max_value = 0.99)
+
         ###use only training data to find min-max information, then apply on the whole dataset
         if cfg.GenTestList:
             min_max_normaliser.load_min_max_values(label_norm_file)
         else:
             min_max_normaliser.find_min_max_values(nn_label_file_list[0:cfg.train_file_number])
+
         ### enforce silence such that the normalization runs without removing silence: only for final synthesis
         if cfg.GenTestList and cfg.enforce_silence:
             min_max_normaliser.normalise_data(binary_label_file_list, nn_label_norm_file_list)
         else:
             min_max_normaliser.normalise_data(nn_label_file_list, nn_label_norm_file_list)
+
 
 
     if min_max_normaliser != None and not cfg.GenTestList:
@@ -632,15 +586,10 @@ def main_function(cfg):
         fid.close()
         logger.info('saved %s vectors to %s' %(label_min_vector.size, label_norm_file))
 
-
     ### make output duration data
     if cfg.MAKEDUR:
         logger.info('creating duration (output) features')
-        label_type = cfg.label_type
-        feature_type = cfg.dur_feature_type
-        dur_file_list = prepare_file_path_list(file_id_list, cfg.in_dur_dir, cfg.dur_ext)
-        label_normaliser.prepare_dur_data(in_label_align_file_list, dur_file_list, label_type, feature_type)
-
+        label_normaliser.prepare_dur_data(in_label_align_file_list, file_paths.dur_file_list, cfg.label_type, cfg.dur_feature_type)
 
     ### make output acoustic data
     if cfg.MAKECMP:
@@ -655,9 +604,11 @@ def main_function(cfg):
             nn_cmp_norm_file_list = prepare_file_path_list(test_id_list, nn_cmp_norm_dir, cfg.cmp_ext)
         
         acoustic_worker = AcousticComposition(delta_win = delta_win, acc_win = acc_win)
+
         if 'dur' in list(cfg.in_dir_dict.keys()) and cfg.AcousticModel:
-            lf0_file_list = prepare_file_path_list(file_id_list, cfg.in_lf0_dir, cfg.lf0_ext)
+            lf0_file_list = file_paths.get_lf0_file_list()
             acoustic_worker.make_equal_frames(dur_file_list, lf0_file_list, cfg.in_dimension_dict)
+
         acoustic_worker.prepare_nn_data(in_file_list_dict, nn_cmp_file_list, cfg.in_dimension_dict, cfg.out_dimension_dict)
 
         if cfg.remove_silence_using_binary_labels:
@@ -679,13 +630,8 @@ def main_function(cfg):
             remover.remove_silence(nn_cmp_file_list, in_label_align_file_list, nn_cmp_file_list) # save to itself
 
     ### save acoustic normalisation information for normalising the features back
-    var_dir   = os.path.join(inter_data_dir, 'var')
-    if not os.path.exists(var_dir):
-        os.makedirs(var_dir)
-
-    var_file_dict = {}
-    for feature_name in list(cfg.out_dimension_dict.keys()):
-        var_file_dict[feature_name] = os.path.join(var_dir, feature_name + '_' + str(cfg.out_dimension_dict[feature_name]))
+    var_dir  = file_paths.var_dir
+    var_file_dict = file_paths.get_var_dic()
 
     ### normalise output acoustic data
     if cfg.NORMCMP:
@@ -739,13 +685,9 @@ def main_function(cfg):
 
                 feature_index += cfg.out_dimension_dict[feature_name]
 
-    train_x_file_list = nn_label_norm_file_list[0:cfg.train_file_number]
-    train_y_file_list = nn_cmp_norm_file_list[0:cfg.train_file_number]
-    valid_x_file_list = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number]
-    valid_y_file_list = nn_cmp_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number]
-    test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
-    test_y_file_list  = nn_cmp_norm_file_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
-
+    train_x_file_list, train_y_file_list = file_paths.get_train_list_x_y()
+    valid_x_file_list, valid_y_file_list = file_paths.get_valid_list_x_y()
+    test_x_file_list, test_y_file_list = file_paths.get_test_list_x_y()
 
     # we need to know the label dimension before training the DNN
     # computing that requires us to look at the labels
@@ -762,8 +704,8 @@ def main_function(cfg):
     for hid_size in hidden_layer_size:
         combined_model_arch += '_' + str(hid_size)
 
-    nnets_file_name = '%s/%s.model' %(model_dir, cfg.model_file_name)
-    temp_dir_name   = cfg.model_file_name
+    nnets_file_name = file_paths.get_nnets_file_name()
+    temp_dir_name = file_paths.get_temp_nn_dir_name()
 
     gen_dir = os.path.join(gen_dir, temp_dir_name)
 
@@ -832,7 +774,7 @@ def main_function(cfg):
 
     if cfg.GENBNFEA:
         # Please only tune on this step when you want to generate bottleneck features from DNN
-        gen_dir = os.path.join(gen_dir, "bottleneck_features")
+        gen_dir = file_paths.bottleneck_features
 
         bottleneck_size = min(hidden_layer_size)
         bottleneck_index = 0
