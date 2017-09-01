@@ -55,6 +55,7 @@ Now, you can also follow Josh Meyer [blog post](http://jrmeyer.github.io/merlin/
 
 For a more in-depth tutorial about building voices with Merlin, you can check out:
 
+- [Deep Learning for Text-to-Speech Synthesis, using the Merlin toolkit (Interspeech 2017 tutorial)](http://www.speech.zone/courses/one-off/merlin-interspeech2017)
 - [Arctic voices](https://cstr-edinburgh.github.io/merlin/getting-started/slt-arctic-voice)
 - [Build your own voice](https://cstr-edinburgh.github.io/merlin/getting-started/build-own-voice)
 
