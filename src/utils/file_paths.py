@@ -155,9 +155,11 @@ class FilePaths(object):
           False)
 
     if self.cfg.GenTestList and self.cfg.test_synth_dir != 'None' and not self.cfg.VoiceConversion:
+      test_binary_file_list = self._prepare_test_binary_label_file_path_list(
+          self.cfg.test_synth_dir)
       test_file_list = self._prepare_test_label_file_path_list(
           self.cfg.test_synth_dir)
-      self.binary_label_file_list = test_file_list
+      self.binary_label_file_list = test_binary_file_list
       self.nn_label_file_list = test_file_list
       self.nn_label_norm_file_list = test_file_list
     elif self.cfg.GenTestList:
@@ -180,3 +182,6 @@ class FilePaths(object):
 
   def _prepare_test_label_file_path_list(self, list_dir):
     return prepare_file_path_list(self.test_id_list, list_dir, self.cfg.lab_ext)
+  
+  def _prepare_test_binary_label_file_path_list(self, list_dir):
+    return prepare_file_path_list(self.test_id_list, list_dir, self.cfg.lab_ext+'bin')
