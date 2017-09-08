@@ -11,12 +11,12 @@ cd $tools_dir
 
 install_speech_tools=true
 install_festival=true
-install_festvox=true
+install_multisyn=true
 
 # 1. Get and compile speech tools
 if [ "$install_speech_tools" = true ]; then
     echo "downloading speech tools..."
-    speech_tools_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/speech_tools-2.4-release.tar.gz
+    speech_tools_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/speech_tools-2.4-with-wrappers.tar.gz
     if hash curl 2>/dev/null; then
         curl -L -O $speech_tools_url
     elif hash wget 2>/dev/null; then
@@ -25,7 +25,7 @@ if [ "$install_speech_tools" = true ]; then
         echo "please download speech tools from $speech_tools_url"
         exit 1
     fi
-    tar xzf speech_tools-2.4-release.tar.gz
+    tar xzf speech_tools-2.4-with-wrappers.tar.gz
 
     echo "compiling speech tools..."
     (
@@ -45,7 +45,7 @@ export PATH=$ESTDIR/bin:$PATH
 # 2. Get and compile festival, download dicts and some voices
 if [ "$install_festival" = true ]; then
     echo "downloading festival..."
-    festival_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/festival-2.4-release.tar.gz
+    festival_url=http://104.131.174.95/downloads/tools/festival-2.4-current.tar.gz
     if hash curl 2>/dev/null; then
         curl -L -O $festival_url
     elif hash wget 2>/dev/null; then
@@ -54,7 +54,7 @@ if [ "$install_festival" = true ]; then
         echo "please download Festival from $festival_url"
         exit 1
     fi
-    tar xzf festival-2.4-release.tar.gz
+    tar xzf festival-2.4-current.tar.gz
 
     echo "compiling festival..."
     (
@@ -111,43 +111,40 @@ fi
 export FESTDIR=$tools_dir/festival
 export PATH=$FESTDIR/bin:$PATH
 
-# 3. Get and compile festvox
-if [ "$install_festvox" = true ]; then
-    echo "downloading festvox..."
-    festvox_url=http://festvox.org/festvox-2.7/festvox-2.7.0-release.tar.gz
+# 3. Get multisyn build
+if [ "$install_multisyn" = true ]; then
+    echo "downloading multisyn..."
+    multisyn_url=http://www.cstr.ed.ac.uk/downloads/festival/multisyn_build/multisyn_build-1.20.tgz
     if hash curl 2>/dev/null; then
-        curl -L -O $festvox_url
+        curl -L -O $multisyn_url
     elif hash wget 2>/dev/null; then
-        wget $festvox_url
+        wget $multisyn_url
     else
-        echo "please download festvox from $festvox_url"
+        echo "please download multisyn from $multisyn_url"
         exit 1
     fi
-    tar xzf festvox-2.7.0-release.tar.gz
+    tar xzf multisyn_build-1.20.tgz
 
-    echo "compiling festvox..."
+    echo "compiling multisyn..."
     (
-        cd festvox;
-        ./configure;
+        cd multisyn_build;
         make;
     )
 
 fi
 
 # export paths
-export FESTVOXDIR=$tools_dir/festvox
+export MULTISYN_BUILD=$tools_dir/multisyn_build
 
 echo "deleting downloaded tar files..."
 rm -rf $tools_dir/*.tar.gz
+rm -rf $tools_dir/*.tgz
 
 if [[ ! -f ${ESTDIR}/bin/ch_track ]]; then
     echo "Error installing speech tools"
     exit 1
 elif [[ ! -f ${FESTDIR}/bin/festival ]]; then
     echo "Error installing Festival"
-    exit 1
-elif [[ ! -f ${FESTVOXDIR}/src/vc/build_transform ]]; then
-    echo "Error installing Festvox"
     exit 1
 else
     echo "All tools successfully compiled!!"
