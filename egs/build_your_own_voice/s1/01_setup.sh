@@ -69,9 +69,9 @@ echo "######### No. of files ###############" >> $global_config_file
 echo "######################################" >> $global_config_file
 echo "" >> $global_config_file
 
-echo "Train=1000" >> $global_config_file 
-echo "Valid=50" >> $global_config_file 
-echo "Test=50" >> $global_config_file 
+echo "Train=50" >> $global_config_file 
+echo "Valid=5" >> $global_config_file 
+echo "Test=5" >> $global_config_file 
 echo "" >> $global_config_file
 
 echo "######################################" >> $global_config_file

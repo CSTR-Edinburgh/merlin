@@ -78,9 +78,9 @@ echo "######### No. of files ###############" >> $global_config_file
 echo "######################################" >> $global_config_file
 echo "" >> $global_config_file
 
-echo "Train=200" >> $global_config_file 
-echo "Valid=50" >> $global_config_file 
-echo "Test=50" >> $global_config_file 
+echo "Train=250" >> $global_config_file 
+echo "Valid=25" >> $global_config_file 
+echo "Test=25" >> $global_config_file 
 echo "" >> $global_config_file
 
 echo "Step 1:"

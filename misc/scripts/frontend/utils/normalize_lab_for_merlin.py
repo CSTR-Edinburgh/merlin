@@ -92,9 +92,12 @@ def normalize_label_files(in_lab_file, out_lab_file, label_style, write_time_sta
             else:
                 out_f.write(merged_data[2][j]+'\n')
         elif label_style == "state_align":
-            for k in range(num_states):
-                state_dur = divide_into_states(int(merged_data[0][j]), int(merged_data[1][j]), num_states)
-                out_f.write(str(state_dur[0][k])+' '+str(state_dur[1][k])+' '+merged_data[2][j]+'['+str(k+2)+']\n')
+            if write_time_stamps:
+                for k in range(num_states):
+                    state_dur = divide_into_states(int(merged_data[0][j]), int(merged_data[1][j]), num_states)
+                    out_f.write(str(state_dur[0][k])+' '+str(state_dur[1][k])+' '+merged_data[2][j]+'['+str(k+2)+']\n')
+            else:
+                out_f.write(merged_data[2][j]+'\n')
 
     out_f.close()
 

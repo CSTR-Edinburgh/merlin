@@ -87,28 +87,41 @@ class HTSLabelModification(object):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            start_time = int(temp_list[0])
-            end_time = int(temp_list[1])
 
-            full_label = temp_list[2]
-            full_label_length = len(full_label) - 3  # remove state information [k]
-            state_index = full_label[full_label_length + 1]
-            state_index = int(state_index) - 1
+            if len(temp_list)==1:
+                start_time = 0 
+                end_time = 600000 ## hard-coded silence duration
+                full_label = temp_list[0]
+            else:
+                start_time = int(temp_list[0])
+                end_time = int(temp_list[1])
+                full_label = temp_list[2]
+
+                full_label_length = len(full_label) - 3  # remove state information [k]
+                state_index = full_label[full_label_length + 1]
+                state_index = int(state_index) - 1
 
             label_binary_flag = self.check_silence_pattern(full_label)
 
-            if label_binary_flag == 1:
-                current_state_dur = end_time - start_time
-                out_fid.write(str(prev_end_time)+' '+str(prev_end_time+current_state_dur)+' '+full_label+'\n')
-                prev_end_time = prev_end_time+current_state_dur
-                continue;
+            if len(temp_list)==1:
+                for state_index in range(1, state_number+1):
+                    if label_binary_flag == 1:
+                        current_state_dur = end_time - start_time
+                    else:
+                        pred_state_dur = dur_features[current_index, state_index-1]
+                        current_state_dur = int(pred_state_dur)*5*10000
+                    out_fid.write(str(prev_end_time)+' '+str(prev_end_time+current_state_dur)+' '+full_label+'['+str(state_index+1)+']\n')
+                    prev_end_time = prev_end_time + current_state_dur
             else:
-                state_dur = dur_features[current_index, state_index-1]
-                state_dur = int(state_dur)*5*10000
-                out_fid.write(str(prev_end_time)+' '+str(prev_end_time+state_dur)+' '+full_label+'\n')
-                prev_end_time = prev_end_time+state_dur
+                if label_binary_flag == 1:
+                    current_state_dur = end_time - start_time
+                else:
+                    pred_state_dur = dur_features[current_index, state_index-1]
+                    current_state_dur = int(pred_state_dur)*5*10000
+                out_fid.write(str(prev_end_time)+' '+str(prev_end_time+current_state_dur)+' '+full_label+'\n')
+                prev_end_time = prev_end_time + current_state_dur
 
-            if state_index == state_number:
+            if state_index == state_number and label_binary_flag!=1:
                 current_index += 1
 
         logger.debug('modifed label with predicted duration of %d frames x %d features' % dur_features.shape )
@@ -138,10 +151,15 @@ class HTSLabelModification(object):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            start_time = int(temp_list[0])
-            end_time = int(temp_list[1])
-
-            full_label = temp_list[2]
+            
+            if len(temp_list)==1:
+                start_time = 0 
+                end_time = 3000000 ## hard-coded silence duration
+                full_label = temp_list[0]
+            else:
+                start_time = int(temp_list[0])
+                end_time = int(temp_list[1])
+                full_label = temp_list[2]
 
             label_binary_flag = self.check_silence_pattern(full_label)
 

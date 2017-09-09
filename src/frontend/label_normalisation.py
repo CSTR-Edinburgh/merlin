@@ -334,16 +334,24 @@ class HTSLabelNormalisation(LabelNormalisation):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            start_time = int(temp_list[0])
-            end_time = int(temp_list[1])
-            full_label = temp_list[2]
-
-            # to do - support different frame shift - currently hardwired to 5msec
-            # currently under beta testing: support different frame shift
-            if dur_file_name:
-                frame_number = manual_dur_data[ph_count]
+            
+            if len(temp_list)==1:
+                frame_number = 0
+                full_label = temp_list[2]
             else:
-                frame_number = int((end_time - start_time)/50000)
+                start_time = int(temp_list[0])
+                end_time = int(temp_list[1])
+                full_label = temp_list[2]
+
+                # to do - support different frame shift - currently hardwired to 5msec
+                # currently under beta testing: support different frame shift
+                if dur_file_name:
+                    frame_number = manual_dur_data[ph_count]
+                else:
+                    frame_number = int((end_time - start_time)/50000)
+
+                if self.subphone_feats == "coarse_coding":
+                    cc_feat_matrix = self.extract_coarse_coding_features_relative(frame_number)
 
             ph_count = ph_count+1
             #label_binary_vector = self.pattern_matching(full_label)
@@ -352,9 +360,6 @@ class HTSLabelNormalisation(LabelNormalisation):
             # if there is no CQS question, the label_continuous_vector will become to empty
             label_continuous_vector = self.pattern_matching_continous_position(full_label)
             label_vector = numpy.concatenate([label_binary_vector, label_continuous_vector], axis = 1)
-
-            if self.subphone_feats == "coarse_coding":
-                cc_feat_matrix = self.extract_coarse_coding_features_relative(frame_number)
 
             if self.add_frame_features:
                 current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))
@@ -433,18 +438,23 @@ class HTSLabelNormalisation(LabelNormalisation):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            start_time = int(temp_list[0])
-            end_time = int(temp_list[1])
-            full_label = temp_list[2]
-            full_label_length = len(full_label) - 3  # remove state information [k]
-            state_index = full_label[full_label_length + 1]
 
-#            print state_index
-            state_index = int(state_index) - 1
-            state_index_backward = 6 - state_index
-            full_label = full_label[0:full_label_length]
+            if len(temp_list)==1:
+                frame_number = 0
+                state_index = 1
+                full_label = temp_list[0]
+            else:
+                start_time = int(temp_list[0])
+                end_time = int(temp_list[1])
+                frame_number = int((end_time - start_time)/50000)
+                full_label = temp_list[2]
+            
+                full_label_length = len(full_label) - 3  # remove state information [k]
+                state_index = full_label[full_label_length + 1]
 
-            frame_number = int((end_time - start_time)/50000)
+                state_index = int(state_index) - 1
+                state_index_backward = 6 - state_index
+                full_label = full_label[0:full_label_length]
 
             if state_index == 1:
                 current_frame_number = 0
@@ -458,13 +468,16 @@ class HTSLabelNormalisation(LabelNormalisation):
                 label_continuous_vector = self.pattern_matching_continous_position(full_label)
                 label_vector = numpy.concatenate([label_binary_vector, label_continuous_vector], axis = 1)
 
-                for i in range(state_number - 1):
-                    line = utt_labels[current_index + i + 1].strip()
-                    temp_list = re.split('\s+', line)
-                    phone_duration += int((int(temp_list[1]) - int(temp_list[0]))/50000)
+                if len(temp_list)==1:
+                    state_index = state_number
+                else:
+                    for i in range(state_number - 1):
+                        line = utt_labels[current_index + i + 1].strip()
+                        temp_list = re.split('\s+', line)
+                        phone_duration += int((int(temp_list[1]) - int(temp_list[0]))/50000)
 
-                if self.subphone_feats == "coarse_coding":
-                    cc_feat_matrix = self.extract_coarse_coding_features_relative(phone_duration)
+                    if self.subphone_feats == "coarse_coding":
+                        cc_feat_matrix = self.extract_coarse_coding_features_relative(phone_duration)
 
             if self.add_frame_features:
                 current_block_binary_array = numpy.zeros((frame_number, self.dict_size+self.frame_feature_size))

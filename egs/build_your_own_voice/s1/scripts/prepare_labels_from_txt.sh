@@ -75,7 +75,7 @@ else
                             ${out_dir}/prompt-lab/full \
                             ${out_dir}/prompt-lab \
                             ${Labels} \
-                            ${out_dir}/$file_id_scp
+                            ${out_dir}/$file_id_scp 0
     ### remove any un-necessary files
     rm -rf ${out_dir}/prompt-lab/{full,mono,tmp}
     

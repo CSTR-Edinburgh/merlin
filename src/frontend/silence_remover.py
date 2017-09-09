@@ -139,17 +139,21 @@ class SilenceRemover(object):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            start_time = int(temp_list[0])
-            end_time = int(temp_list[1])
-            full_label = temp_list[2]
 
-            # to do - support different frame shift - currently hardwired to 5msec
-            # currently under beta testing: supports different frame shift
-            if dur_file_name:
-                frame_number = manual_dur_data[ph_count]
-                ph_count = ph_count+1
+            if len(temp_list)==1:
+                full_label = temp_list[0]
             else:
-                frame_number = int((end_time - start_time)/50000)
+                start_time = int(temp_list[0])
+                end_time = int(temp_list[1])
+                full_label = temp_list[2]
+
+                # to do - support different frame shift - currently hardwired to 5msec
+                # currently under beta testing: supports different frame shift
+                if dur_file_name:
+                    frame_number = manual_dur_data[ph_count]
+                    ph_count = ph_count+1
+                else:
+                    frame_number = int((end_time - start_time)/50000)
 
             label_binary_flag = self.check_silence_pattern(full_label)
 
@@ -178,13 +182,17 @@ class SilenceRemover(object):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            start_time = int(temp_list[0])
-            end_time = int(temp_list[1])
-            full_label = temp_list[2]
-            full_label_length = len(full_label) - 3  # remove state information [k]
-            state_index = full_label[full_label_length + 1]
-            state_index = int(state_index) - 1
-            frame_number = int((end_time - start_time)/50000)
+            if len(temp_list)==1:
+                state_index = state_number
+                full_label = temp_list[0]
+            else:
+                start_time = int(temp_list[0])
+                end_time = int(temp_list[1])
+                full_label = temp_list[2]
+                full_label_length = len(full_label) - 3  # remove state information [k]
+                state_index = full_label[full_label_length + 1]
+                state_index = int(state_index) - 1
+                frame_number = int((end_time - start_time)/50000)
 
             label_binary_flag = self.check_silence_pattern(full_label)
 
@@ -202,7 +210,6 @@ class SilenceRemover(object):
                     nonsilence_frame_index_list.append(base_frame_index)
                 base_frame_index = base_frame_index + 1
 
-            #print start_time, end_time, frame_number, base_frame_index
         fid.close()
 
         return  nonsilence_frame_index_list
