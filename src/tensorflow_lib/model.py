@@ -49,7 +49,6 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.framework import dtypes
 from tensorflow.python.ops import init_ops,math_ops
-import helper
 
 class TensorflowModels(object):
 

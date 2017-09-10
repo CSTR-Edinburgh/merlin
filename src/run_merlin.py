@@ -78,8 +78,6 @@ from utils.learn_rates import ExpDecreaseLearningRate
 
 from io_funcs.binary_io import  BinaryIOCollection
 
-from run_keras_with_merlin_io import KerasClass
-
 # our custom logging class that can also plot
 from logplot.logging_plotting import LoggerPlotter, MultipleSeriesPlot, SingleWeightMatrixPlot
 import logging # as logging
@@ -709,7 +707,7 @@ def main_function(cfg):
 
     gen_dir = os.path.join(gen_dir, temp_dir_name)
 
-    if cfg.switch_to_keras:
+    if cfg.switch_to_keras or cfg.switch_to_tensorflow:
         ### set configuration variables ###
         cfg.inp_dim = lab_dim
         cfg.out_dim = cfg.cmp_dim
@@ -722,8 +720,15 @@ def main_function(cfg):
             cfg.inp_feat_dir  = cfg.test_synth_dir
             cfg.pred_feat_dir = cfg.test_synth_dir
         
+    if cfg.switch_to_keras:
         ### call kerasclass and use an instance ###
+        from run_keras_with_merlin_io import KerasClass
         keras_instance = KerasClass(cfg)
+    
+    elif cfg.switch_to_tensorflow:
+        ### call Tensorflowclass and use an instance ###
+        from run_tensorflow_with_merlin_io import TensorflowClass
+        tf_instance = TensorflowClass(cfg)
 
     ### DNN model training
     if cfg.TRAINDNN:
@@ -754,6 +759,8 @@ def main_function(cfg):
         try:
             if cfg.switch_to_keras:
                 keras_instance.train_keras_model()
+            elif cfg.switch_to_tensorflow:
+                tf_instance.train_tensorflow_model()
             else:
                 train_DNN(train_xy_file_list = (train_x_file_list, train_y_file_list), \
                       valid_xy_file_list = (valid_x_file_list, valid_y_file_list), \
@@ -831,6 +838,8 @@ def main_function(cfg):
 
         if cfg.switch_to_keras:
             keras_instance.test_keras_model()
+        elif cfg.switch_to_tensorflow:
+            tf_instance.test_tensorflow_model()
         else:
             reshape_io = True if cfg.rnn_batch_training else False
             dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list, reshape_io)

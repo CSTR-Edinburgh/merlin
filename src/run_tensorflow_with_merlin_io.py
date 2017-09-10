@@ -80,15 +80,12 @@ class TensorflowClass(object):
         self.hidden_layer_size = cfg.hidden_layer_size
 
         self.sequential_training = cfg.sequential_training
-        self.encoder_decoder=cfg.encoder_decoder
-        self.attention=cfg.attention
-        self.cbhg=cfg.cbhg
-        #self.stateful      = cfg.stateful
-        self.batch_size    = cfg.batch_size
-        #self.seq_length    = cfg.seq_length
-
-        #self.training_algo = cfg.training_algo
-        self.shuffle_data  = cfg.shuffle_data
+        self.encoder_decoder     = cfg.encoder_decoder
+        
+        self.attention    = cfg.attention
+        self.cbhg         = cfg.cbhg
+        self.batch_size   = cfg.batch_size
+        self.shuffle_data = cfg.shuffle_data
 
         self.output_layer_type = cfg.output_layer_type
         self.loss_function     = cfg.loss_function
@@ -98,8 +95,8 @@ class TensorflowClass(object):
         self.dropout_rate  = cfg.dropout_rate
         self.num_of_epochs = cfg.num_of_epochs
 
-        self.json_model_file = cfg.json_model_file
-        self.h5_model_file   = cfg.h5_model_file
+        ### Define the work directory###
+        self.model_dir = cfg.model_dir
 
         ### define train, valid, test ###
 
@@ -108,6 +105,7 @@ class TensorflowClass(object):
         test_file_number  = cfg.test_file_number
 
         file_id_scp  = cfg.file_id_scp
+        test_id_scp  = cfg.test_id_scp
 
         #### main processess ####
 
@@ -115,32 +113,44 @@ class TensorflowClass(object):
         self.TRAINMODEL = cfg.TRAINMODEL
         self.TESTMODEL  = cfg.TESTMODEL
 
-        ### Define the work directory###
-        self.model_dir=cfg.model_dir
+        #### Generate only test list ####
+        self.GenTestList = cfg.GenTestList
+        
         ###################################################
         ####### End of user-defined conf variables ########
         ###################################################
-
+        
         #### Create train, valid and test file lists ####
         file_id_list = data_utils.read_file_list(file_id_scp)
 
         train_id_list = file_id_list[0: train_file_number]
-        valid_id_list = file_id_list[train_file_number: train_file_number + valid_file_number + test_file_number]
+        valid_id_list = file_id_list[train_file_number: train_file_number + valid_file_number]
         test_id_list  = file_id_list[train_file_number + valid_file_number: train_file_number + valid_file_number + test_file_number]
+        
+        valid_test_id_list = file_id_list[train_file_number: train_file_number + valid_file_number + test_file_number]
 
         self.inp_train_file_list = data_utils.prepare_file_path_list(train_id_list, inp_feat_dir, inp_file_ext)
         self.out_train_file_list = data_utils.prepare_file_path_list(train_id_list, out_feat_dir, out_file_ext)
 
-        self.inp_test_file_list = data_utils.prepare_file_path_list(valid_id_list, inp_feat_dir, inp_file_ext)
-        self.out_test_file_list = data_utils.prepare_file_path_list(valid_id_list, out_feat_dir, out_file_ext)
+        self.inp_valid_file_list = data_utils.prepare_file_path_list(valid_id_list, inp_feat_dir, inp_file_ext)
+        self.out_valid_file_list = data_utils.prepare_file_path_list(valid_id_list, out_feat_dir, out_file_ext)
 
-        self.gen_test_file_list  = data_utils.prepare_file_path_list(valid_id_list, pred_feat_dir, out_file_ext)
+        self.inp_test_file_list = data_utils.prepare_file_path_list(valid_test_id_list, inp_feat_dir, inp_file_ext)
+        self.out_test_file_list = data_utils.prepare_file_path_list(valid_test_id_list, out_feat_dir, out_file_ext)
+
+        self.gen_test_file_list = data_utils.prepare_file_path_list(valid_test_id_list, pred_feat_dir, out_file_ext)
+
+        if self.GenTestList:
+            test_id_list = data_utils.read_file_list(test_id_scp)
+            self.inp_test_file_list = data_utils.prepare_file_path_list(test_id_list, inp_feat_dir, inp_file_ext)
+            self.gen_test_file_list = data_utils.prepare_file_path_list(test_id_list, pred_feat_dir, out_file_ext)
+
         if not self.encoder_decoder:
-          self.tensorflow_models=TrainTensorflowModels(self.inp_dim, self.hidden_layer_size, self.out_dim, self.hidden_layer_type, self.model_dir, 
+          self.tensorflow_models = TrainTensorflowModels(self.inp_dim, self.hidden_layer_size, self.out_dim, self.hidden_layer_type, self.model_dir, 
                                                 output_type=self.output_layer_type, dropout_rate=self.dropout_rate,
                                                 loss_function=self.loss_function, optimizer=self.optimizer)
         else:
-            self.encoder_decoder_models=Train_Encoder_Decoder_Models(self.inp_dim,self.hidden_layer_size,self.out_dim,self.hidden_layer_type,output_type=self.output_layer_type,\
+            self.encoder_decoder_models = Train_Encoder_Decoder_Models(self.inp_dim,self.hidden_layer_size,self.out_dim,self.hidden_layer_type,output_type=self.output_layer_type,\
                                                                      dropout_rate=self.dropout_rate,loss_function=self.loss_function,optimizer=self.optimizer,\
                                                                      attention=self.attention,cbhg=self.cbhg)
     def normlize_data(self):

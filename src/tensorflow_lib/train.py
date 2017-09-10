@@ -41,7 +41,6 @@
 import tensorflow as tf
 import numpy as np
 import random, os ,sys
-import helper
 from io_funcs.binary_io import BinaryIOCollection
 from tensorflow_lib.model import TensorflowModels, Encoder_Decoder_Models
 from tensorflow_lib import data_utils
@@ -54,7 +53,7 @@ class TrainTensorflowModels(TensorflowModels):
         TensorflowModels.__init__(self, n_in, hidden_layer_size, n_out, hidden_layer_type, output_type, dropout_rate, loss_function, optimizer)
 
         #### TODO: Find a good way to pass below params ####
-        self.ckpt_dir=os.path.join(model_dir,"temp_checkpoint_file")
+        self.ckpt_dir = model_dir
 
     def train_feedforward_model(self, train_x, train_y, batch_size=256, num_of_epochs=10, shuffle_data=True):
         seed=12345

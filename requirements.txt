@@ -6,3 +6,4 @@ bandmat>=0.5
 theano>=0.8
 keras>=2.0.5
 h5py>=2.7.0
+tensorflow>=1.2.0

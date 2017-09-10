@@ -26,11 +26,12 @@ Merlin uses the following dependencies:
 - matplotlib
 - bandmat
 - theano
+- tensorflow (optional, required if you use tensorflow models)
 - sklearn, keras, h5py (optional, required if you use keras models)
 
 To install Merlin, `cd` merlin and run the below steps:
 
-- Install some tools in Merlin
+- Install some basic tools in Merlin
 ```sh
 bash tools/compile_tools.sh
 ```

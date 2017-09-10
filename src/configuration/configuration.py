@@ -147,10 +147,9 @@ class configuration(object):
         self.data_dir       = os.path.join(self.work_dir, 'data')
         self.inter_data_dir = os.path.join(self.work_dir, 'inter_module')
 
-        self.keras_dir   = os.path.join(self.work_dir, 'keras')
-        self.gen_dir     = os.path.join(self.keras_dir, 'gen')
-        self.model_dir   = os.path.join(self.keras_dir, 'models')
-        self.stats_dir   = os.path.join(self.keras_dir, 'stats')
+        self.gen_dir     = os.path.join(self.work_dir, 'gen')
+        self.model_dir   = os.path.join(self.work_dir, 'nnets_model')
+        self.stats_dir   = os.path.join(self.work_dir, 'stats')
 
         self.def_inp_dir    = os.path.join(self.inter_data_dir, 'nn_no_silence_lab_norm_425')
         self.def_out_dir    = os.path.join(self.inter_data_dir, 'nn_norm_mgc_lf0_vuv_bap_187')
@@ -273,6 +272,7 @@ class configuration(object):
             ('rnn_batch_training'   , False                                             , 'Architecture', 'rnn_batch_training'),
             ('dropout_rate'         , 0.0                                               , 'Architecture', 'dropout_rate'),
             ('switch_to_keras'      , False                                             , 'Architecture', 'switch_to_keras'),
+            ('switch_to_tensorflow' , False                                             , 'Architecture', 'switch_to_tensorflow'),
 
             ## some config variables for token projection DNN
             ('scheme'               , 'stagewise'                   , 'Architecture', 'scheme'),
@@ -299,6 +299,10 @@ class configuration(object):
             ('seq_length'   , 200, 'Architecture', 'seq_length'),
             ('bucket_range' , 100, 'Architecture', 'bucket_range'),
 
+            ('encoder_decoder'      , False                                           ,  'Architecture','encoder_decoder'),
+            ('attention'            , False                                           ,  'Architecture', 'attention'),
+            ("cbhg"                 , False                                           ,   "Architecture", "cbhg"),
+            
             # Data
             ('shuffle_data', True, 'Data', 'shuffle_data'),
 
@@ -529,15 +533,30 @@ class configuration(object):
                 self.sequential_training = True
                 break
 
-        # switch to keras
-        if self.switch_to_keras:
+        # switch to tensorflow
+        if self.switch_to_tensorflow:
             ## create directories if not exists
+            self.model_dir = os.path.join(self.model_dir, "tensorflow")
+            self.model_dir = os.path.join(self.model_dir, self.model_file_name)
             if not os.path.exists(self.model_dir):
                 os.makedirs(self.model_dir)
 
-            if not os.path.exists(self.stats_dir):
-                os.makedirs(self.stats_dir)
+        # switch to keras
+        if self.switch_to_keras:
+            ## create directories if not exists
+            self.model_dir = os.path.join(self.model_dir, "keras")
+            if not os.path.exists(self.model_dir):
+                os.makedirs(self.model_dir)
 
+            # model files
+            self.json_model_file = os.path.join(self.model_dir, self.model_file_name+'.json')
+            self.h5_model_file   = os.path.join(self.model_dir, self.model_file_name+'.h5')
+
+        if self.switch_to_keras and self.switch_to_tensorflow:
+            logger.critical("Please switch to either tensorflow or keras, but not both!!")
+            sys.exit(1)
+
+        if self.switch_to_keras or self.switch_to_tensorflow:
             if not os.path.exists(self.gen_dir):
                 os.makedirs(self.gen_dir)
 
@@ -547,10 +566,6 @@ class configuration(object):
 
             # define model file name
             logger.info('model file: %s' % (self.model_file_name))
-
-            # model files
-            self.json_model_file = os.path.join(self.model_dir, self.model_file_name+'.json')
-            self.h5_model_file   = os.path.join(self.model_dir, self.model_file_name+'.h5')
 
             # predicted features directory
             self.pred_feat_dir = os.path.join(self.gen_dir, self.model_file_name)
