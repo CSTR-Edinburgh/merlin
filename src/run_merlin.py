@@ -220,7 +220,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     
     shared_train_set_xy, temp_train_set_x, temp_train_set_y = train_data_reader.load_one_partition()
     train_set_x, train_set_y = shared_train_set_xy
-    shared_valid_set_xy, temp_valid_set_x, temp_valid_set_y = valid_data_reader.load_one_partition() 
+    shared_valid_set_xy, temp_valid_set_x, temp_valid_set_y = valid_data_reader.load_one_partition()
     valid_set_x, valid_set_y = shared_valid_set_xy
     train_data_reader.reset()
     valid_data_reader.reset()
@@ -243,13 +243,45 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         dnn_model = DeepRecurrentNetwork(n_in= n_ins, hidden_layer_size = hidden_layer_size, n_out = n_outs,
                                          L1_reg = l1_reg, L2_reg = l2_reg, hidden_layer_type = hidden_layer_type, 
                                          dropout_rate = dropout_rate, optimizer = cfg.optimizer, rnn_batch_training = cfg.rnn_batch_training)
-        train_fn, valid_fn = dnn_model.build_finetune_functions(
-                    (train_set_x, train_set_y), (valid_set_x, valid_set_y))  #, batch_size=batch_size
 
     else:
         logger.critical('%s type NN model is not supported!' %(model_type))
         raise
 
+    ## Model adaptation -- fine tuning the existing model
+    ## We can't just unpickle the old model and use that because fine-tune functions
+    ## depend on opt_l2e option used in construction of initial model. One way around this
+    ## would be to unpickle, manually set unpickled_dnn_model.opt_l2e=True and then call
+    ## unpickled_dnn_model.build_finetne_function() again. This is another way, construct
+    ## new model from scratch with opt_l2e=True, then copy existing weights over:
+    use_lhuc = cfg.use_lhuc
+    if init_dnn_model_file != "'_'":
+        logger.info('load parameters from existing model: %s' %(init_dnn_model_file))
+        if not os.path.isfile(init_dnn_model_file):
+            sys.exit('Model file %s does not exist'%(init_dnn_model_file))
+        existing_dnn_model = pickle.load(open(init_dnn_model_file, 'rb'))
+        if not use_lhuc and not len(existing_dnn_model.params) == len(dnn_model.params):
+            sys.exit('Old and new models have different numbers of weight matrices')
+        elif use_lhuc and len(dnn_model.params) < len(existing_dnn_model.params):
+            sys.exit('In LHUC adaptation new model must have more parameters than old model.')
+        # assign the existing dnn model parameters to the new dnn model
+        k = 0
+        for i in range(len(dnn_model.params)):
+            ## Added for LHUC ##
+            # In LHUC, we keep all the old parameters intact and learn only a small set of new
+            # parameters
+            if dnn_model.params[i].name == 'c':
+                continue
+            else:
+                old_val = existing_dnn_model.params[k].get_value()
+                new_val = dnn_model.params[i].get_value()
+                if numpy.shape(old_val) == numpy.shape(new_val):
+                    dnn_model.params[i].set_value(old_val)
+                else:
+                    sys.exit('old and new weight matrices have different shapes')
+                k = k + 1        
+    train_fn, valid_fn = dnn_model.build_finetune_functions(
+                    (train_set_x, train_set_y), (valid_set_x, valid_set_y), use_lhuc)  #, batch_size=batch_size
     logger.info('fine-tuning the %s model' %(model_type))
 
     start_time = time.time()
@@ -302,7 +334,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         logger.debug("training params -- learning rate: %f, early_stop: %d/%d" % (current_finetune_lr, early_stop, early_stop_epoch))
         while (not train_data_reader.is_finish()):
 
-            shared_train_set_xy, temp_train_set_x, temp_train_set_y = train_data_reader.load_one_partition()
+            _, temp_train_set_x, temp_train_set_y = train_data_reader.load_one_partition()
 
             # if sequential training, the batch size will be the number of frames in an utterance
             # batch_size for sequential training is considered only when rnn_batch_training is set to True
@@ -644,6 +676,24 @@ def main_function(cfg):
                 ###calculate mean and std vectors on the training data, and apply on the whole dataset
                 global_mean_vector = normaliser.compute_mean(nn_cmp_file_list[0:cfg.train_file_number], 0, cfg.cmp_dim)
                 global_std_vector = normaliser.compute_std(nn_cmp_file_list[0:cfg.train_file_number], global_mean_vector, 0, cfg.cmp_dim)
+                # for hmpd vocoder we don't need to normalize the 
+                # pdd values
+                if cfg.vocoder_type == 'hmpd':
+                    stream_start_index = {}
+                    dimension_index = 0
+                    recorded_vuv = False
+                    vuv_dimension = None
+                    for feature_name in cfg.out_dimension_dict.keys():
+                        if feature_name != 'vuv':
+                            stream_start_index[feature_name] = dimension_index
+                        else:
+                            vuv_dimension = dimension_index
+                            recorded_vuv = True
+                        
+                        dimension_index += cfg.out_dimension_dict[feature_name]
+                    logger.info('hmpd pdd values are not normalized since they are in 0 to 1')
+                    global_mean_vector[:,stream_start_index['pdd']: stream_start_index['pdd'] + cfg.out_dimension_dict['pdd']] = 0
+                    global_std_vector[:,stream_start_index['pdd']: stream_start_index['pdd'] + cfg.out_dimension_dict['pdd']] = 1
             normaliser.feature_normalisation(nn_cmp_file_list, nn_cmp_norm_file_list)
             cmp_norm_info = numpy.concatenate((global_mean_vector, global_std_vector), axis=0)
 
@@ -767,7 +817,7 @@ def main_function(cfg):
                       nnets_file_name = nnets_file_name, \
                       n_ins = lab_dim, n_outs = cfg.cmp_dim, ms_outs = cfg.multistream_outs, \
                       hyper_params = cfg.hyper_params, buffer_size = cfg.buffer_size, plot = cfg.plot, var_dict = var_dict,
-                      cmp_mean_vector = cmp_mean_vector, cmp_std_vector = cmp_std_vector)
+                      cmp_mean_vector = cmp_mean_vector, cmp_std_vector = cmp_std_vector,init_dnn_model_file=cfg.start_from_trained_model)
         except KeyboardInterrupt:
             logger.critical('train_DNN interrupted via keyboard')
             # Could 'raise' the exception further, but that causes a deep traceback to be printed
@@ -930,10 +980,17 @@ def main_function(cfg):
         logger.info('calculating MCD')
 
         ref_data_dir = os.path.join(inter_data_dir, 'ref_data')
-
+        ref_lf0_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.lf0_ext)
+        # for straight or world vocoders
         ref_mgc_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.mgc_ext)
         ref_bap_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.bap_ext)
-        ref_lf0_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.lf0_ext)
+        # for GlottDNN vocoder
+        ref_lsf_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.lsf_ext)
+        ref_slsf_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.slsf_ext)
+        ref_gain_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.gain_ext)
+        ref_hnr_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.hnr_ext)
+        # for pulsemodel vocoder
+        ref_pdd_list = prepare_file_path_list(gen_file_id_list, ref_data_dir, cfg.pdd_ext)
 
         in_gen_label_align_file_list = in_label_align_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
         calculator = IndividualDistortionComp()
@@ -1002,6 +1059,62 @@ def main_function(cfg):
                 ref_data_dir = os.path.join(data_dir, 'lf0')
             valid_f0_mse, valid_f0_corr, valid_vuv_error   = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.lf0_ext, cfg.lf0_dim)
             test_f0_mse , test_f0_corr, test_vuv_error    = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.lf0_ext, cfg.lf0_dim)
+        
+        if 'lsf' in cfg.in_dimension_dict:
+            if cfg.remove_silence_using_binary_labels:
+                untrimmed_reference_data = in_file_list_dict['lsf'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+                trim_silence(untrimmed_reference_data, ref_lsf_list, cfg.lsf_dim, \
+                                    untrimmed_test_labels, lab_dim, silence_feature)
+            else:
+                remover = SilenceRemover(n_cmp = cfg.lsf_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
+                remover.remove_silence(in_file_list_dict['lsf'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_lsf_list)
+            valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.lsf_ext, cfg.lsf_dim)
+            test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.lsf_ext, cfg.lsf_dim)
+        
+        if 'slsf' in cfg.in_dimension_dict:
+            if cfg.remove_silence_using_binary_labels:
+                untrimmed_reference_data = in_file_list_dict['slsf'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+                trim_silence(untrimmed_reference_data, ref_slsf_list, cfg.slsf_dim, \
+                                    untrimmed_test_labels, lab_dim, silence_feature)
+            else:
+                remover = SilenceRemover(n_cmp = cfg.slsf_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
+                remover.remove_silence(in_file_list_dict['slsf'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_slsf_list)
+            valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.slsf_ext, cfg.slsf_dim)
+            test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.slsf_ext, cfg.slsf_dim)
+        
+        if 'hnr' in cfg.in_dimension_dict:
+            if cfg.remove_silence_using_binary_labels:
+                untrimmed_reference_data = in_file_list_dict['hnr'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+                trim_silence(untrimmed_reference_data, ref_hnr_list, cfg.hnr_dim, \
+                                    untrimmed_test_labels, lab_dim, silence_feature)
+            else:
+                remover = SilenceRemover(n_cmp = cfg.hnr_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
+                remover.remove_silence(in_file_list_dict['hnr'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_hnr_list)
+            valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.hnr_ext, cfg.hnr_dim)
+            test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.hnr_ext, cfg.hnr_dim)
+        
+        if 'gain' in cfg.in_dimension_dict:
+            if cfg.remove_silence_using_binary_labels:
+                untrimmed_reference_data = in_file_list_dict['gain'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+                trim_silence(untrimmed_reference_data, ref_gain_list, cfg.gain_dim, \
+                                    untrimmed_test_labels, lab_dim, silence_feature)
+            else:
+                remover = SilenceRemover(n_cmp = cfg.gain_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
+                remover.remove_silence(in_file_list_dict['gain'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_gain_list)
+            valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.gain_ext, cfg.gain_dim)
+            test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.gain_ext, cfg.gain_dim)
+        
+        if 'pdd' in cfg.in_dimension_dict:
+            if cfg.remove_silence_using_binary_labels:
+                untrimmed_reference_data = in_file_list_dict['pdd'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+                trim_silence(untrimmed_reference_data, ref_pdd_list, cfg.pdd_dim, \
+                                    untrimmed_test_labels, lab_dim, silence_feature)
+            else:
+                remover = SilenceRemover(n_cmp = cfg.pdd_dim, silence_pattern = cfg.silence_pattern, label_type=cfg.label_type)
+                remover.remove_silence(in_file_list_dict['pdd'][cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number], in_gen_label_align_file_list, ref_pdd_list)
+            valid_spectral_distortion = calculator.compute_distortion(valid_file_id_list, ref_data_dir, gen_dir, cfg.pdd_ext, cfg.pdd_dim)
+            test_spectral_distortion  = calculator.compute_distortion(test_file_id_list , ref_data_dir, gen_dir, cfg.pdd_ext, cfg.pdd_dim)
+        
 
         logger.info('Develop: DNN -- MCD: %.3f dB; BAP: %.3f dB; F0:- RMSE: %.3f Hz; CORR: %.3f; VUV: %.3f%%' \
                     %(valid_spectral_distortion, valid_bap_mse, valid_f0_mse, valid_f0_corr, valid_vuv_error*100.))
