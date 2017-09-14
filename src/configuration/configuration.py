@@ -215,6 +215,16 @@ class configuration(object):
             ('in_LSF_dir'   , os.path.join(self.work_dir, 'data/LSF')  , 'Paths', 'in_LSF_dir'),
             ('in_LSFsource_dir'   , os.path.join(self.work_dir, 'data/LSFsource')  , 'Paths', 'in_LSFsource_dir'),
 
+            ## for glottDNN
+            ('in_f0_dir'   , os.path.join(self.work_dir, 'data/f0')  , 'Paths', 'in_f0_dir'),
+            ('in_gain_dir'   , os.path.join(self.work_dir, 'data/gain')  , 'Paths', 'in_gain_dir'),
+            ('in_hnr_dir'   , os.path.join(self.work_dir, 'data/hnr')  , 'Paths', 'in_hnr_dir'),
+            ('in_lsf_dir'   , os.path.join(self.work_dir, 'data/lsf')  , 'Paths', 'in_lsf_dir'),
+            ('in_slsf_dir'   , os.path.join(self.work_dir, 'data/slsf')  , 'Paths', 'in_slsf_dir'),
+
+            ## for sinusoidal
+            ('in_pdd_dir'   , os.path.join(self.work_dir, 'data/pdd')  , 'Paths', 'in_pdd_dir'),
+
             ## for joint duration
             ('in_seq_dur_dir' , os.path.join(self.work_dir, 'data/S2S_dur')  , 'Paths', 'in_seq_dur_dir'),
             ('in_dur_dir'     , os.path.join(self.work_dir, 'data/dur')      , 'Paths', 'in_dur_dir'),
@@ -263,6 +273,9 @@ class configuration(object):
             ('sptk_bindir', 'tools/bin/SPTK-3.9', 'Paths','sptk'),
             ('straight_bindir', 'tools/bin/straight', 'Paths','straight'),
             ('world_bindir', 'tools/bin/WORLD', 'Paths','world'),
+            ('glotthmm_bindir', 'tools/bin/glotthmm', 'Paths', 'glotthmm'),
+            ('glottdnn_bindir', 'tools/bin/glottdnn', 'Paths', 'glottdnn'),
+            ('hmpd_bindir', 'tools/bin/hmpd', 'Paths', 'hmpd'),
 
             ('network_type'           , 'RNN'                                           , 'Architecture', 'network_type'),
             ('model_type'           , 'DNN'                                             , 'Architecture', 'model_type'),
@@ -336,7 +349,7 @@ class configuration(object):
             ('mean_log_det',        -100.0                        , 'Architecture', 'mean_log_det'),
             ('start_from_trained_model',  '_'                     , 'Architecture', 'start_from_trained_model'),
             ('use_rprop',           0                             , 'Architecture', 'use_rprop'),
-
+            ('use_lhuc',           False                             , 'Architecture', 'use_lhuc'),
 
             ('mgc_dim' ,60     ,'Outputs','mgc'),
             ('dmgc_dim',60 * 3 ,'Outputs','dmgc'),
@@ -365,6 +378,23 @@ class configuration(object):
             ('dLSF_dim',30 * 3 ,'Outputs','dLSF'),
             ('LSFsource_dim' ,10     ,'Outputs','LSFsource'),
             ('dLSFsource_dim',10 * 3 ,'Outputs','dLSFsource'),
+
+            ## for GlottDNN
+             ('f0_dim' ,1     ,'Outputs','f0'),
+            ('df0_dim',1 * 3 ,'Outputs','df0'),
+            ('gain_dim' ,1     ,'Outputs','gain'),
+            ('dgain_dim',1 * 3 ,'Outputs','dgain'),
+            ('hnr_dim' ,5     ,'Outputs','hnr'),
+            ('dhnr_dim',5 * 3 ,'Outputs','dhnr'),
+            ('lsf_dim' ,30     ,'Outputs','lsf'),
+            ('dlsf_dim',30 * 3 ,'Outputs','dlsf'),
+            ('slsf_dim' ,10     ,'Outputs','slsf'),
+            ('dslsf_dim',10 * 3 ,'Outputs','dslsf'),
+        
+        ## for sinusoidal
+            ('pdd_dim', 25, 'Outputs', 'pdd'),
+            ('dpdd_dim', 25 * 3, 'Outputs', 'dpdd'),
+
 
         ## for joint dur:-
             ('seq_dur_dim' ,1     ,'Outputs','seq_dur'),
@@ -427,6 +457,16 @@ class configuration(object):
             ('HNR_ext'   , '.HNR'     , 'Extensions', 'HNR_ext'),
             ('LSF_ext'   , '.LSF'     , 'Extensions', 'LSF_ext'),
             ('LSFsource_ext'   , '.LSFsource'     , 'Extensions', 'LSFsource_ext'),
+
+             ## GlottDNN
+            ('f0_ext'   , '.f0'     , 'Extensions', 'f0_ext'),
+            ('gain_ext'   , '.gain'     , 'Extensions', 'gain_ext'),
+            ('hnr_ext'   , '.hnr'     , 'Extensions', 'hnr_ext'),
+            ('lsf_ext'   , '.lsf'     , 'Extensions', 'lsf_ext'),
+            ('slsf_ext'   , '.slsf'     , 'Extensions', 'slsf_ext'),
+
+            ## sinusoidal
+            ('pdd_ext'  , '.pdd', 'Extensions', 'pdd_ext'),
 
             ## joint dur
             ('dur_ext'   , '.dur'     , 'Extensions', 'dur_ext'),
@@ -520,6 +560,23 @@ class configuration(object):
             'SYNTHESIS'     : os.path.join(self.world_bindir, 'synth'),
             'ANALYSIS'      : os.path.join(self.world_bindir, 'analysis'),
             }
+        
+        self.GLOTTHMM= {
+            'SYNTHESIS'     : os.path.join(self.glotthmm_bindir, 'Synthesis'),
+            'config_file'   : os.path.join(self.glotthmm_bindir, 'config_default_48'),
+            'config_file_16'   : os.path.join(self.glotthmm_bindir, 'config_default_16'),
+            }
+
+        self.GLOTTDNN = {
+            'SYNTHESIS'     : os.path.join(self.glottdnn_bindir, 'Synthesis'),         
+            'config_file'   : os.path.join(self.glottdnn_bindir, 'config_default_48'),
+            'config_file_16'   : os.path.join(self.glottdnn_bindir, 'config_default_16'),
+            }
+
+        self.HMPD = {
+            'SYNTHESIS'     : os.path.join(self.hmpd_bindir, 'synthesis.py'),
+           }
+
 
         # set input extension same as output for voice conversion
         if self.VoiceConversion:
@@ -728,6 +785,40 @@ class configuration(object):
 #                current_stream_weight      = self.stream_weight_LSFsource
             ## for GlottHMM (end)
 
+            ## for GlottDNN (start)
+            elif feature_name == 'f0':
+                in_dimension = self.f0_dim
+                out_dimension = self.df0_dim
+                in_directory  = self.in_f0_dir
+
+            elif feature_name == 'gain':
+                in_dimension = self.gain_dim
+                out_dimension = self.dgain_dim
+                in_directory  = self.in_gain_dir
+
+            elif feature_name == 'hnr':
+                in_dimension = self.hnr_dim
+                out_dimension = self.dhnr_dim
+                in_directory  = self.in_hnr_dir
+
+            elif feature_name == 'lsf':
+                in_dimension = self.lsf_dim
+                out_dimension = self.dlsf_dim
+                in_directory  = self.in_lsf_dir
+
+            elif feature_name == 'slsf':
+                in_dimension = self.slsf_dim
+                out_dimension = self.dslsf_dim
+                in_directory  = self.in_slsf_dir
+            ## for GlottDNN (end)
+
+            ## for HMPD (start)
+            elif feature_name == 'pdd':
+                in_dimension = self.pdd_dim
+                out_dimension = self.dpdd_dim
+                in_directory  = self.in_pdd_dir
+            ## for HMPD (end)
+
             ## for joint dur (start)
             elif feature_name == 'dur':
                 in_dimension = self.dur_dim
@@ -821,6 +912,16 @@ class configuration(object):
         self.file_extension_dict['HNR'] = self.HNR_ext
         self.file_extension_dict['LSF'] = self.LSF_ext
         self.file_extension_dict['LSFsource'] = self.LSFsource_ext
+
+        ## gDNN
+        self.file_extension_dict['f0'] = self.f0_ext
+        self.file_extension_dict['gain'] = self.gain_ext
+        self.file_extension_dict['hnr'] = self.hnr_ext
+        self.file_extension_dict['lsf'] = self.lsf_ext
+        self.file_extension_dict['slsf'] = self.slsf_ext
+        
+        ## HMPD
+        self.file_extension_dict['pdd'] = self.pdd_ext
 
         ## joint dur
         self.file_extension_dict['dur'] = self.dur_ext

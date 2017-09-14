@@ -10,6 +10,7 @@ from theano.tensor.shared_randomstreams import RandomStreams
 
 from layers.gating import SimplifiedLstm, BidirectionSLstm, VanillaLstm, BidirectionLstm, VanillaRNN, SimplifiedGRU, GatedRecurrentUnit, LstmNoPeepholes, LstmNOG, LstmNIG, LstmNFG
 from layers.layers import GeneralLayer, LinearLayer, SigmoidLayer
+from layers.lhuc_layer import SigmoidLayer_LHUC, VanillaLstm_LHUC
 
 from training_schemes.rprop import compile_RPROP_train_function
 from training_schemes.adam_v2 import compile_ADAM_train_function
@@ -88,7 +89,8 @@ class DeepRecurrentNetwork(object):
             if hidden_layer_type[i] in self.list_of_activations:
                 hidden_activation = hidden_layer_type[i].lower()
                 hidden_layer = GeneralLayer(rng, layer_input, input_size, hidden_layer_size[i], activation=hidden_activation, p=self.dropout_rate, training=self.is_train)
-            
+            elif hidden_layer_type[i] == 'TANH_LHUC':
+                hidden_layer = SigmoidLayer_LHUC(rng, layer_input, input_size, hidden_layer_size[i], activation='tanh', p=self.dropout_rate, training=self.is_train)
             elif hidden_layer_type[i] == 'SLSTM':
                 hidden_layer = SimplifiedLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'SGRU':
@@ -111,6 +113,8 @@ class DeepRecurrentNetwork(object):
                 hidden_layer = BidirectionLstm(rng, layer_input, input_size, hidden_layer_size[i], hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'RNN':
                 hidden_layer = VanillaRNN(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
+            elif hidden_layer_type[i] == 'LSTM_LHUC':
+                hidden_layer = VanillaLstm_LHUC(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             else:
                 logger.critical("This hidden layer type: %s is not supported right now! \n Please use one of the following: SLSTM, BSLSTM, TANH, SIGMOID\n" %(hidden_layer_type[i]))
                 sys.exit(1)
@@ -150,7 +154,7 @@ class DeepRecurrentNetwork(object):
             self.finetune_cost = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
             self.errors = T.mean(T.sum((self.final_layer.output - self.y) ** 2, axis=1))
 
-    def build_finetune_functions(self, train_shared_xy, valid_shared_xy):
+    def build_finetune_functions(self, train_shared_xy, valid_shared_xy, use_lhuc=False):
         """ This function is to build finetune functions and to update gradients
 
         :param train_shared_xy: theano shared variable for input and output training data
@@ -170,15 +174,26 @@ class DeepRecurrentNetwork(object):
         mom = T.scalar('mom', dtype = theano.config.floatX)  # momentum
 
         cost = self.finetune_cost #+ self.L2_reg * self.L2_sqr
-
-        gparams = T.grad(cost, self.params)
+        
+        ## added for LHUC
+        if use_lhuc:
+            # In lhuc the parameters are only scaling parameters which have the name 'c'
+            self.lhuc_params = []
+            for p in self.params:
+                if p.name == 'c':
+                    self.lhuc_params.append(p)
+            params = self.lhuc_params
+            gparams = T.grad(cost, params)
+        else:
+            params = self.params
+            gparams = T.grad(cost, params)
 
         # use optimizer
         if self.optimizer=='sgd':
             # zip just concatenate two lists
             updates = OrderedDict()
 
-            for param, gparam in zip(self.params, gparams):
+            for param, gparam in zip(params, gparams):
                 weight_update = self.updates[param]
                 upd = mom * weight_update - lr * gparam
                 updates[weight_update] = upd
