@@ -1,6 +1,6 @@
 # Hybrid speech synthesis
 
-ATTENTION: still in experimental phase...won't work straight-forward...requires lot of debugging!!
+## ATTENTION: still in experimental phase...won't work straight-forward...requires lot of debugging!!
 
 Hybrid speech synthesis is one of the main driving force behind most of the commercial systems that are present today. 
 
