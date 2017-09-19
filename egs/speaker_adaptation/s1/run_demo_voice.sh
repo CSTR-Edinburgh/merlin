@@ -1,7 +1,8 @@
 #!/bin/bash
 
-train_tts=false
-run_tts=false
+train_tts=true
+run_tts=true
+do_adaptation=true
 
 if test "$#" -ne 1; then
     voice_name="vctk_avm"

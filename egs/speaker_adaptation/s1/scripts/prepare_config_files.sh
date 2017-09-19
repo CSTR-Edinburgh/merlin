@@ -30,7 +30,7 @@ fi
 duration_config_file=conf/duration_${Voice}.conf
 
 # Start with a general recipe...
-cp -f $MerlinDir/misc/recipes/duration_demo.conf $duration_config_file
+cp -f $WorkDir/conf/general/duration_demo.conf $duration_config_file
 
 # ... and modify it:
 
@@ -86,7 +86,7 @@ echo "Duration configuration settings stored in $duration_config_file"
 acoustic_config_file=conf/acoustic_${Voice}.conf
 
 # Start with a general recipe...
-cp -f $MerlinDir/misc/recipes/acoustic_demo.conf $acoustic_config_file
+cp -f $WorkDir/conf/general/acoustic_demo.conf $acoustic_config_file
 
 # ... and modify it:
 
