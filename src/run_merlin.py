@@ -255,7 +255,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     ## unpickled_dnn_model.build_finetne_function() again. This is another way, construct
     ## new model from scratch with opt_l2e=True, then copy existing weights over:
     use_lhuc = cfg.use_lhuc
-    if init_dnn_model_file != "'_'":
+    if init_dnn_model_file != "_":
         logger.info('load parameters from existing model: %s' %(init_dnn_model_file))
         if not os.path.isfile(init_dnn_model_file):
             sys.exit('Model file %s does not exist'%(init_dnn_model_file))
