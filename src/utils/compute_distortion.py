@@ -71,7 +71,7 @@ class   DistortionComputation(object):
             generation_lf0, lf0_frame_number = self.load_binary_file(lf0_file_name, self.lf0_dim)
 
             if ref_frame_number != mgc_frame_number:
-                print("The number of frames is not the same: %d vs %d. Error in compute_distortion.py\n." %(ref_frame_number, mgc_frame_number))
+                print("The number of frames is not the same: %d vs %d (%s). Error in compute_distortion.py\n." %(ref_frame_number, mgc_frame_number, file_id))
                 sys.exit(1)
 
             reference_mgc = reference_cmp[:, 0:self.mgc_dim]
@@ -169,8 +169,15 @@ class IndividualDistortionComp(object):
             ref_data, ref_frame_number = io_funcs.load_binary_file_frame(ref_file_name, feature_dim)
             gen_data, gen_frame_number = io_funcs.load_binary_file_frame(gen_file_name, feature_dim)
 
+            # accept the difference upto two frames
+            if abs(ref_frame_number - gen_frame_number) <= 2:
+                ref_frame_number = min(ref_frame_number, gen_frame_number)
+                gen_frame_number = min(ref_frame_number, gen_frame_number)
+                ref_data = ref_data[0:ref_frame_number, ]
+                gen_data = gen_data[0:gen_frame_number, ]
+            
             if ref_frame_number != gen_frame_number:
-                self.logger.critical("The number of frames is not the same: %d vs %d. Error in compute_distortion.py\n." %(ref_frame_number, gen_frame_number))
+                self.logger.critical("The number of frames is not the same: %d vs %d (%s). Error in compute_distortion.py\n." %(ref_frame_number, gen_frame_number, file_id))
                 raise
 
             if file_ext == '.lf0':

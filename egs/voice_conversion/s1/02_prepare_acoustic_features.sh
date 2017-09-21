@@ -31,6 +31,7 @@ prepare_feats=true
 if [ "$prepare_feats" = true ]; then
     echo "Step 2:" 
     echo "Prepare acoustic features using "${Vocoder}" vocoder..."
-    python ${MerlinDir}/misc/scripts/vocoder/${Vocoder,,}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq 
+    python ${MerlinDir}/misc/scripts/vocoder/${Vocoder,,}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq
+    python ${MerlinDir}/misc/scripts/voice_conversion/compute_lf0_stats.py ${feat_dir}/lf0 ${feat_dir}/mean_std_lf0.txt
 fi
 
