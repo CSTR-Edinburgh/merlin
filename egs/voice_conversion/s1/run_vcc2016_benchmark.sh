@@ -11,6 +11,9 @@ if test "$#" -ne 2; then
     exit 1
 fi
 
+src_speaker=$1
+tgt_speaker=$2
+
 train_vc=true
 run_vc=true
 
