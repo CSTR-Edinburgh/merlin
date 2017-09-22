@@ -6,7 +6,6 @@ To manipulate source speaker's voice to sound like target without changing langu
 
 Along with Merlin, we need to install few other speech tools in order to run voice conversion. 
 - [speech tools](http://www.cstr.ed.ac.uk/downloads/festival/2.4/speech_tools-2.4-release.tar.gz)
-- [festival](http://www.cstr.ed.ac.uk/downloads/festival/2.4/festival-2.4-release.tar.gz)
 - [festvox](http://festvox.org/festvox-2.7/festvox-2.7.0-release.tar.gz)
 
 ```sh
@@ -17,6 +16,20 @@ All these tools are required for only one task i.e., dynamic time warping (DTW) 
 You can check this [tutorial](http://speech.zone/exercises/dtw-in-python) for DTW implementation. 
 
 To convert source voice to target voice, `cd egs/voice_conversion/s1` and follow the below steps:
+
+## Voice conversion challenge 2016 data
+
+Now, you can run Merlin voice conversion using VC2016 data. 
+
+To download the data:
+```sh
+./scripts/download_vcc2016_data.sh
+```
+
+To run voice conversion between any source-target pair, give the speaker names as arguments:
+```sh
+./run_vcc2016_benchmark.sh [SOURCE_SPEAKER] [TARGET_SPEAKER]
+```
 
 ## Demo data
 

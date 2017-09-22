@@ -1,28 +1,18 @@
 #!/bin/bash
 
-setup_data=true
+if test "$#" -ne 2; then
+    echo "################################"
+    echo "Usage:"
+    echo "$0 <src_speaker> <tgt_speaker>"
+    echo ""
+    echo "Give a source speaker name eg., SF1"
+    echo "Give a target speaker name eg., TM1"
+    echo "################################"
+    exit 1
+fi
+
 train_vc=true
 run_vc=true
-
-if test "$#" -ne 2; then
-    src_speaker="SF1"
-    tgt_speaker="TM1"
-else
-    src_speaker=$1
-    tgt_speaker=$2
-fi
-
-# setup directory structure and download data
-if [ "$setup_data" = true ]; then
-    # download vcc2016 training data
-    wget http://datashare.is.ed.ac.uk/bitstream/handle/10283/2211/vcc2016_training.zip
-
-    # unzip files
-    unzip -q vcc2016_training.zip
-
-    # delete zip file
-    rm -rf vcc2016_training.zip
-fi
 
 # train voice conversion system for any source-target pair
 if [ "$train_vc" = true ]; then
@@ -55,20 +45,9 @@ if [ "$run_vc" = true ]; then
 
     mkdir -p experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}
     mkdir -p experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${tgt_speaker}
-    
-    if [ "$setup_data" = true ]; then
-        # download evaluation data
-        wget http://datashare.is.ed.ac.uk/bitstream/handle/10283/2211/evaluation_all.zip
-        
-        # unzip files
-        unzip -q evaluation_all.zip
 
-        # copy source audio files
-        cp evaluation_all/${src_speaker}/* experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}/
-
-        # delete zip file
-        rm -rf evaluation_all.zip
-    fi
+    # copy source audio files
+    cp evaluation_all/${src_speaker}/* experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}/
 
     basename --suffix=.wav -- experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}/* > experiments/${src_speaker}2${tgt_speaker}/test_synthesis/test_id_list.scp
 
