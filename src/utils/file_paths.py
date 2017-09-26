@@ -19,8 +19,8 @@
 __author__ = 'pasindu@google.com (Pasindu De Silva)'
 
 import os
-from utils import prepare_file_path_list
-from utils import read_file_list
+from .utils import prepare_file_path_list
+from .utils import read_file_list
 
 
 class FilePaths(object):
@@ -182,6 +182,6 @@ class FilePaths(object):
 
   def _prepare_test_label_file_path_list(self, list_dir):
     return prepare_file_path_list(self.test_id_list, list_dir, self.cfg.lab_ext)
-  
+
   def _prepare_test_binary_label_file_path_list(self, list_dir):
     return prepare_file_path_list(self.test_id_list, list_dir, self.cfg.lab_ext+'bin')
