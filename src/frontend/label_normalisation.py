@@ -337,7 +337,7 @@ class HTSLabelNormalisation(LabelNormalisation):
             
             if len(temp_list)==1:
                 frame_number = 0
-                full_label = temp_list[2]
+                full_label = temp_list[0]
             else:
                 start_time = int(temp_list[0])
                 end_time = int(temp_list[1])
