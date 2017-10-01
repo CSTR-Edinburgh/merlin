@@ -2,6 +2,10 @@
 
 To manipulate source speaker's voice to sound like target without changing language content. 
 
+## Install Merlin
+
+Before proceeding any further, you first [install Merlin](https://github.com/CSTR-Edinburgh/merlin#installation) and then run the below steps.
+
 ## Dependency tools
 
 Along with Merlin, we need to install few other speech tools in order to run voice conversion. 
