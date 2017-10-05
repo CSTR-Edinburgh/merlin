@@ -1,0 +1,15 @@
+About the Blizzard 2017 corpus
+-------------------------------
+
+This corpus is released as part of Blizzard 2017 challenge and was used in Merlin benchmark for Blizzard challenge workshop.
+It consists of 7253 sentences -- train(5866), valid(134) and test(253).
+
+For more details about the corpus, please follow below link:
+http://datashare.is.ed.ac.uk/handle/10283/2908 
+
+Each subdirectory of this directory contains the scripts for a sequence of experiments.
+
+  s1: To run fls_blizzard2017 with WORLD vocoder and unilex phoneset
+      
+
+

@@ -37,12 +37,12 @@ bash tools/compile_tools.sh
 ```
 - Install python dependencies
 ```sh
+pip install numpy 
 pip install -r requirements.txt
 ```
 
-For detailed instructions, to build the toolkit: see [`INSTALL`](https://github.com/CSTR-Edinburgh/merlin/blob/master/INSTALL.md).  
-These instructions are valid for UNIX
-systems including various flavors of Linux;
+For detailed instructions, to build the toolkit: see [`INSTALL`](https://github.com/CSTR-Edinburgh/merlin/blob/master/INSTALL.md) or [CSTR blog post](https://cstr-edinburgh.github.io/install-merlin/).  
+These instructions are valid for UNIX systems including various flavors of Linux;
 
 
 Getting started with Merlin
