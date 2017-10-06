@@ -90,7 +90,7 @@ class DeepRecurrentNetwork(object):
                 hidden_activation = hidden_layer_type[i].lower()
                 hidden_layer = GeneralLayer(rng, layer_input, input_size, hidden_layer_size[i], activation=hidden_activation, p=self.dropout_rate, training=self.is_train)
             elif hidden_layer_type[i] == 'TANH_LHUC':
-                hidden_layer = SigmoidLayer_LHUC(rng, layer_input, input_size, hidden_layer_size[i], activation='tanh', p=self.dropout_rate, training=self.is_train)
+                hidden_layer = SigmoidLayer_LHUC(rng, layer_input, input_size, hidden_layer_size[i], activation=T.tanh, p=self.dropout_rate, training=self.is_train)
             elif hidden_layer_type[i] == 'SLSTM':
                 hidden_layer = SimplifiedLstm(rng, layer_input, input_size, hidden_layer_size[i], p=self.dropout_rate, training=self.is_train, rnn_batch_training=self.rnn_batch_training)
             elif hidden_layer_type[i] == 'SGRU':
