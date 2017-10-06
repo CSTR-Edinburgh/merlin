@@ -37,6 +37,9 @@ function get_bap_dimension(){
         if [ "$SamplingFreq" == "16000" ]
         then
             echo 1
+        elif [ "$SamplingFreq" == "22050" ]
+        then
+            echo 2
         elif [ "$SamplingFreq" == "48000" ]
         then
             echo 5
@@ -68,7 +71,7 @@ if [ "$copy" = true ]; then
     cp -r ${tgt_feat_dir}/* $tgt_acoustic_data_dir
     
     echo "preparing file list..."
-    basename --suffix=.mgc -- ${src_aligned_feat_dir}/mgc/* > file_id_list.scp
+    basename -s .mgc ${src_aligned_feat_dir}/mgc/*.mgc > file_id_list.scp
     cp file_id_list.scp $src_acoustic_data_dir
     mv file_id_list.scp $tgt_acoustic_data_dir
     echo "done...!"

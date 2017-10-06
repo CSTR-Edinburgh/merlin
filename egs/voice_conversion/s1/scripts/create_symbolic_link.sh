@@ -20,6 +20,12 @@ then
     if [ "$SamplingFreq" == "16000" ]
     then
         cmp_dim=187
+    elif [ "$SamplingFreq" == "22050" ]
+    then
+        cmp_dim=190
+    elif [ "$SamplingFreq" == "44100" ]
+    then
+        cmp_dim=199
     elif [ "$SamplingFreq" == "48000" ]
     then
         cmp_dim=199

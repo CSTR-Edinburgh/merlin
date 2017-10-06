@@ -52,7 +52,7 @@ if [ "$run_vc" = true ]; then
     # copy source audio files
     cp evaluation_all/${src_speaker}/* experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}/
 
-    basename --suffix=.wav -- experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}/* > experiments/${src_speaker}2${tgt_speaker}/test_synthesis/test_id_list.scp
+    basename -s .wav experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker}/*.wav > experiments/${src_speaker}2${tgt_speaker}/test_synthesis/test_id_list.scp
 
     # step 6: run voice conversion from source to target 
     ./06_run_merlin_vc.sh experiments/${src_speaker}2${tgt_speaker}/test_synthesis/${src_speaker} conf/test_synth_${src_speaker}.conf conf/test_synth_${src_speaker}2${tgt_speaker}.conf

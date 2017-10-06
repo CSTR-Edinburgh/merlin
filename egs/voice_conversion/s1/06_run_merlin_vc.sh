@@ -25,7 +25,8 @@ echo "transforming source voice to target..."
 
 echo "extracting source features using "${Vocoder}" vocoder..."
 feat_dir=experiments/${Source}/acoustic_model/data
-python ${MerlinDir}/misc/scripts/vocoder/${Vocoder,,}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq 
+Vocoder=$(echo ${Vocoder} | tr '[A-Z]' '[a-z]')
+python ${MerlinDir}/misc/scripts/vocoder/${Vocoder}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq 
 
 echo "preparing acoustic features for source voice..."
 ./scripts/submit.sh ${MerlinDir}/src/run_merlin.py $test_source_config_file

@@ -42,6 +42,18 @@ nFFTHalf=1024
 alpha=0.58
 fi
 
+if [ "$fs" -eq 22050 ]
+then
+nFFTHalf=1024 
+alpha=0.65
+fi
+
+if [ "$fs" -eq 44100 ]
+then
+nFFTHalf=2048
+alpha=0.76
+fi
+
 if [ "$fs" -eq 48000 ]
 then
 nFFTHalf=2048

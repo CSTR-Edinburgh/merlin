@@ -55,6 +55,14 @@ if fs == 16000:
     nFFTHalf = 1024
     alpha = 0.58
 
+elif fs == 22050:
+    nFFTHalf = 1024
+    alpha = 0.65
+
+elif fs == 44100:
+    nFFTHalf = 2048
+    alpha = 0.76
+
 elif fs == 48000:
     nFFTHalf = 2048
     alpha = 0.77
