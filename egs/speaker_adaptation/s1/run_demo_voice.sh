@@ -18,7 +18,7 @@ if [ "$train_tts" = true ]; then
     ./01_setup.sh $voice_name
 
     # step 2: prepare labels
-    ./02_prepare_labels.sh database/wav database/txt.data database/labels
+    ./02_prepare_labels.sh database/wav database/txt database/labels
 
     # step 3: extract acoustic features
     ./03_prepare_acoustic_features.sh database/wav database/feats
