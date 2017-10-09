@@ -10,6 +10,7 @@ from theano.tensor.shared_randomstreams import RandomStreams
 
 from layers.gating import SimplifiedLstm, BidirectionSLstm, VanillaLstm, BidirectionLstm, VanillaRNN, SimplifiedGRU, GatedRecurrentUnit, LstmNoPeepholes, LstmNOG, LstmNIG, LstmNFG
 from layers.layers import GeneralLayer, LinearLayer, SigmoidLayer
+from layers.recurrent_output_layer import RecurrentOutputLayer
 from layers.lhuc_layer import SigmoidLayer_LHUC, VanillaLstm_LHUC
 
 from training_schemes.rprop import compile_RPROP_train_function
@@ -128,6 +129,8 @@ class DeepRecurrentNetwork(object):
 
         if output_type.lower() == 'linear':
             self.final_layer = LinearLayer(rng, self.rnn_layers[-1].output, input_size, self.n_out)
+        elif output_type.lower() == 'recurrent':
+            self.final_layer = RecurrentOutputLayer(rng, self.rnn_layers[-1].output, input_size, self.n_out, rnn_batch_training=self.rnn_batch_training)
         else:
             logger.critical("This output layer type: %s is not supported right now! \n Please use one of the following: LINEAR, BSLSTM\n" %(output_type))
             sys.exit(1)

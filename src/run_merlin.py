@@ -241,7 +241,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
     valid_model = None ## valid_fn and valid_model are the same. reserve to computer multi-stream distortion
     if model_type == 'DNN':
         dnn_model = DeepRecurrentNetwork(n_in= n_ins, hidden_layer_size = hidden_layer_size, n_out = n_outs,
-                                         L1_reg = l1_reg, L2_reg = l2_reg, hidden_layer_type = hidden_layer_type, 
+                                         L1_reg = l1_reg, L2_reg = l2_reg, hidden_layer_type = hidden_layer_type, output_type = cfg.output_layer_type,
                                          dropout_rate = dropout_rate, optimizer = cfg.optimizer, rnn_batch_training = cfg.rnn_batch_training)
 
     else:
