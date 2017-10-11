@@ -49,6 +49,8 @@ if [[ ! -d ${data_dir} ]] || [[ -n "$do_unzip" ]]; then
     rm -fr ${duration_dir}/data
     rm -fr ${acoustic_dir}/data
     unzip -q ${data_dir}.zip
+    mkdir -p ${duration_dir}/data
+    mkdir -p ${acoustic_dir}/data
     cp -r ${data_dir}/labels/unilex/label_state_align ${duration_dir}/data/label_state_align
     cp -r ${data_dir}/labels/unilex/label_state_align ${acoustic_dir}/data/label_state_align
     cp -r ${data_dir}/feats/world/* ${acoustic_dir}/data
