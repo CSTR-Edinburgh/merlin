@@ -92,6 +92,8 @@ if [[ ! -f ${SPTK_BIN_DIR}/x2x ]]; then
 elif [[ ! -f ${SPTK_BIN_DIR}/mcpf ]]; then
     echo "Error installing postfilter tools! Try installing dependencies!!"
     echo "sudo apt-get install realpath"
+    echo "sudo apt-get install autotools-dev"
+    echo "sudo apt-get install automake"
     exit 1
 elif [[ ! -f ${WORLD_BIN_DIR}/analysis ]]; then
     echo "Error installing WORLD tools"
