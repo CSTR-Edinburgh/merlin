@@ -8,6 +8,21 @@ class VanillaSequenceEncoder(object):
     def __init__(self, rng, x, d):
 
         self.input = x
+        self.out_len = d
+        self.encoded_output = self.encode_final_state()
+
+    ### default seq-to-seq model: tile C as input to all frames ###
+    def encode_final_state(self):
+        context_vector       = self.input[-1, ]
+        tiled_context_vector = T.tile(context_vector, (self.out_len, 1))
+
+        return tiled_context_vector
+
+class VanillaSequenceEncoderWithDur(object):
+
+    def __init__(self, rng, x, d):
+
+        self.input = x
         self.dur_input = d
         self.encoded_output = self.encode_final_state()
 

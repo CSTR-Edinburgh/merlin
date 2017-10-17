@@ -260,6 +260,23 @@ class ListDataProvider(object):
         self.seq_length   = max_seq_length
         self.bucket_index = self.bucket_index + 1
 
+    def set_s2s_division(self, linguistic_feats_file=None, frame_length=4):
+        self.MLU_div = {}
+        in_f = open(linguistic_feats_file, 'r')
+        for newline in in_f.readlines():
+            temp_list = newline.strip().split()
+            unit  = temp_list[0]
+            feat1 = temp_list[1][1:-1].split('-')
+            feat2 = temp_list[2][1:-1].split('-')
+
+            self.MLU_div[unit] = [int(feat1[0]), int(feat1[1]), int(feat2[0]), int(feat2[1])]
+       
+        syl_length = (self.MLU_div['syl'][1] - self.MLU_div['syl'][0])+ (self.MLU_div['syl'][3] - self.MLU_div['syl'][2])
+        phone_length = (self.MLU_div['phone'][1] - self.MLU_div['phone'][0]) + (self.MLU_div['phone'][3] - self.MLU_div['phone'][2])
+        self.MLU_div['length'] = [0, syl_length, syl_length+phone_length, syl_length+phone_length+frame_length]
+
+        return self.MLU_div['length']
+
     def load_one_partition(self):
         if self.sequential == True:
             if not self.network_type or self.network_type=="RNN":
@@ -270,8 +287,8 @@ class ListDataProvider(object):
             elif self.network_type=="CTC":
                 shared_set_xy, temp_set_x, temp_set_y = self.load_next_utterance_CTC()
             elif self.network_type=="S2S":
-                shared_set_xyd, temp_set_x, temp_set_y, temp_set_d = self.load_next_utterance_S2S()
-                return  shared_set_xyd, temp_set_x, temp_set_y, temp_set_d
+                shared_set_xyd, temp_set_x, temp_set_y, temp_set_d, temp_set_af = self.load_next_utterance_S2SML()
+                return  shared_set_xyd, temp_set_x, temp_set_y, temp_set_d, temp_set_af
             else:
                 logger.critical("Unknown network type: %s \n Please use one of the following: DNN, RNN, S2S, CTC\n" %(self.network_type))
                 sys.exit(1)
@@ -430,10 +447,10 @@ class ListDataProvider(object):
         else:
             dur_features, dur_frame_number = io_fun.load_binary_file_frame(self.dur_files_list[self.file_index], 1)
             assert sum(dur_features) == out_frame_number
-
+           
         dur_features = numpy.reshape(dur_features, (-1, ))
-        temp_set_d = dur_features.astype(int)
-
+        temp_set_d = dur_features.astype(int)   
+        
         self.file_index += 1
 
         if  self.file_index >= self.list_size:
@@ -447,6 +464,230 @@ class ListDataProvider(object):
         shared_set_xyd = (shared_set_x, shared_set_y, shared_set_d)
 
         return shared_set_xyd, temp_set_x, temp_set_y, temp_set_d
+
+    def load_next_utterance_S2SML(self):
+        """Load the data for one utterance. This function will be called when utterance-by-utterance loading is required (e.g., sequential training).
+        
+        """
+        
+        io_fun = BinaryIOCollection()
+
+        in_features, lab_frame_number = io_fun.load_binary_file_frame(self.x_files_list[self.file_index], self.n_ins)
+        out_features, out_frame_number = io_fun.load_binary_file_frame(self.y_files_list[self.file_index], self.n_outs)
+        dur_features, dur_frame_number = io_fun.load_binary_file_frame(self.dur_files_list[self.file_index], 1)
+      
+        ### MLU features sub-division ###
+        temp_set_MLU = in_features[0:lab_frame_number, ]
+        temp_set_y   = out_features[0:out_frame_number, ]
+      
+        temp_set_phone = numpy.concatenate([temp_set_MLU[:, self.MLU_div['phone'][0]: self.MLU_div['phone'][1]], temp_set_MLU[:, self.MLU_div['phone'][2]: self.MLU_div['phone'][3]]], axis = 1)
+        temp_set_syl   = numpy.concatenate([temp_set_MLU[:, self.MLU_div['syl'][0]: self.MLU_div['syl'][1]], temp_set_MLU[:, self.MLU_div['syl'][2]: self.MLU_div['syl'][3]]], axis = 1)
+        temp_set_word  = numpy.concatenate([temp_set_MLU[:, self.MLU_div['word'][0]: self.MLU_div['word'][1]], temp_set_MLU[:, self.MLU_div['word'][2]: self.MLU_div['word'][3] ]], axis = 1)
+        
+        ### duration array sub-division ###
+        dur_features = numpy.reshape(dur_features, (-1, ))
+        temp_set_d   = dur_features.astype(int)   
+        dur_word_syl = temp_set_d[0: -lab_frame_number]    
+        
+        num_ph    = lab_frame_number
+        num_syl   = (numpy.where(numpy.cumsum(dur_word_syl[::-1])==lab_frame_number)[0][0] + 1)
+        num_words = len(dur_word_syl) - num_syl 
+        
+        temp_set_dur_phone = temp_set_d[-num_ph:] 
+        temp_set_dur_word  = dur_word_syl[0: num_words]
+        temp_set_dur_syl   = dur_word_syl[num_words: ]
+        
+        ### additional feature matrix (syllable+phone+frame=432) ###
+        num_frames = sum(temp_set_dur_phone)
+        temp_set_af = numpy.empty((num_frames, self.MLU_div['length'][-1]))
+        
+        temp_set_af[0: num_syl, self.MLU_div['length'][0]: self.MLU_div['length'][1] ] = temp_set_syl[numpy.cumsum(temp_set_dur_syl)-1]
+        temp_set_af[0: num_ph, self.MLU_div['length'][1]: self.MLU_div['length'][2]] = temp_set_phone
+        
+        ### input word feature matrix ###
+        temp_set_dur_word_segments = numpy.zeros(num_words, dtype='int32')
+        syl_bound = numpy.cumsum(temp_set_dur_word)
+        for indx in xrange(num_words):
+            temp_set_dur_word_segments[indx] = int(sum(temp_set_dur_syl[0: syl_bound[indx]]))
+        temp_set_x = temp_set_word[temp_set_dur_word_segments-1]
+        
+        ### rest of the code similar to S2S ###
+        self.file_index += 1
+
+        if  self.file_index >= self.list_size:
+            self.end_reading = True
+            self.file_index = 0
+
+        shared_set_x  = self.make_shared(temp_set_x, 'x')
+        shared_set_y  = self.make_shared(temp_set_y, 'y')
+        shared_set_d  = theano.shared(numpy.asarray(temp_set_d, dtype='int32'), name='d', borrow=True)
+
+        shared_set_xyd = (shared_set_x, shared_set_y, shared_set_d)
+        
+        return shared_set_xyd, temp_set_x, temp_set_y, temp_set_d, temp_set_af
+
+    def load_next_batch_S2S(self):
+        """Load the data for one utterance. This function will be called when utterance-by-utterance loading is required (e.g., sequential training).
+        
+        """
+
+        temp_set_x = numpy.empty((self.buffer_size, self.n_ins))
+        temp_set_y = numpy.empty((self.buffer_size, self.n_outs))
+        temp_set_d = numpy.empty((self.buffer_size, 1))
+
+        io_fun = BinaryIOCollection()
+
+        lab_start_frame_number = 0
+        lab_end_frame_number   = 0
+
+        out_start_frame_number = 0
+        out_end_frame_number   = 0
+
+        new_x_files_list = self.x_files_list[self.file_index].split(',')
+        new_y_files_list = self.y_files_list[self.file_index].split(',')
+        new_dur_files_list = self.dur_files_list[self.file_index].split(',')
+
+        for new_file_index in xrange(len(new_x_files_list)):
+            in_features, lab_frame_number = io_fun.load_binary_file_frame(new_x_files_list[new_file_index], self.n_ins)
+            out_features, out_frame_number = io_fun.load_binary_file_frame(new_y_files_list[new_file_index], self.n_outs)
+            
+            lab_end_frame_number+=lab_frame_number
+            out_end_frame_number+=out_frame_number
+
+            temp_set_x[lab_start_frame_number: lab_end_frame_number, ] = in_features[0:lab_frame_number, ]
+            temp_set_y[out_start_frame_number: out_end_frame_number, ] = out_features[0:out_frame_number, ]
+            if not self.dur_files_list:
+                dur_frame_number = out_end_frame_number
+                temp_set_d = numpy.array([dur_frame_number])
+            else:
+                dur_features, dur_frame_number = io_fun.load_binary_file_frame(new_dur_files_list[new_file_index], 1)
+                assert sum(dur_features) == out_frame_number
+                temp_set_d[lab_start_frame_number: lab_end_frame_number, ] = dur_features[0:lab_frame_number, ]
+
+            lab_start_frame_number = lab_end_frame_number
+            out_start_frame_number = out_end_frame_number
+
+        temp_set_x = temp_set_x[0:lab_end_frame_number, ]
+        temp_set_y = temp_set_y[0:out_end_frame_number, ]
+
+        temp_set_d = temp_set_d[0:lab_end_frame_number, ]
+        temp_set_d = numpy.reshape(temp_set_d, (-1, ))
+        temp_set_d = temp_set_d.astype(int)   
+        
+        self.file_index += 1
+
+        if  self.file_index >= self.list_size:
+            self.end_reading = True
+            self.file_index = 0
+
+        shared_set_x = self.make_shared(temp_set_x, 'x')
+        shared_set_y = self.make_shared(temp_set_y, 'y')
+        shared_set_d = theano.shared(numpy.asarray(temp_set_d, dtype='int32'), name='d', borrow=True)
+
+        shared_set_xyd = (shared_set_x, shared_set_y, shared_set_d)
+
+        return shared_set_xyd, temp_set_x, temp_set_y, temp_set_d
+
+    def load_next_batch_S2SML(self):
+        """Load the data for one utterance. This function will be called when utterance-by-utterance loading is required (e.g., sequential training).
+        
+        """
+       
+        inp_length = (self.MLU_div['word'][1] - self.MLU_div['word'][0]) + (self.MLU_div['word'][3] - self.MLU_div['word'][2])
+        af_length = self.MLU_div['length'][-1]
+
+        new_temp_set_x  = numpy.empty((self.buffer_size, inp_length))
+        new_temp_set_y  = numpy.empty((self.buffer_size, self.n_outs))
+        new_temp_set_af = numpy.empty((self.buffer_size, af_length))
+        new_temp_set_d  = [numpy.array([], 'int32'),numpy.array([], 'int32'),numpy.array([], 'int32')]
+
+        io_fun = BinaryIOCollection()
+
+        lab_start_frame_number = 0
+        lab_end_frame_number   = 0
+
+        out_start_frame_number = 0
+        out_end_frame_number   = 0
+
+        new_x_files_list = self.x_files_list[self.file_index].split(',')
+        new_y_files_list = self.y_files_list[self.file_index].split(',')
+        new_dur_files_list = self.dur_files_list[self.file_index].split(',')
+
+        for new_file_index in xrange(len(new_x_files_list)):
+            in_features, lab_frame_number = io_fun.load_binary_file_frame(new_x_files_list[new_file_index], self.n_ins)
+            out_features, out_frame_number = io_fun.load_binary_file_frame(new_y_files_list[new_file_index], self.n_outs)
+            dur_features, dur_frame_number = io_fun.load_binary_file_frame(new_dur_files_list[new_file_index], 1)
+            
+            ### MLU features sub-division ###
+            temp_set_MLU = in_features[0:lab_frame_number, ]
+            temp_set_y   = out_features[0:out_frame_number, ]
+        
+            temp_set_phone = numpy.concatenate([temp_set_MLU[:, self.MLU_div['phone'][0]: self.MLU_div['phone'][1]], temp_set_MLU[:, self.MLU_div['phone'][2]: self.MLU_div['phone'][3]]], axis = 1)
+            temp_set_syl   = numpy.concatenate([temp_set_MLU[:, self.MLU_div['syl'][0]: self.MLU_div['syl'][1]], temp_set_MLU[:, self.MLU_div['syl'][2]: self.MLU_div['syl'][3]]], axis = 1)
+            temp_set_word  = numpy.concatenate([temp_set_MLU[:, self.MLU_div['word'][0]: self.MLU_div['word'][1]], temp_set_MLU[:, self.MLU_div['word'][2]: self.MLU_div['word'][3] ]], axis = 1)
+        
+            ### duration array sub-division ###
+            dur_features = numpy.reshape(dur_features, (-1, ))
+            temp_set_d   = dur_features.astype(int)   
+            dur_word_syl = temp_set_d[0: -lab_frame_number]    
+        
+            num_ph    = lab_frame_number
+            num_syl   = (numpy.where(numpy.cumsum(dur_word_syl[::-1])==lab_frame_number)[0][0] + 1)
+            num_words = len(dur_word_syl) - num_syl 
+        
+            temp_set_dur_phone = temp_set_d[-num_ph:] 
+            temp_set_dur_word  = dur_word_syl[0: num_words]
+            temp_set_dur_syl   = dur_word_syl[num_words: ]
+        
+            ### additional feature matrix (syllable+phone+frame=432) ###
+            num_frames = sum(temp_set_dur_phone)
+            temp_set_af = numpy.empty((num_frames, self.MLU_div['length'][-1]))
+        
+            temp_set_af[0: num_syl, self.MLU_div['length'][0]: self.MLU_div['length'][1] ] = temp_set_syl[numpy.cumsum(temp_set_dur_syl)-1]
+            temp_set_af[0: num_ph, self.MLU_div['length'][1]: self.MLU_div['length'][2]] = temp_set_phone
+        
+            ### input word feature matrix ###
+            temp_set_dur_word_segments = numpy.zeros(num_words, dtype='int32')
+            syl_bound = numpy.cumsum(temp_set_dur_word)
+            for indx in xrange(num_words):
+                temp_set_dur_word_segments[indx] = int(sum(temp_set_dur_syl[0: syl_bound[indx]]))
+            temp_set_x = temp_set_word[temp_set_dur_word_segments-1]
+        
+            ### for batch processing ###
+            lab_end_frame_number+=num_words
+            out_end_frame_number+=out_frame_number
+      
+            new_temp_set_x[lab_start_frame_number: lab_end_frame_number, ] = temp_set_x[0:num_words, ]
+            new_temp_set_y[out_start_frame_number: out_end_frame_number, ] = temp_set_y[0:out_frame_number, ]
+            new_temp_set_af[out_start_frame_number: out_end_frame_number, ] = temp_set_af[0:out_frame_number, ]
+
+            new_temp_set_d[0] = numpy.append(new_temp_set_d[0], temp_set_dur_word)
+            new_temp_set_d[1] = numpy.append(new_temp_set_d[1], temp_set_dur_syl)
+            new_temp_set_d[2] = numpy.append(new_temp_set_d[2], temp_set_dur_phone)
+
+            lab_start_frame_number = lab_end_frame_number
+            out_start_frame_number = out_end_frame_number
+        
+        new_temp_set_x = new_temp_set_x[0:lab_end_frame_number, ]
+        new_temp_set_y = new_temp_set_y[0:out_end_frame_number, ]
+        new_temp_set_af = new_temp_set_af[0:out_end_frame_number, ]
+        
+        new_temp_set_d = numpy.concatenate((new_temp_set_d[0], new_temp_set_d[1], new_temp_set_d[2]))
+        
+        ### rest of the code similar to S2S ###
+        self.file_index += 1
+
+        if  self.file_index >= self.list_size:
+            self.end_reading = True
+            self.file_index = 0
+
+        shared_set_x  = self.make_shared(new_temp_set_x, 'x')
+        shared_set_y  = self.make_shared(new_temp_set_y, 'y')
+        shared_set_d  = theano.shared(numpy.asarray(new_temp_set_d, dtype='int32'), name='d', borrow=True)
+
+        shared_set_xyd = (shared_set_x, shared_set_y, shared_set_d)
+        
+        return shared_set_xyd, new_temp_set_x, new_temp_set_y, new_temp_set_d, new_temp_set_af
 
     def load_next_utterance_CTC(self):
 

@@ -168,9 +168,6 @@ class VanillaRNNDecoder(object):
 
         self.params = [self.W_xi, self.W_hi, self.W_yi, self.U_hi, self.b_i, self.b]
 
-        # Still in testing mode
-        #self.params = [self.W_xi, self.W_hi, self.W_yi, self.U_xi, self.U_hi, self.U_yi, self.b_i, self.b]
-
         self.L2_cost = (self.W_xi ** 2).sum() + (self.W_hi ** 2).sum() + (self.W_yi ** 2).sum() + (self.U_hi ** 2).sum()
 
 
@@ -188,9 +185,6 @@ class VanillaRNNDecoder(object):
         h_t = T.tanh(Wix + T.dot(h_tm1, self.W_hi) + T.dot(y_tm1, self.W_yi) + self.b_i)  #
 
         y_t = T.dot(h_t, self.U_hi) + self.b
-
-        # Still in testing mode
-        #y_t = T.dot(h_t, self.U_hi) + T.dot(self.input, self.U_xi) + T.dot(y_tm1, self.U_yi) + self.b
 
         c_t = h_t
 
@@ -552,6 +546,48 @@ class VanillaLstmDecoder(LstmDecoderBase):
         y_t = T.dot(h_t, self.U_ho) + self.b
 
         return h_t, c_t, y_t     #, i_t, f_t, o_t
+
+class SimplifiedLstmDecoder(LstmDecoderBase):
+    """ This class implements a simplified LSTM block which only keeps the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
+    
+    """
+
+    def __init__(self, rng, x, n_in, n_h, n_out, p=0.0, training=0, rnn_batch_training=False):
+        """ Initialise a LSTM with only the forget gate
+        
+        :param rng: random state, fixed value for randome state for reproducible objective results
+        :param x: input to a network
+        :param n_in: number of input features
+        :type n_in: integer
+        :param n_h: number of hidden units
+        :type n_h: integer
+        """
+        
+        self.n_out = int(n_out)
+
+        LstmDecoderBase.__init__(self, rng, x, n_in, n_h, n_out, p, training, rnn_batch_training)
+
+        self.params = [self.W_yi,
+                       self.W_xf, self.W_hf,
+                       self.W_xc, self.W_hc,
+                       self.U_ho,
+                       self.b_f,  self.b_c, self.b]
+                       
+    def lstm_as_activation_function(self, Wix, Wfx, Wcx, Wox, h_tm1, c_tm1, y_tm1):
+        """ This function treats the LSTM block as an activation function, and implements the LSTM (simplified LSTM) activation function.
+            The meaning of each input and output parameters can be found in :func:`layers.gating.LstmBase.recurrent_fn`
+        
+        """
+    
+        f_t = T.nnet.sigmoid(Wfx + T.dot(h_tm1, self.W_hf) + self.b_f)  #self.w_cf * c_tm1 
+    
+        c_t = f_t * c_tm1 + (1 - f_t) * T.tanh(Wcx + T.dot(h_tm1, self.W_hc) + T.dot(y_tm1, self.W_yi) + self.b_c) 
+
+        h_t = T.tanh(c_t)
+
+        y_t = T.dot(h_t, self.U_ho) + self.b
+
+        return h_t, c_t, y_t
 
 class LstmNFG(LstmBase):
     """ This class implements a LSTM block without the forget gate, inheriting the genetic class :class:`layers.gating.LstmBase`.
