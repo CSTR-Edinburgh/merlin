@@ -56,13 +56,23 @@ The first step is to run setup as it creates directories and some text files for
 The next steps demonstrate on how to setup voice. 
 
 ```sh
-./01_setup.sh my_voice
+./01_setup.sh conf/global_settings.cfg
 ```
 
-It also creates a global config file: `conf/global_settings.cfg`, where default settings are stored.
 You need to modify these params as per your own data.
 
 ### Build unit-selection model with Multisyn
+
+Choose one of the lexicons:
+1. cmulex
+2. unilex-rpx
+3. combilex-rpx
+
+Choose gender:
+1. 'm' for male
+2. 'f' for female
+
+If no arguments provided, the script uses default options: unilex and female assuming slt database
 
 ```sh
 ./02_build_unit_selection_model.sh
@@ -82,6 +92,8 @@ You need to modify these params as per your own data.
 
 ### Synthesis with Festival
 
+The below instructions are for Festival Multisyn voice:
+
 ```sh
 $FESTDIR/bin/festival
 ```
@@ -99,3 +111,5 @@ For batch processing:
 ```sh
 ./05_run_hybrid_voice.sh <path_to_text_dir> <path_to_wav_dir>
 ```
+
+For hybrid voice, please use the scm file in `scripts`.

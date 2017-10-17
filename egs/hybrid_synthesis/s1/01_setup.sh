@@ -3,24 +3,29 @@
 if test "$#" -ne 1; then
     echo "################################"
     echo "Usage:"
-    echo "./01_setup.sh <voice_name>"
+    echo "$0 <path_to_global_conf_file>"
     echo ""
-    echo "Give a voice name eg., slt_arctic"
+    echo "default path to global conf file: conf/global_settings.cfg"
+    echo "Modify the params in conf file as per your data..."
     echo "################################"
     exit 1
 fi
 
-current_working_dir=$(pwd)
-merlin_dir=$(dirname $(dirname $(dirname $current_working_dir)))
-experiments_dir=${current_working_dir}/experiments
-data_dir=${current_working_dir}/database
+#pass arguments
+global_config_file=$1
 
-voice_name=$1
-voice_dir=${experiments_dir}/${voice_name}
+if [ ! -f $global_config_file ]; then
+    echo "Global config file doesn't exist"
+    exit 1
+else
+    source $global_config_file
+fi
 
+experiments_dir=${WORKDIR}/experiments
+voice_dir=${experiments_dir}/${Voice}
 synthesis_dir=${voice_dir}/test_synthesis
 
-mkdir -p ${data_dir}
+mkdir -p ${DATADIR}
 mkdir -p ${experiments_dir}
 mkdir -p ${voice_dir}
 mkdir -p ${synthesis_dir}
@@ -32,46 +37,7 @@ echo "Hi, this is a demo voice from Merlin." > ${synthesis_dir}/txt/test_002.txt
 echo "Hope you guys enjoy free open-source voices from Merlin." > ${synthesis_dir}/txt/test_003.txt
 printf "test_001\ntest_002\ntest_003" > ${synthesis_dir}/test_id_list.scp
 
-global_config_file=conf/global_settings.cfg
-
-### default settings ###
-echo "######################################" > $global_config_file
-echo "############# PATHS ##################" >> $global_config_file
-echo "######################################" >> $global_config_file
-echo "" >> $global_config_file
-
-echo "MerlinDir=${merlin_dir}" >>  $global_config_file
-echo "WorkDir=${current_working_dir}" >>  $global_config_file
-echo "" >> $global_config_file
-
-echo "######################################" >> $global_config_file
-echo "############# PARAMS #################" >> $global_config_file
-echo "######################################" >> $global_config_file
-echo "" >> $global_config_file
-
-echo "Voice=${voice_name}" >> $global_config_file
-echo "SamplingFreq=16000" >> $global_config_file
-echo "Labels=state_align" >> $global_config_file
-echo "SilencePhone='sil'" >> $global_config_file
-echo "FileIDList=file_id_list.scp" >> $global_config_file
-
-echo "" >> $global_config_file
-
-echo "######################################" >> $global_config_file
-echo "############# TOOLS ##################" >> $global_config_file
-echo "######################################" >> $global_config_file
-echo "" >> $global_config_file
-
-echo "ESTDIR=${merlin_dir}/tools/speech_tools" >> $global_config_file
-echo "FESTDIR=${merlin_dir}/tools/festival" >> $global_config_file
-echo "MULTISYN_BUILD=${merlin_dir}/tools/multisyn_build" >> $global_config_file
-echo "" >> $global_config_file
-echo "HTKDIR=${merlin_dir}/tools/bin/htk" >> $global_config_file
-echo "" >> $global_config_file
-
 echo "Step 1:"
-echo "Merlin default voice settings configured in \"$global_config_file\""
-echo "Modify these params as per your data..."
-echo "eg., sampling frequency etc.,"
+echo "Merlin default voice settings configured in ${global_config_file}"
 echo "setup done...!"
 

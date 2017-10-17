@@ -31,14 +31,14 @@
 ;;;                                                                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; fls Multisyn Voice definition for use with Unilex
+;;; slt Multisyn Voice definition for use with Unilex
 ;;;
 
 
 ;; SCHEME PATHS
 (defvar multisyn_lib_dir (path-append libdir "multisyn/"))
-(defvar fls_edi_multisyn_dir (cdr (assoc 'cstr_edi_fls_multisyn voice-locations)))
-(defvar fls_edi_data_dir (path-append fls_edi_multisyn_dir "fls"))
+(defvar slt_edi_multisyn_dir (cdr (assoc 'cstr_edi_slt_multisyn voice-locations)))
+(defvar slt_edi_data_dir (path-append slt_edi_multisyn_dir "slt"))
 
 
 ;; These may or may not be already loaded.
@@ -56,23 +56,23 @@
 ;; DATA PATHS
 
 ;; Location of Base utterances
-(set! fls_edi_base_dirs (list (path-append fls_edi_data_dir "utt/")
-			   (path-append fls_edi_data_dir "wav/")
-			   (path-append fls_edi_data_dir "pm/")
-			   (path-append fls_edi_data_dir "coef/")
+(set! slt_edi_base_dirs (list (path-append slt_edi_data_dir "utt/")
+			   (path-append slt_edi_data_dir "wav/")
+			   (path-append slt_edi_data_dir "pm/")
+			   (path-append slt_edi_data_dir "coef/")
 			   ".utt" ".wav" ".pm" ".coef"))
 
-(make_voice_definition 'cstr_edi_fls_multisyn 
-		       48000
-		       'voice_cstr_edi_fls_multisyn_configure
+(make_voice_definition 'cstr_edi_slt_multisyn 
+		       16000
+		       'voice_cstr_edi_slt_multisyn_configure
 		       unilex-rpx-backoff_rules
-		       fls_edi_data_dir
-		       (list (list fls_edi_base_dirs "utts.data")
-			     (list fls_edi_base_dirs "fls_pauses.data")))
+		       slt_edi_data_dir
+		       (list (list slt_edi_base_dirs "utts.data")
+			     (list slt_edi_base_dirs "slt_pauses.data")))
 
-(define (voice_cstr_edi_fls_multisyn_configure_pre voice)
-  "(voice_cstr_edi_fls_multisyn_configure_pre voice)
- Preconfiguration for female British English (fls) for
+(define (voice_cstr_edi_slt_multisyn_configure_pre voice)
+  "(voice_cstr_edi_slt_multisyn_configure_pre voice)
+ Preconfiguration for female British English (slt) for
  the multisyn unitselection engine with Combilex."
   (voice_reset)
   (Parameter.set 'Language 'britishenglish)
@@ -81,9 +81,9 @@
   (unilex::select_phoneset))
 
 
-(define (voice_cstr_edi_fls_multisyn_configure voice)
-  "(voice_cstr_edi_fls_multisyn_configure voice)
- Set up the current voice to be female British English (fls) for
+(define (voice_cstr_edi_slt_multisyn_configure voice)
+  "(voice_cstr_edi_slt_multisyn_configure voice)
+ Set up the current voice to be female British English (slt) for
  the multisyn unitselection engine with Combilex."
   (let (this_voice)
     (voice_reset)
@@ -116,8 +116,8 @@
 )
 
 (proclaim_voice
- 'cstr_edi_fls_multisyn
+ 'cstr_edi_slt_multisyn
  '((language english)(gender female)(dialect british)
-   (description "fls multisyn unitsel voice  (Combilex configuration).")))
+   (description "slt multisyn unitsel voice  (Combilex configuration).")))
 
-(provide 'cstr_edi_fls_multisyn)
+(provide 'cstr_edi_slt_multisyn)

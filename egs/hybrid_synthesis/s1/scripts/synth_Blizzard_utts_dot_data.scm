@@ -1,0 +1,18 @@
+(define (synth_utts_dot_data uttsdotdatafile datadirectory wavdirectory)
+  "(synth_utts_dot_data uttsdotdatafile datadirectory wavdirectory)
+Synthesise a test set"
+  (let ((utt nil)
+        (p (load uttsdotdatafile t)))
+    (mapcar
+      (lambda (l)
+        (set! outfname (car l))
+        (format t "%s: %s\n" outfname (cadr l))
+        ;;(format t "COPY FILES:\n")
+        (system (format nil "cp %s/tcoef/final_test/%s.tcoef %s/sample_test/test_001.tcoef" datadirectory outfname datadirectory))
+        (system (format nil "cp %s/labels/final_test/%s.lab %s/sample_test/test_001.lab" datadirectory outfname datadirectory))
+        ;;(format t "COPYING COMPLETED NOW FOR FESTIVAL:\n")
+        (set! utt (utt.synth (eval (list 'Utterance 'Text (cadr l)))))
+        (utt.save utt (path-append wavdirectory (string-append (car l) ".utt")))
+        (utt.save.wave utt (path-append wavdirectory (string-append (car l) ".wav"))))
+     p)
+    t))

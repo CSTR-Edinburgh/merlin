@@ -32,7 +32,6 @@ else
 fi
 
 voice_dir=experiments/${Voice}
-SPEAKER=slt
 
 # setup directory structure and download data
 if [ "$setup_data" = true ]; then
@@ -56,12 +55,11 @@ fi
 if [ "$build_voice" = true ]; then
     # step 1 - setup
     cd ${voice_dir}
-    source $MULTISYN_BUILD/multisyn_build.sh
     $MULTISYN_BUILD/bin/setup
 
     # step 2 - copy audio files and text
-    cp ${WorkDir}/database/wav/* wav/
-    cp ${WorkDir}/database/txt.data utts.data
+    cp -r ${WAV_DIR}/* wav/
+    cp ${DATADIR}/txt.data utts.data
 
     # step 3 - prepare labels 
     $MULTISYN_BUILD/bin/setup_alignment
@@ -138,17 +136,26 @@ fi
 
 # copy voice into festival/lib/voices
 if [ "$copy_voice" = true ]; then
-    mkdir $FESTDIR/lib/voices/english/cstr_edi_${Voice}
-    mkdir $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}
-    mkdir $FESTDIR/lib/voices/english/cstr_edi_${Voice}/festvox
+    my_voice_dir=$FESTDIR/lib/voices/english/cstr_edi_${Voice}
+    mkdir -p ${my_voice_dir}
+    mkdir -p ${my_voice_dir}/${SPEAKER}
+    mkdir -p ${my_voice_dir}/festvox
 
-    cp -r wav_fn $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/wav
-    cp -r coef $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/coef 
-    cp -r f0 $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/f0
-    cp -r pm $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/pm
-    cp -r utt $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/utt
-    cp -r utts.data $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/utts.data
+    cp voice_definition_files/unit_selection/cstr_edi_slt_multisyn.scm ${my_voice_dir}/festvox/cstr_edi_${Voice}.scm
 
-    cp -r ${SPEAKER}_pauses.data $FESTDIR/lib/voices/english/cstr_edi_${Voice}/${SPEAKER}/
+    cp -r wav_fn ${my_voice_dir}/${SPEAKER}/wav
+    cp -r coef ${my_voice_dir}/${SPEAKER}/coef 
+    cp -r f0 ${my_voice_dir}/${SPEAKER}/f0
+    cp -r pm ${my_voice_dir}/${SPEAKER}/pm
+    cp -r utt ${my_voice_dir}/${SPEAKER}/utt
+    cp -r utts.data ${my_voice_dir}/${SPEAKER}/utts.data
+
+    cp -r $MULTISYN_BUILD/resources/pauses/SPEAKER_pauses ${my_voice_dir}/${SPEAKER}/${SPEAKER}_pauses
+    cp -r $MULTISYN_BUILD/resources/pauses/utt/SPEAKER_pauses.utt ${my_voice_dir}/${SPEAKER}/utt/${SPEAKER}_pauses.utt
+    cp -r $MULTISYN_BUILD/resources/pauses/wav/SPEAKER_pauses.wav ${my_voice_dir}/${SPEAKER}/wav/${SPEAKER}_pauses.wav
+    cp -r $MULTISYN_BUILD/resources/pauses/coef/SPEAKER_pauses.coef ${my_voice_dir}/${SPEAKER}/coef/${SPEAKER}_pauses.coef
+    cp -r $MULTISYN_BUILD/resources/pauses/pm/SPEAKER_pauses.pm ${my_voice_dir}/${SPEAKER}/pm/${SPEAKER}_pauses.pm
+    cp -r $MULTISYN_BUILD/resources/pauses/lpc/SPEAKER_pauses.lpc ${my_voice_dir}/${SPEAKER}/lpc/${SPEAKER}_pauses.lpc
+    cp -r $MULTISYN_BUILD/resources/pauses/lpc/SPEAKER_pauses.res ${my_voice_dir}/${SPEAKER}/lpc/${SPEAKER}_pauses.res
 fi
 
