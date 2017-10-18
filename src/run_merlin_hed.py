@@ -231,8 +231,8 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         valid_data_reader.reshape_input_output()
     
     if cfg.network_type == 'S2S':
-        MLU_div_lengths = train_data_reader.set_s2s_division(cfg.linguistic_file_name)
-        MLU_div_lengths = valid_data_reader.set_s2s_division(cfg.linguistic_file_name)
+        MLU_div = train_data_reader.set_s2s_division(cfg.linguistic_file_name)
+        MLU_div = valid_data_reader.set_s2s_division(cfg.linguistic_file_name)
 
     if cfg.network_type == 'S2SD':
         shared_train_set_xyd, temp_train_set_x, temp_train_set_y, temp_train_set_d = train_data_reader.load_one_partition()
@@ -292,7 +292,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
         if cfg.network_type == 'S2S':
             dnn_model = DeepEncoderDecoderNetwork(n_in= n_ins, hidden_layer_size = hidden_layer_size, n_out = n_outs,
                                          L1_reg = l1_reg, L2_reg = l2_reg, hidden_layer_type = hidden_layer_type, output_type = cfg.output_layer_type,  
-                                         network_type=cfg.network_type, ed_type='HED', MLU_div_lengths = MLU_div_lengths,  
+                                         network_type=cfg.network_type, ed_type='HED', MLU_div_lengths = MLU_div['length'],  
                                          dropout_rate = dropout_rate, optimizer = cfg.optimizer, rnn_batch_training = cfg.rnn_batch_training)
         else:
             dnn_model = DeepRecurrentNetwork(n_in= n_ins, hidden_layer_size = hidden_layer_size, n_out = n_outs,
@@ -574,7 +574,7 @@ def dnn_generation_S2S(valid_file_list, valid_dur_file_list, nnets_file_name, n_
         logger.debug('saved to %s' % out_file_list[i])
         fid.close()
 
-def dnn_generation_S2SML(valid_file_list, valid_dur_file_list, nnets_file_name, n_ins, n_outs, out_file_list):
+def dnn_generation_S2SML(valid_file_list, valid_dur_file_list, nnets_file_name, n_ins, n_outs, MLU_div, out_file_list):
     logger = logging.getLogger("dnn_generation")
     logger.debug('Starting dnn_generation')
 
@@ -599,9 +599,9 @@ def dnn_generation_S2SML(valid_file_list, valid_dur_file_list, nnets_file_name, 
         test_set_d = features.astype(numpy.int32)
         
         ### MLU features sub-division ###
-        test_set_phone = numpy.concatenate([test_set_MLU[:,   0:348], test_set_MLU[:, 438:440]], axis = 1)
-        test_set_syl   = numpy.concatenate([test_set_MLU[:, 348:405], test_set_MLU[:, 440:461]], axis = 1)
-        test_set_word  = numpy.concatenate([test_set_MLU[:, 405:438], test_set_MLU[:, 461:   ]], axis = 1)
+        test_set_phone = numpy.concatenate([test_set_MLU[:, MLU_div['phone'][0]: MLU_div['phone'][1]], test_set_MLU[:, MLU_div['phone'][2]: MLU_div['phone'][3]]], axis = 1)
+        test_set_syl   = numpy.concatenate([test_set_MLU[:, MLU_div['syl'][0]: MLU_div['syl'][1]], test_set_MLU[:, MLU_div['syl'][2]: MLU_div['syl'][3]]], axis = 1)
+        test_set_word  = numpy.concatenate([test_set_MLU[:, MLU_div['word'][0]: MLU_div['word'][1]], test_set_MLU[:, MLU_div['word'][2]: MLU_div['word'][3] ]], axis = 1)
         
         ### duration array sub-division ###
         num_ph    = len(test_set_MLU)
@@ -615,14 +615,14 @@ def dnn_generation_S2SML(valid_file_list, valid_dur_file_list, nnets_file_name, 
         test_set_dur_word  = dur_word_syl[0: num_words]
         test_set_dur_syl   = dur_word_syl[num_words: ]
         
-        ### additional feature matrix (syllable+phone+frame=432) ###
+        ### additional feature matrix (syllable+phone+frame) ###
         num_frames = sum(test_set_dur_phone)
-        test_set_af = numpy.empty((num_frames, 432))
+        test_set_af = numpy.empty((num_frames, MLU_div['length'][-1]))
         
-        test_set_af[0: num_syl, 0:78 ] = test_set_syl[numpy.cumsum(test_set_dur_syl)-1]
-        test_set_af[0: num_ph, 78:428] = test_set_phone
+        test_set_af[0: num_syl, MLU_div['length'][0]: MLU_div['length'][1] ] = test_set_syl[numpy.cumsum(test_set_dur_syl)-1]
+        test_set_af[0: num_ph, MLU_div['length'][1]: MLU_div['length'][2]] = test_set_phone
         
-        ### input word feature matrix (53) ###
+        ### input word feature matrix ###
         test_set_dur_word_segments = numpy.zeros(num_words, dtype='int32')
         syl_bound = numpy.cumsum(test_set_dur_word)
         for indx in xrange(num_words):
@@ -1071,12 +1071,12 @@ def main_function(cfg):
     ### generate parameters from DNN
     gen_file_id_list = file_id_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
     test_x_file_list  = nn_label_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
+    test_y_file_list  = nn_cmp_norm_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
     test_d_file_list = file_paths.seq_dur_file_list[cfg.train_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
 
     if cfg.GenTestList:
         gen_file_id_list = test_id_list
         test_x_file_list = nn_label_norm_file_list
-        test_d_file_list = file_paths.seq_dur_file_list[cfg.train_file_number+cfg.valid_file_number:cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number]
         if cfg.test_synth_dir!="None":
             gen_dir = cfg.test_synth_dir
 
@@ -1106,7 +1106,9 @@ def main_function(cfg):
             if cfg.network_type == "S2SD":
                 dnn_generation_S2S(test_x_file_list, test_d_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
             elif cfg.network_type == "S2S":
-                dnn_generation_S2SML(test_x_file_list, test_d_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list)
+                test_data_reader = ListDataProvider(x_file_list = test_x_file_list, y_file_list = test_y_file_list, dur_file_list = test_d_file_list) 
+                MLU_div = test_data_reader.set_s2s_division(cfg.linguistic_file_name)
+                dnn_generation_S2SML(test_x_file_list, test_d_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, MLU_div, gen_file_list)
             else:
                 dnn_generation(test_x_file_list, nnets_file_name, lab_dim, cfg.cmp_dim, gen_file_list, reshape_io)
 

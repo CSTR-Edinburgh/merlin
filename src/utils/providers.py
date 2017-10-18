@@ -275,7 +275,7 @@ class ListDataProvider(object):
         phone_length = (self.MLU_div['phone'][1] - self.MLU_div['phone'][0]) + (self.MLU_div['phone'][3] - self.MLU_div['phone'][2])
         self.MLU_div['length'] = [0, syl_length, syl_length+phone_length, syl_length+phone_length+frame_length]
 
-        return self.MLU_div['length']
+        return self.MLU_div
 
     def load_one_partition(self):
         if self.sequential == True:
