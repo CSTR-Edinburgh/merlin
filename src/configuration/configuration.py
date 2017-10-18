@@ -240,6 +240,7 @@ class configuration(object):
             ('label_type'         , 'state_align'                                         ,    'Labels', 'label_type'),
             ('in_label_align_dir' , os.path.join(self.work_dir, 'data/label_state_align') ,    'Labels', 'label_align'),
             ('question_file_name' , os.path.join(self.work_dir, 'data/questions.hed')     ,    'Labels', 'question_file_name'),
+            ('linguistic_file_name' , os.path.join(self.work_dir, 'data/hed_feats.txt')   ,    'Labels', 'linguistic_file_name'),
             ('silence_pattern'    , ['*-#+*']                                             ,    'Labels', 'silence_pattern'),
             ('subphone_feats'     , 'full'                                                ,    'Labels', 'subphone_feats'),
             ('additional_features', {}                                                    ,    'Labels', 'additional_features'),
@@ -401,7 +402,8 @@ class configuration(object):
             ('remove_silence_from_dur'  , True  , 'Outputs', 'remove_silence_from_dur'),
             ('dur_dim' ,5     ,'Outputs','dur'),
             ('dur_feature_type' , 'numerical' , 'Outputs', 'dur_feature_type'),
-
+            ('dur_unit_size' , 'phoneme' , 'Outputs', 'dur_unit_size'),
+            ('dur_feat_size' , 'phoneme' , 'Outputs', 'dur_feat_size'),
 
             ('output_feature_normalisation', 'MVN', 'Outputs', 'output_feature_normalisation'),
 
