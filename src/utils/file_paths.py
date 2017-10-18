@@ -43,6 +43,7 @@ class FilePaths(object):
   nn_label_norm_file_list = []
   in_label_align_file_list = []
   dur_file_list = []
+  seq_dur_file_list = []
   nn_cmp_norm_file_list = []
 
   def __init__(self, cfg):
@@ -79,6 +80,10 @@ class FilePaths(object):
     if self.cfg.MAKEDUR:
       self.dur_file_list = prepare_file_path_list(
           self.file_id_list, self.cfg.in_dur_dir, self.cfg.dur_ext)
+
+    if self.cfg.network_type=="S2S":
+      self.seq_dur_file_list  = prepare_file_path_list(
+          self.file_id_list, self.cfg.in_seq_dur_dir, self.cfg.dur_ext)
 
     self.nn_cmp_norm_file_list = prepare_file_path_list(
         self.file_id_list, self.nn_cmp_norm_dir, self.cfg.cmp_ext)

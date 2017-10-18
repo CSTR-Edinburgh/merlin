@@ -32,11 +32,11 @@ data_dir="blizzard2017-merlin-benchmark-data"
 if [[ ! -f ${data_dir}.zip ]]; then
     echo "downloading data....."
     rm -f ${data_dir}.zip
-    data_url=http://datashare.is.ed.ac.uk/bitstream/handle/10283/2909/${data_dir}.zip
-    if hash curl 2>/dev/null; then
-        curl -O $data_url
-    elif hash wget 2>/dev/null; then
+    data_url=http://datashare.is.ed.ac.uk/bitstream/handle/10283/2909/blizzard2017-merlin-benchmark-data.zip
+    if hash wget 2>/dev/null; then
         wget $data_url
+    elif hash curl 2>/dev/null; then
+        curl -L -O $data_url
     else
         echo "please download the data from $data_url"
         exit 1
