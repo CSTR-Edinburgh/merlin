@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/CSTR-Edinburgh/merlin.svg?branch=master)](https://travis-ci.org/CSTR-Edinburgh/merlin)
+
 ## Merlin: The Neural Network (NN) based Speech Synthesis System
 
 This repository contains the Neural Network (NN) based Speech Synthesis System  
@@ -41,7 +43,7 @@ pip install numpy
 pip install -r requirements.txt
 ```
 
-For detailed instructions, to build the toolkit: see [`INSTALL`](https://github.com/CSTR-Edinburgh/merlin/blob/master/INSTALL.md) or [CSTR blog post](https://cstr-edinburgh.github.io/install-merlin/).  
+For detailed instructions, to build the toolkit: see [INSTALL](https://github.com/CSTR-Edinburgh/merlin/blob/master/INSTALL.md) and [CSTR blog post](https://cstr-edinburgh.github.io/install-merlin/).  
 These instructions are valid for UNIX systems including various flavors of Linux;
 
 
