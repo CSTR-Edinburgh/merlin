@@ -1,6 +1,11 @@
 import os
 import sys
 
+if len(sys.argv)!=6:
+    print("Usage: ")
+    print("python synthesis.py <path_to_merlin_dir> <path_to_feat_dir> <path_to_out_wav_dir> <sampling rate> <file_id_list>")
+    sys.exit(1)
+
 # top merlin directory
 merlin_dir = sys.argv[1]
 
@@ -60,8 +65,11 @@ else:
 
 mcsize=59
 
+# set to True if synthesizing generated files
 post_filtering = False
-pf_coef = 1.07
+
+# this coefficient depends on voice
+pf_coef = 1.07 
 
 f = open(file_id_scp)
 file_id_list = [newline.strip() for newline in f.readlines()]
