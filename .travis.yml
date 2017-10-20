@@ -1,0 +1,34 @@
+language: python
+
+python:
+  - "2.7"
+  - "3.6"
+
+notifications:
+  email: false
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install csh realpath autotools-dev automake
+  - ./tools/compile_tools.sh
+  - if [["$TRAVIS_PYTHON_VERSION" == "2.7"]]; then
+      wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget http://repo.continuum.io/miniconda/Miniconda3-3.8.3-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda config --add channels pypi
+  - conda info -a
+  - deps='pip numpy scipy nose'
+  - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps
+  - source activate test-environment
+
+install:
+  - pip install -r requirements.txt
+
+script:
+  - cd $TRAVIS_BUILD_DIR/egs/slt_arctic/s1 && ./run_demo.sh
