@@ -12,6 +12,7 @@ install_sptk=true
 install_postfilter=true
 install_world=true
 install_reaper=true
+install_magphase=true
 
 # 1. Get and compile SPTK
 if [ "$install_sptk" = true ]; then
@@ -70,7 +71,7 @@ if [ "$install_world" = true ]; then
 fi
 
 
-# 2. Getting REAPER
+# 3. Getting REAPER
 if [ "$install_reaper" = true ]; then
     echo "downloading REAPER..."
     git clone https://github.com/google/REAPER.git
@@ -85,13 +86,29 @@ if [ "$install_reaper" = true ]; then
 fi
 
 
-# 4. Copy binaries
-echo "deleting downloaded tar files..."
-rm -rf $tools_dir/*.tar.gz
-
 SPTK_BIN_DIR=bin/SPTK-3.9
 WORLD_BIN_DIR=bin/WORLD
 REAPER_BIN_DIR=bin/REAPER
+
+# 4. Getting MagPhase vocoder:
+if [ "$install_magphase" = true ]; then
+    echo "downloading MagPhase vocoder..."
+    rm -rf magphase
+    git clone https://github.com/CSTR-Edinburgh/magphase.git
+    echo "configuring MagPhase..."
+    (
+        echo "[TOOLS]" > magphase/config.ini
+        echo "reaper=${PWD}/${REAPER_BIN_DIR}/reaper" >> magphase/config.ini
+        echo "sptk_mcep=${PWD}/${SPTK_BIN_DIR}/mcep" >> magphase/config.ini
+    )
+fi
+
+
+# 5. Copy binaries
+echo "deleting downloaded tar files..."
+rm -rf $tools_dir/*.tar.gz
+
+
 
 mkdir -p bin
 mkdir -p $SPTK_BIN_DIR
