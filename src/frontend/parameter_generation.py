@@ -193,7 +193,7 @@ class   ParameterGeneration(object):
                         label_binary_flag = self.check_silence_pattern(full_label, silence_pattern)
 
                         if label_binary_flag:
-                            if feature_name in ['lf0', 'F0']:
+                            if feature_name in ['lf0', 'F0', 'mag']:
                                 gen_features[start_time:end_time, :] = self.inf_float
                             else:
                                 gen_features[start_time:end_time, :] = 0.0

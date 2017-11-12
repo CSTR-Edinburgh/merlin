@@ -129,10 +129,11 @@ def bark_alpha(sr):
 def erb_alpha(sr):
     return 0.5941*np.sqrt(np.arctan(0.1418*sr/1000.0))+0.03237
 
-
-def generate_wav(gen_dir, file_id_list, cfg):
-
-    logger = logging.getLogger("wav_generation")
+def wavgen_straight_type_vocoder(gen_dir, file_id_list, cfg, logger):
+    '''
+    Waveform generation for using with STRAIGHT or WORLD vocoders,
+    whose acoustic parameters are: mgc, bap, and lf0.
+    '''
 
     SPTK     = cfg.SPTK
 #    NND      = cfg.NND
@@ -282,9 +283,51 @@ def generate_wav(gen_dir, file_id_list, cfg):
 
             run_process('rm -f {ap} {sp} {f0}'.format(ap=files['ap'],sp=files['sp'],f0=files['f0']))
 
-        else:
-
-            logger.critical('The vocoder %s is not supported yet!\n' % cfg.vocoder_type )
-            raise
-
         os.chdir(cur_dir)
+
+
+def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
+
+    # Import MagPhase and libraries:
+    sys.path.append(cfg.magphase_bindir)
+    import libutils as lu
+    import libaudio as la
+    import magphase as mp
+
+    # Constants:
+    #b_parallel= True
+
+    # Synthesis of one utterance function:
+    #def synth_one_utt(in_feats_dir, filename_token, out_syn_dir, nbins_mel, nbins_phase, fs, b_postfilter):
+    #    mp.synthesis_from_acoustic_modelling(in_feats_dir, filename_token, out_syn_dir, nbins_mel, nbins_phase, fs, b_postfilter)
+
+    #if b_parallel:
+    #    lu.run_multithreaded(synth_one_utt, gen_dir, file_id_list, gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, cfg.do_post_filtering)
+    #else:
+
+    nfiles = len(file_id_list)
+    for nxf in xrange(nfiles):
+        logger.info('Creating waveform for %4d of %4d: %s' % (nxf+1, nfiles, file_id_list[nxf]))
+        mp.synthesis_from_acoustic_modelling(gen_dir, file_id_list[nxf], gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, cfg.do_post_filtering)
+    return
+
+def generate_wav(gen_dir, file_id_list, cfg):
+
+    logger = logging.getLogger("wav_generation")
+
+    ## STRAIGHT or WORLD vocoders:
+    if (cfg.vocoder_type=='STRAIGHT') or (cfg.vocoder_type=='WORLD'):
+        wavgen_straight_type_vocoder(gen_dir, file_id_list, cfg, logger)
+
+    ## MagPhase Vocoder:
+    elif cfg.vocoder_type=='MAGPHASE':
+        wavgen_magphase(gen_dir, file_id_list, cfg, logger)
+
+    # Add your favorite vocoder here.
+
+    # If vocoder is not supported:
+    else:
+        logger.critical('The vocoder %s is not supported yet!\n' % cfg.vocoder_type )
+        raise
+
+    return

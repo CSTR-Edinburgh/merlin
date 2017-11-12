@@ -198,6 +198,26 @@ class configuration(object):
             ('in_sp_dir'    , os.path.join(self.work_dir, 'data/sp' )  , 'Paths', 'in_sp_dir'),
             ('in_seglf0_dir', os.path.join(self.work_dir, 'data/lf03') , 'Paths', 'in_seglf0_dir'),
 
+            ## for glottHMM:
+            ('in_F0_dir'   , os.path.join(self.work_dir, 'data/F0')  , 'Paths', 'in_F0_dir'),
+            ('in_Gain_dir'   , os.path.join(self.work_dir, 'data/Gain')  , 'Paths', 'in_Gain_dir'),
+            ('in_HNR_dir'   , os.path.join(self.work_dir, 'data/HNR')  , 'Paths', 'in_HNR_dir'),
+            ('in_LSF_dir'   , os.path.join(self.work_dir, 'data/LSF')  , 'Paths', 'in_LSF_dir'),
+            ('in_LSFsource_dir'   , os.path.join(self.work_dir, 'data/LSFsource')  , 'Paths', 'in_LSFsource_dir'),
+
+            ## for glottDNN:
+            ('in_f0_dir'   , os.path.join(self.work_dir, 'data/f0')  , 'Paths', 'in_f0_dir'),
+            ('in_gain_dir'   , os.path.join(self.work_dir, 'data/gain')  , 'Paths', 'in_gain_dir'),
+            ('in_hnr_dir'   , os.path.join(self.work_dir, 'data/hnr')  , 'Paths', 'in_hnr_dir'),
+            ('in_lsf_dir'   , os.path.join(self.work_dir, 'data/lsf')  , 'Paths', 'in_lsf_dir'),
+            ('in_slsf_dir'   , os.path.join(self.work_dir, 'data/slsf')  , 'Paths', 'in_slsf_dir'),
+
+            ## for sinusoidal:
+            ('in_pdd_dir'   , os.path.join(self.work_dir, 'data/pdd')  , 'Paths', 'in_pdd_dir'),
+
+            ## For MagPhase Vocoder:
+            ('in_acous_feats_dir'   , os.path.join(self.work_dir, 'data/acoustic_feats')  , 'Paths', 'in_acous_feats_dir'),
+
             # Input-Output
             ('inp_dim', 425, 'Input-Output', 'inp_dim'),
             ('out_dim', 187, 'Input-Output', 'out_dim'),
@@ -207,23 +227,6 @@ class configuration(object):
 
             ('inp_norm', 'MINMAX', 'Input-Output', 'inp_norm'),
             ('out_norm', 'MINMAX', 'Input-Output', 'out_norm'),
-
-            ## for glottHMM
-            ('in_F0_dir'   , os.path.join(self.work_dir, 'data/F0')  , 'Paths', 'in_F0_dir'),
-            ('in_Gain_dir'   , os.path.join(self.work_dir, 'data/Gain')  , 'Paths', 'in_Gain_dir'),
-            ('in_HNR_dir'   , os.path.join(self.work_dir, 'data/HNR')  , 'Paths', 'in_HNR_dir'),
-            ('in_LSF_dir'   , os.path.join(self.work_dir, 'data/LSF')  , 'Paths', 'in_LSF_dir'),
-            ('in_LSFsource_dir'   , os.path.join(self.work_dir, 'data/LSFsource')  , 'Paths', 'in_LSFsource_dir'),
-
-            ## for glottDNN
-            ('in_f0_dir'   , os.path.join(self.work_dir, 'data/f0')  , 'Paths', 'in_f0_dir'),
-            ('in_gain_dir'   , os.path.join(self.work_dir, 'data/gain')  , 'Paths', 'in_gain_dir'),
-            ('in_hnr_dir'   , os.path.join(self.work_dir, 'data/hnr')  , 'Paths', 'in_hnr_dir'),
-            ('in_lsf_dir'   , os.path.join(self.work_dir, 'data/lsf')  , 'Paths', 'in_lsf_dir'),
-            ('in_slsf_dir'   , os.path.join(self.work_dir, 'data/slsf')  , 'Paths', 'in_slsf_dir'),
-
-            ## for sinusoidal
-            ('in_pdd_dir'   , os.path.join(self.work_dir, 'data/pdd')  , 'Paths', 'in_pdd_dir'),
 
             ## for joint duration
             ('in_seq_dur_dir' , os.path.join(self.work_dir, 'data/S2S_dur')  , 'Paths', 'in_seq_dur_dir'),
@@ -244,6 +247,9 @@ class configuration(object):
             ('silence_pattern'    , ['*-#+*']                                             ,    'Labels', 'silence_pattern'),
             ('subphone_feats'     , 'full'                                                ,    'Labels', 'subphone_feats'),
             ('additional_features', {}                                                    ,    'Labels', 'additional_features'),
+
+            ## For MagPhase Vocoder:
+            ('label_align_orig_const_rate_dir', os.path.join(self.work_dir, 'data/label_state_align'), 'Labels', 'label_align_orig_const_rate'),
 
             ('xpath_file_name',      os.path.join(self.work_dir, 'data/xml_labels/xpaths.txt'), 'Labels', 'xpath_file_name'),
 
@@ -271,12 +277,13 @@ class configuration(object):
             ('log_file', '', 'Paths','log_file'),
             ('log_config_file', 'configuration/exampleloggingconfigfile.conf', 'Paths', 'log_config_file'),
 
-            ('sptk_bindir', 'tools/bin/SPTK-3.9', 'Paths','sptk'),
-            ('straight_bindir', 'tools/bin/straight', 'Paths','straight'),
-            ('world_bindir', 'tools/bin/WORLD', 'Paths','world'),
-            ('glotthmm_bindir', 'tools/bin/glotthmm', 'Paths', 'glotthmm'),
-            ('glottdnn_bindir', 'tools/bin/glottdnn', 'Paths', 'glottdnn'),
-            ('hmpd_bindir', 'tools/bin/hmpd', 'Paths', 'hmpd'),
+            ('sptk_bindir'    , 'tools/bin/SPTK-3.9'    , 'Paths', 'sptk'),
+            ('straight_bindir', 'tools/bin/straight'    , 'Paths', 'straight'),
+            ('world_bindir'   , 'tools/bin/WORLD'       , 'Paths', 'world'),
+            ('glotthmm_bindir', 'tools/bin/glotthmm'    , 'Paths', 'glotthmm'),
+            ('glottdnn_bindir', 'tools/bin/glottdnn'    , 'Paths', 'glottdnn'),
+            ('hmpd_bindir'    , 'tools/bin/hmpd'        , 'Paths', 'hmpd'),
+            ('magphase_bindir', 'tools/bin/magphase/src', 'Paths', 'magphase'),
 
             ('network_type'           , 'RNN'                                           , 'Architecture', 'network_type'),
             ('model_type'           , 'DNN'                                             , 'Architecture', 'model_type'),
@@ -367,8 +374,7 @@ class configuration(object):
             ('acc_win'          , [1.0, -2.0, 1.0]  , 'Outputs', 'acc_win'),
             ('do_MLPG'          , True              , 'Outputs', 'do_MLPG'),
 
-
-            ## for GlottHMM
+            ## for GlottHMM:
             ('F0_dim' ,1     ,'Outputs','F0'),
             ('dF0_dim',1 * 3 ,'Outputs','dF0'),
             ('Gain_dim' ,1     ,'Outputs','Gain'),
@@ -380,7 +386,7 @@ class configuration(object):
             ('LSFsource_dim' ,10     ,'Outputs','LSFsource'),
             ('dLSFsource_dim',10 * 3 ,'Outputs','dLSFsource'),
 
-            ## for GlottDNN
+            ## for GlottDNN:
              ('f0_dim' ,1     ,'Outputs','f0'),
             ('df0_dim',1 * 3 ,'Outputs','df0'),
             ('gain_dim' ,1     ,'Outputs','gain'),
@@ -392,10 +398,17 @@ class configuration(object):
             ('slsf_dim' ,10     ,'Outputs','slsf'),
             ('dslsf_dim',10 * 3 ,'Outputs','dslsf'),
         
-        ## for sinusoidal
+            ## for sinusoidal:
             ('pdd_dim', 25, 'Outputs', 'pdd'),
             ('dpdd_dim', 25 * 3, 'Outputs', 'dpdd'),
 
+            ## For MagPhase Vocoder:
+            ('mag_dim'  , 60    , 'Outputs', 'mag'),
+            ('dmag_dim' , 60 * 3, 'Outputs', 'dmag'),
+            ('real_dim' , 45    , 'Outputs', 'real'),
+            ('dreal_dim', 45 * 3, 'Outputs', 'dreal'),
+            ('imag_dim' , 45    , 'Outputs', 'imag'),
+            ('dimag_dim', 45 * 3, 'Outputs', 'dimag'),
 
         ## for joint dur:-
             ('seq_dur_dim' ,1     ,'Outputs','seq_dur'),
@@ -470,6 +483,11 @@ class configuration(object):
             ## sinusoidal
             ('pdd_ext'  , '.pdd', 'Extensions', 'pdd_ext'),
 
+            ## For MagPhase Vocoder:
+            ('mag_ext'   , '.mag'     , 'Extensions', 'mag_ext'),
+            ('real_ext'  , '.real'    , 'Extensions', 'real_ext'),
+            ('imag_ext'  , '.imag'    , 'Extensions', 'imag_ext'),
+
             ## joint dur
             ('dur_ext'   , '.dur'     , 'Extensions', 'dur_ext'),
 
@@ -497,6 +515,14 @@ class configuration(object):
                     value = default
                     user_or_default='default'
 
+            # DEBUG:
+            print(' ')
+            print('variable:')
+            print(variable)
+            print(' ')
+            print('value:')
+            print(value)
+            print(' ')
 
             if   type(default) == str:
                 exec('self.%s = "%s"'      % (variable,value))
@@ -713,6 +739,8 @@ class configuration(object):
                 in_dimension = self.lf0_dim
                 out_dimension = self.dlf0_dim
                 in_directory  = self.in_lf0_dir
+                if self.vocoder_type == 'MAGPHASE':
+                    in_directory = self.in_acous_feats_dir
 
 #                current_stream_hidden_size = self.stream_lf0_hidden_size
 #                current_stream_weight      = self.stream_weight_lf0
@@ -821,6 +849,24 @@ class configuration(object):
                 in_directory  = self.in_pdd_dir
             ## for HMPD (end)
 
+            ## For MagPhase Vocoder (start):
+            # Note: 'lf0' is set before. See above.
+            elif feature_name == 'mag':
+                in_dimension  = self.mag_dim
+                out_dimension = self.dmag_dim
+                in_directory  = self.in_acous_feats_dir
+
+            elif feature_name == 'real':
+                in_dimension  = self.real_dim
+                out_dimension = self.dreal_dim
+                in_directory  = self.in_acous_feats_dir
+
+            elif feature_name == 'imag':
+                in_dimension  = self.imag_dim
+                out_dimension = self.dimag_dim
+                in_directory  = self.in_acous_feats_dir
+            ## For MagPhase Vocoder (end)
+
             ## for joint dur (start)
             elif feature_name == 'dur':
                 in_dimension = self.dur_dim
@@ -907,7 +953,6 @@ class configuration(object):
         self.file_extension_dict['cmp'] = self.cmp_ext
         self.file_extension_dict['seglf0'] = self.lf0_ext
 
-
         ## gHMM:
         self.file_extension_dict['F0'] = self.F0_ext
         self.file_extension_dict['Gain'] = self.Gain_ext
@@ -924,6 +969,12 @@ class configuration(object):
         
         ## HMPD
         self.file_extension_dict['pdd'] = self.pdd_ext
+
+        ## For MagPhase Vocoder:
+        # Note: 'lf0' is set before. See above.
+        self.file_extension_dict['mag']  = self.mag_ext
+        self.file_extension_dict['real'] = self.real_ext
+        self.file_extension_dict['imag'] = self.imag_ext
 
         ## joint dur
         self.file_extension_dict['dur'] = self.dur_ext
