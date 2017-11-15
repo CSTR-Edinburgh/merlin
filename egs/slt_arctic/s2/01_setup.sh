@@ -118,7 +118,7 @@ then
     echo "FileIDList=file_id_list_full.scp" >> $global_config_file
     echo "Train=1000" >> $global_config_file
     echo "Valid=66" >> $global_config_file
-    echo "Test=66" >> $global_config_file
+    echo "Test=65" >> $global_config_file
 else
     echo "The data for voice name ($voice_name) is not available...please use slt_arctic_demo or slt_arctic_full !!"
     exit 1
