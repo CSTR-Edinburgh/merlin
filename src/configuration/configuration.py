@@ -515,15 +515,6 @@ class configuration(object):
                     value = default
                     user_or_default='default'
 
-            # DEBUG:
-            print(' ')
-            print('variable:')
-            print(variable)
-            print(' ')
-            print('value:')
-            print(value)
-            print(' ')
-
             if   type(default) == str:
                 exec('self.%s = "%s"'      % (variable,value))
             elif type(default) == int:
