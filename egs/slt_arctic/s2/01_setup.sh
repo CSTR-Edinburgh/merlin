@@ -40,6 +40,10 @@ if [ "$voice_name" == "slt_arctic_demo_magphase" ]
 then
     data_dir=slt_arctic_demo_data_magphase
     data_url=http://felipeespic.com/depot/databases/merlin_demos/${data_dir}.zip
+elif [ "$voice_name" == "slt_arctic_full_magphase" ]
+then
+    data_dir=slt_arctic_full_data_magphase
+    data_url=http://felipeespic.com/depot/databases/merlin_demos/${data_dir}.zip
 # if [ "$voice_name" == "slt_arctic_demo" ]
 # then
 #     data_dir=slt_arctic_demo_data
@@ -103,29 +107,22 @@ echo "QuestionFile=questions-radio_dnn_416.hed" >> $global_config_file
 echo "Vocoder=MAGPHASE" >> $global_config_file
 echo "SamplingFreq=16000" >> $global_config_file
 
-echo "FileIDList=file_id_list_demo.scp" >> $global_config_file
-echo "Train=50" >> $global_config_file
-echo "Valid=5" >> $global_config_file
-echo "Test=5" >> $global_config_file
-
-
-# if [[ "$voice_name" == *"demo"* ]]
-# then
-#     echo "FileIDList=file_id_list_demo.scp" >> $global_config_file
-#     echo "Train=50" >> $global_config_file
-#     echo "Valid=5" >> $global_config_file
-#     echo "Test=5" >> $global_config_file
-# elif [[ "$voice_name" == *"full"* ]]
-# then
-#     echo "FileIDList=file_id_list_full.scp" >> $global_config_file
-#     echo "Train=1000" >> $global_config_file
-#     echo "Valid=66" >> $global_config_file
-#     echo "Test=66" >> $global_config_file
-# else
-#     echo "The data for voice name ($voice_name) is not available...please use slt_arctic_demo or slt_arctic_full !!"
-#     exit 1
-# fi
+if [[ "$voice_name" == *"demo"* ]]
+then
+    echo "FileIDList=file_id_list_demo.scp" >> $global_config_file
+    echo "Train=50" >> $global_config_file
+    echo "Valid=5" >> $global_config_file
+    echo "Test=5" >> $global_config_file
+elif [[ "$voice_name" == *"full"* ]]
+then
+    echo "FileIDList=file_id_list_full.scp" >> $global_config_file
+    echo "Train=1000" >> $global_config_file
+    echo "Valid=66" >> $global_config_file
+    echo "Test=65" >> $global_config_file
+else
+    echo "The data for voice name ($voice_name) is not available...please use slt_arctic_demo or slt_arctic_full !!"
+    exit 1
+fi
 
 echo "Merlin default voice settings configured in $global_config_file"
 echo "setup done...!"
-
