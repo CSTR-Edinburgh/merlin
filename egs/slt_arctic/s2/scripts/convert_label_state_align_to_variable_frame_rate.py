@@ -78,7 +78,18 @@ if __name__ == '__main__':
         # Current i/o files:
         in_lab_file   = path.join(in_lab_dir  , filename + '.lab')
         out_lab_file  = path.join(out_lab_dir , filename + '.lab')
+
+        # Debug:
+        #print('out_lab_file:-----------------------------------')
+        #print(out_lab_file)
+
         in_shift_file = path.join(in_feats_dir, filename + '.shift')
+
+
+        # Debug:
+        v_shift  = lu.read_binfile(in_shift_file, dim=1)
+        v_n_frms = mp.get_num_of_frms_per_state(v_shift, in_lab_file, fs, b_prevent_zeros=b_prevent_zeros)
+        la.convert_label_state_align_to_var_frame_rate(in_lab_file, v_n_frms, out_lab_file)
 
         try:
             v_shift  = lu.read_binfile(in_shift_file, dim=1)

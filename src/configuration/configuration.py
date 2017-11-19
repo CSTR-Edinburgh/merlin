@@ -440,6 +440,9 @@ class configuration(object):
             ('apply_GV'         ,False                 ,'Waveform'  , 'apply_GV'),
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
 
+            ## For MagPhase Vocoder:
+            ('use_magphase_pf'  ,False                 ,'Waveform'  , 'use_magphase_pf'), # Use MagPhase own Post-Filter (experimemental)
+
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),
             ('VoiceConversion'      , False, 'Processes', 'VoiceConversion'),
