@@ -57,7 +57,10 @@ class   ParameterGeneration(object):
     def __init__(self, gen_wav_features = ['mgc', 'lf0', 'bap'], enforce_silence=False):
         self.gen_wav_features = gen_wav_features
         self.enforce_silence  = enforce_silence
+
+        # Debug:
         self.inf_float = -1.0e+10
+        #self.inf_float = -50000
 
         # not really necessary to have the logger rembered in the class - can easily obtain it by name instead
         # self.logger = logging.getLogger('param_generation')
