@@ -54,7 +54,7 @@ To run the example system builds, see `egs/README.txt`
 
 As a first demo, please follow the scripts in `egs/slt_arctic`
 
-Now, you can also follow Josh Meyer [blog post](http://jrmeyer.github.io/merlin/2017/02/14/Installing-Merlin.html) for detailed instructions <br/> on how to install Merlin and build SLT demo voice.
+Now, you can also follow Josh Meyer's [blog post](http://jrmeyer.github.io/tts/2017/02/14/Installing-Merlin.html) for detailed instructions <br/> on how to install Merlin and build SLT demo voice.
 
 For a more in-depth tutorial about building voices with Merlin, you can check out:
 
