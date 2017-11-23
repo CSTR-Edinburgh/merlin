@@ -44,26 +44,6 @@ elif [ "$voice_name" == "slt_arctic_full_magphase" ]
 then
     data_dir=slt_arctic_full_data_magphase
     data_url=http://felipeespic.com/depot/databases/merlin_demos/${data_dir}.zip
-# if [ "$voice_name" == "slt_arctic_demo" ]
-# then
-#     data_dir=slt_arctic_demo_data
-#     data_url=http://104.131.174.95/${data_dir}.zip
-# elif [ "$voice_name" == "slt_arctic_full" ]
-# then
-#     data_dir=slt_arctic_full_data
-#     data_url=http://104.131.174.95/${data_dir}.zip
-# elif [ "$voice_name" == "awb_arctic_demo" ]
-# then
-#     data_dir=awb_arctic_demo_data
-#     data_url=http://104.131.174.95/${data_dir}.zip
-# elif [ "$voice_name" == "awb_arctic_full" ]
-# then
-#     data_dir=awb_arctic_full_data
-#     data_url=http://104.131.174.95/${data_dir}.zip
-# elif [ "$voice_name" == "bdl_arctic_full" ]
-# then
-#     data_dir=bdl_arctic_full_data
-#     data_url=https://github.com/aospan/merlin-tts/raw/master/${data_dir}.zip
 else
     echo "The data for voice name ($voice_name) is not available...please use slt_arctic_demo_magphase !!"
     exit 1
