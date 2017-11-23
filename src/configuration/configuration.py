@@ -441,7 +441,7 @@ class configuration(object):
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
 
             ## For MagPhase Vocoder:
-            ('use_magphase_pf'  ,False                 ,'Waveform'  , 'use_magphase_pf'), # Use MagPhase own Post-Filter (experimemental)
+            ('use_magphase_pf'  ,True                 ,'Waveform'  , 'use_magphase_pf'), # Use MagPhase own Post-Filter (experimemental)
 
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),

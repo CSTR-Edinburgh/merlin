@@ -7,7 +7,7 @@ The databases consist of around 1150 utterances carefully selected from out-of-c
 Each subdirectory of this directory contains the
 scripts for a sequence of experiments.
 
-  s1: To run slt_arctic_demo with WORLD vocoder
-  s2: To run slt_arctic_demo with MagPhase vocoder. (TODO: 1.- Implement CALMCD. 2.- Tune postfilter)
+  s1: To run slt_arctic_demo with WORLD vocoder.
+  s2: To run slt_arctic_demo with MagPhase vocoder.
 
 
