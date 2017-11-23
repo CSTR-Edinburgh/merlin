@@ -23,7 +23,7 @@ before_install:
   - conda update -q conda
   - conda config --add channels pypi
   - conda info -a
-  - deps='pip numpy scipy nose'
+  - deps='pip numpy scipy nose mkl mkl-service'
   - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps
   - source activate test-environment
 
@@ -31,4 +31,5 @@ install:
   - pip install -r requirements.txt
 
 script:
+  - export MKL_THREADING_LAYER=GNU
   - cd $TRAVIS_BUILD_DIR/egs/slt_arctic/s1 && ./run_demo.sh
