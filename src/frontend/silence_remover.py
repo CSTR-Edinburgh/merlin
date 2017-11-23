@@ -40,6 +40,7 @@
 
 import  sys, numpy, re, math
 from io_funcs.binary_io import BinaryIOCollection
+from multiprocessing.dummy import Pool as ThreadPool
 
 class SilenceRemover(object):
     def __init__(self, n_cmp, silence_pattern=['*-#+*'], label_type="state_align", remove_frame_features=True, subphone_feats="none"):
@@ -62,9 +63,9 @@ class SilenceRemover(object):
             sys.exit(1)
 
         io_funcs = BinaryIOCollection()
-        for i in range(file_number):
 
-            if self.label_type=="phone_align":
+        def _remove_silence(i):
+            if self.label_type == "phone_align":
                 if dur_file_list:
                     dur_file_name = dur_file_list[i]
                 else:
@@ -87,6 +88,10 @@ class SilenceRemover(object):
             new_cmp_data = ori_cmp_data[nonsilence_indices,]
 
             io_funcs.array_to_binary_file(new_cmp_data, out_data_list[i])
+        pool = ThreadPool()
+        pool.map(_remove_silence, range(file_number))
+        pool.close()
+        pool.join()
 
     """
     def check_silence_pattern(self, label):
