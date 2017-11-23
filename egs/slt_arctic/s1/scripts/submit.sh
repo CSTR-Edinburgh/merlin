@@ -17,7 +17,7 @@ if [ "$use_gpu_lock" = true ]; then
     # Run the input command (run_merlin.py) with its arguments
     if [ $gpu_id -gt -1 ]; then
         echo "Running on GPU id=$gpu_id ..."
-        THEANO_FLAGS="mode=FAST_RUN,device=gpu$gpu_id,"$MERLIN_THEANO_FLAGS
+        THEANO_FLAGS="mode=FAST_RUN,device=cuda$gpu_id,"$MERLIN_THEANO_FLAGS
         export THEANO_FLAGS
     
     { # try  

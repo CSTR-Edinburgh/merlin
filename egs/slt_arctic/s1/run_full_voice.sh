@@ -6,13 +6,13 @@ if test "$#" -ne 0; then
 fi
 
 ### Step 1: setup directories and the training data files ###
-./01_setup.sh slt_arctic_full
+#./01_setup.sh slt_arctic_full
 
 ### Step 2: prepare config files for acoustic, duration models and for synthesis ###
-./02_prepare_conf_files.sh conf/global_settings.cfg
+#./02_prepare_conf_files.sh conf/global_settings.cfg
 
 ### Step 3: train duration model ###
-./03_train_duration_model.sh conf/duration_slt_arctic_full.conf
+#./03_train_duration_model.sh conf/duration_slt_arctic_full.conf
 
 ### Step 4: train acoustic model ###
 ./04_train_acoustic_model.sh conf/acoustic_slt_arctic_full.conf 
