@@ -57,7 +57,10 @@ class   ParameterGeneration(object):
     def __init__(self, gen_wav_features = ['mgc', 'lf0', 'bap'], enforce_silence=False):
         self.gen_wav_features = gen_wav_features
         self.enforce_silence  = enforce_silence
+
+        # Debug:
         self.inf_float = -1.0e+10
+        #self.inf_float = -50000
 
         # not really necessary to have the logger rembered in the class - can easily obtain it by name instead
         # self.logger = logging.getLogger('param_generation')
@@ -193,7 +196,7 @@ class   ParameterGeneration(object):
                         label_binary_flag = self.check_silence_pattern(full_label, silence_pattern)
 
                         if label_binary_flag:
-                            if feature_name in ['lf0', 'F0']:
+                            if feature_name in ['lf0', 'F0', 'mag']:
                                 gen_features[start_time:end_time, :] = self.inf_float
                             else:
                                 gen_features[start_time:end_time, :] = 0.0
