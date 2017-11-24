@@ -53,14 +53,6 @@ import magphase as mp
 
 def feat_extraction(wav_file, out_feats_dir):
 
-    # Constants:
-
-    fft_len     = 4096
-    mvf         = 4500
-    nbins_mel   = 60
-    nbins_phase = 45
-
-
     # Parsing path:
     file_name_token = os.path.basename(os.path.splitext(wav_file)[0])
 
@@ -73,8 +65,8 @@ def feat_extraction(wav_file, out_feats_dir):
     # Epochs detection:
     la.reaper(wav_file, est_file)
 
-    # Feature extraction:
-    m_mag_mel_log, m_real_mel, m_imag_mel, v_shift, v_lf0, fs = mp.analysis_with_del_comp__ph_enc__f0_norm__from_files2(wav_file, est_file, fft_len, mvf, f0_type='lf0', mag_mel_nbins=nbins_mel, cmplx_ph_mel_nbins=nbins_phase)
+    # Feature extraction:    
+    m_mag_mel_log, m_real_mel, m_imag_mel, v_lf0, v_shift, fs, fft_len = mp.analysis_compressed(wav_file)
 
     if fs!=fs_expected:
         print("The wavefile's sample rate (%dHz) does not match the expected sample rate (%dHz)." % (fs, fs_expected))
