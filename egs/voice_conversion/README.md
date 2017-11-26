@@ -16,7 +16,8 @@ choice to perform voice conversion experiments.
 Each subdirectory of this directory contains the
 scripts for a sequence of experiments.
 
-- s1: To run voice conversion with either world or straight vocoder 
+- s1: To run voice conversion with either world or straight vocoder.
+- s2: To run voice conversion with MagPhase vocoder.
 
 ## Demo data
 

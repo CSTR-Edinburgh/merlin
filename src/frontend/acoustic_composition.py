@@ -119,9 +119,7 @@ class   AcousticComposition(AcousticBase):
 
             for k in range(self.data_stream_number):
                 data_stream_name = self.data_stream_list[k]
-
-                in_file_name = in_file_list_dict[data_stream_name][i]
-
+                in_file_name   = in_file_list_dict[data_stream_name][i]
                 in_feature_dim = in_dimension_dict[data_stream_name]
                 features, frame_number = io_funcs.load_binary_file_frame(in_file_name, in_feature_dim)
 
