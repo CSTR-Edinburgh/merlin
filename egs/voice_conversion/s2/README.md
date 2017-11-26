@@ -1,6 +1,8 @@
-# Voice Conversion
+# Voice Conversion Using MagPhase Vocoder
 
 To manipulate source speaker's voice to sound like target without changing language content. 
+
+MagPhase vocoder for VC has the advantage that in addition to using magnitude spectra derived features, it makes possible to map **phase features** from one speaker to another.
 
 ## Install Merlin
 
@@ -30,7 +32,7 @@ To do voice conversion on demo data, you can simply run:
 ```sh
 ./run_demo_vc.sh
 ```
-Which will download the [data](http://104.131.174.95/downloads/voice_conversion/) and run the voice conversion recipe for you. The data consists of:
+Which will download the [data](http://104.131.174.95/downloads/voice_conversion/) and run the whole voice conversion recipe for you. The data consists of:
 
 * Source: bdl (300 utterances)
 * Target: slt (300 utterances)
