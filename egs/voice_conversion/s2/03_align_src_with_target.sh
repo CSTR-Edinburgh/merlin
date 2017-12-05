@@ -23,7 +23,7 @@ src_mag_dir=$src_feat_dir
 tgt_mag_dir=$tgt_feat_dir
 
 if [ ! "$(ls -A ${src_mag_dir})" ] || [ ! "$(ls -A ${tgt_mag_dir})" ]; then
-    echo "Please run 02_prepare_acoustic_features.sh script for both ${Source} and ${Target}"
+    echo "Please run 03_prepare_acoustic_features.sh script for both ${Source} and ${Target}"
     exit 1
 fi
 
@@ -37,7 +37,7 @@ copy=true
 if [ "$align_feats" = true ]; then
     echo "Step 3:" 
     echo "Align source acoustic features with target acoustic features..."
-    python ${MerlinDir}/misc/scripts/voice_conversion/dtw_aligner_festvox_magphase.py ${MerlinDir}/tools ${src_feat_dir} ${tgt_feat_dir} ${src_aligned_feat_dir}
+    python ${MerlinDir}/misc/scripts/voice_conversion/dtw_aligner_magphase.py ${MerlinDir}/tools ${src_feat_dir} ${tgt_feat_dir} ${src_aligned_feat_dir}
 fi
 
 if [ "$copy" = true ]; then
