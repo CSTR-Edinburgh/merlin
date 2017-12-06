@@ -388,8 +388,9 @@ class HTSLabelNormalisation(LabelNormalisation):
 
         ph_count=0
         label_feature_index = 0
-        fid = open(file_name)
-        for line in fid.readlines():
+        with open(file_name) as fid:
+            all_data = fid.readlines()
+        for line in all_data:
             line = line.strip()
             if len(line) < 1:
                 continue
@@ -452,9 +453,6 @@ class HTSLabelNormalisation(LabelNormalisation):
                 current_block_binary_array = label_vector
                 label_feature_matrix[label_feature_index:label_feature_index+1,] = current_block_binary_array
                 label_feature_index = label_feature_index + 1
-
-
-        fid.close()
 
         label_feature_matrix = label_feature_matrix[0:label_feature_index,]
 
