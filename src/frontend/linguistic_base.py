@@ -40,7 +40,7 @@
 
 import logging
 import sys
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool
 
 
 ## a generic class of linguistic feature extraction
