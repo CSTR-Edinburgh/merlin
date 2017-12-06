@@ -14,8 +14,12 @@ install_world=true
 install_reaper=true
 install_magphase=true
 
+# added by haoqc to support offline install
+install_online=false
+
 # 1. Get and compile SPTK
 if [ "$install_sptk" = true ]; then
+if [ "$install_online" = true ]; then
     echo "downloading SPTK-3.9..."
     sptk_url=http://downloads.sourceforge.net/sp-tk/SPTK-3.9.tar.gz
     if hash curl 2>/dev/null; then
@@ -26,6 +30,7 @@ if [ "$install_sptk" = true ]; then
         echo "please download the SPTK-3.9 from $sptk_url"
         exit 1
     fi
+fi
     tar xzf SPTK-3.9.tar.gz
 
     echo "compiling SPTK..."
@@ -38,6 +43,7 @@ if [ "$install_sptk" = true ]; then
 
     # Get and compile Postfilter
     if [ "$install_postfilter" = true ]; then
+    if [ "$install_online" = true ]; then
         echo "downloading postfilter..."
         postfilter_url=http://104.131.174.95/downloads/tools/postfilter.tar.gz
         if hash curl 2>/dev/null; then
@@ -48,6 +54,7 @@ if [ "$install_sptk" = true ]; then
             echo "please download the postfilter from $postfilter_url"
             exit 1
         fi
+    fi    
         tar xzf postfilter.tar.gz
         
         echo "compiling postfilter..."
@@ -73,8 +80,10 @@ fi
 
 # 3. Getting REAPER
 if [ "$install_reaper" = true ]; then
+if [ "$install_online" = true ]; then
     echo "downloading REAPER..."
     git clone https://github.com/google/REAPER.git
+fi
     echo "compiling REAPER..."
     (
         cd REAPER
@@ -92,9 +101,11 @@ REAPER_BIN_DIR=bin/REAPER
 
 # 4. Getting MagPhase vocoder:
 if [ "$install_magphase" = true ]; then
+if [ "$install_online" = true ]; then
     echo "downloading MagPhase vocoder..."
     rm -rf magphase
     git clone https://github.com/CSTR-Edinburgh/magphase.git
+fi
     echo "configuring MagPhase..."
     (
         echo "[TOOLS]" > magphase/config.ini
