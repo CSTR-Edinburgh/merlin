@@ -38,12 +38,14 @@
 ################################################################################
 
 
-import  sys, numpy, re, math
+import sys, numpy, re, math
 from io_funcs.binary_io import BinaryIOCollection
 from multiprocessing.dummy import Pool as ThreadPool
 
+
 class SilenceRemover(object):
-    def __init__(self, n_cmp, silence_pattern=['*-#+*'], label_type="state_align", remove_frame_features=True, subphone_feats="none"):
+    def __init__(self, n_cmp, silence_pattern=['*-#+*'], label_type="state_align", remove_frame_features=True,
+                 subphone_feats="none"):
         self.silence_pattern = silence_pattern
         self.silence_pattern_size = len(silence_pattern)
         self.label_type = label_type
@@ -55,10 +57,10 @@ class SilenceRemover(object):
         file_number = len(in_data_list)
         align_file_number = len(in_align_list)
 
-        if  file_number != align_file_number:
+        if file_number != align_file_number:
             print("The number of input and output files does not equal!\n")
             sys.exit(1)
-        if  file_number != len(out_data_list):
+        if file_number != len(out_data_list):
             print("The number of input and output files does not equal!\n")
             sys.exit(1)
 
@@ -76,7 +78,7 @@ class SilenceRemover(object):
 
             ori_cmp_data = io_funcs.load_binary_file(in_data_list[i], self.n_cmp)
 
-            frame_number = ori_cmp_data.size/self.n_cmp
+            frame_number = ori_cmp_data.size / self.n_cmp
 
             if len(nonsilence_indices) == frame_number:
                 print('WARNING: no silence found!')
@@ -88,36 +90,11 @@ class SilenceRemover(object):
             new_cmp_data = ori_cmp_data[nonsilence_indices,]
 
             io_funcs.array_to_binary_file(new_cmp_data, out_data_list[i])
+
         pool = ThreadPool()
         pool.map(_remove_silence, range(file_number))
         pool.close()
         pool.join()
-
-    """
-    def check_silence_pattern(self, label):
-        label_size = len(label)
-        binary_flag = 0
-        for si in xrange(self.silence_pattern_size):
-            current_pattern = self.silence_pattern[si]
-            current_size = len(current_pattern)
-            if current_pattern[0] == '*' and current_pattern[current_size - 1] == '*':
-                temp_pattern = current_pattern[1:current_size - 1]
-                for il in xrange(1, label_size - current_size + 2):
-                    if temp_pattern == label[il:il + current_size - 2]:
-                        binary_flag = 1
-            elif current_pattern[current_size-1] != '*':
-                temp_pattern = current_pattern[1:current_size]
-                if temp_pattern == label[label_size - current_size + 1:label_size]:
-                    binary_flag = 1
-            elif current_pattern[0] != '*':
-                temp_pattern = current_pattern[0:current_size - 1]
-                if temp_pattern == label[0:current_size - 1]:
-                    binary_flag = 1
-            if binary_flag == 1:
-                break
-
-        return  binary_flag # one means yes, zero means no
-    """
 
     ## OSW: rewrote above more succintly
     def check_silence_pattern(self, label):
@@ -127,12 +104,11 @@ class SilenceRemover(object):
                 return 1
         return 0
 
-
     def load_phone_alignment(self, alignment_file_name, dur_file_name=None):
 
         if dur_file_name:
             io_funcs = BinaryIOCollection()
-            dur_dim = 1 ## hard coded for now
+            dur_dim = 1  ## hard coded for now
             manual_dur_data = io_funcs.load_binary_file(dur_file_name, dur_dim)
 
         ph_count = 0
@@ -145,7 +121,7 @@ class SilenceRemover(object):
                 continue
             temp_list = re.split('\s+', line)
 
-            if len(temp_list)==1:
+            if len(temp_list) == 1:
                 full_label = temp_list[0]
             else:
                 start_time = int(temp_list[0])
@@ -156,9 +132,9 @@ class SilenceRemover(object):
                 # currently under beta testing: supports different frame shift
                 if dur_file_name:
                     frame_number = manual_dur_data[ph_count]
-                    ph_count = ph_count+1
+                    ph_count = ph_count + 1
                 else:
-                    frame_number = int((end_time - start_time)/50000)
+                    frame_number = int((end_time - start_time) / 50000)
 
             label_binary_flag = self.check_silence_pattern(full_label)
 
@@ -174,7 +150,7 @@ class SilenceRemover(object):
 
         fid.close()
 
-        return  nonsilence_frame_index_list
+        return nonsilence_frame_index_list
 
     def load_alignment(self, alignment_file_name, dur_file_name=None):
 
@@ -187,7 +163,7 @@ class SilenceRemover(object):
             if len(line) < 1:
                 continue
             temp_list = re.split('\s+', line)
-            if len(temp_list)==1:
+            if len(temp_list) == 1:
                 state_index = state_number
                 full_label = temp_list[0]
             else:
@@ -197,7 +173,7 @@ class SilenceRemover(object):
                 full_label_length = len(full_label) - 3  # remove state information [k]
                 state_index = full_label[full_label_length + 1]
                 state_index = int(state_index) - 1
-                frame_number = int((end_time - start_time)/50000)
+                frame_number = int((end_time - start_time) / 50000)
 
             label_binary_flag = self.check_silence_pattern(full_label)
 
@@ -217,9 +193,10 @@ class SilenceRemover(object):
 
         fid.close()
 
-        return  nonsilence_frame_index_list
+        return nonsilence_frame_index_list
 
-#    def load_binary_file(self, file_name, dimension):
+
+# def load_binary_file(self, file_name, dimension):
 
 #        fid_lab = open(file_name, 'rb')
 #        features = numpy.fromfile(fid_lab, dtype=numpy.float32)
@@ -231,7 +208,7 @@ class SilenceRemover(object):
 
 
 def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
-                                       silence_feature_index, percent_to_keep=0):
+                 silence_feature_index, percent_to_keep=0):
     '''
     Function to trim silence from binary label/speech files based on binary labels.
         in_list: list of binary label/speech files to trim
@@ -249,7 +226,8 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
         label = io_funcs.load_binary_file(label_file, label_dimension)
 
         audio_label_difference = data.shape[0] - label.shape[0]
-        assert math.fabs(audio_label_difference) < 3,'%s and %s contain different numbers of frames: %s %s'%(infile, label_file,  data.shape[0], label.shape[0])
+        assert math.fabs(audio_label_difference) < 3, '%s and %s contain different numbers of frames: %s %s' % (
+            infile, label_file, data.shape[0], label.shape[0])
 
         ## In case they are different, resize -- keep label fixed as we assume this has
         ## already been processed. (This problem only arose with STRAIGHT features.)
@@ -257,47 +235,49 @@ def trim_silence(in_list, out_list, in_dimension, label_list, label_dimension, \
             print('audio too short -- pad')
             padding = numpy.vstack([data[-1, :]] * int(math.fabs(audio_label_difference)))
             data = numpy.vstack([data, padding])
-        elif audio_label_difference > 0: ## audio is longer -- cut it
+        elif audio_label_difference > 0:  ## audio is longer -- cut it
             print('audio too long -- trim')
             new_length = label.shape[0]
             data = data[:new_length, :]
-        #else: -- expected case -- lengths match, so do nothing
+        # else: -- expected case -- lengths match, so do nothing
 
         silence_flag = label[:, silence_feature_index]
-#         print silence_flag
-        if not (numpy.unique(silence_flag) == numpy.array([0,1])).all():
+        #         print silence_flag
+        if not (numpy.unique(silence_flag) == numpy.array([0, 1])).all():
             ## if it's all 0s or 1s, that's ok:
             assert (numpy.unique(silence_flag) == numpy.array([0]).all()) or \
                    (numpy.unique(silence_flag) == numpy.array([1]).all()), \
-                   'dimension %s of %s contains values other than 0 and 1'%(silence_feature_index, infile)
-        print('Remove %d%% of frames (%s frames) as silence... '%(100 * numpy.sum(silence_flag / float(len(silence_flag))), int(numpy.sum(silence_flag))))
-        non_silence_indices = numpy.nonzero(silence_flag == 0)  ## get the indices where silence_flag == 0 is True (i.e. != 0)
+                'dimension %s of %s contains values other than 0 and 1' % (silence_feature_index, infile)
+        print('Remove %d%% of frames (%s frames) as silence... ' % (
+            100 * numpy.sum(silence_flag / float(len(silence_flag))), int(numpy.sum(silence_flag))))
+        non_silence_indices = numpy.nonzero(
+            silence_flag == 0)  ## get the indices where silence_flag == 0 is True (i.e. != 0)
         if percent_to_keep != 0:
             assert type(percent_to_keep) == int and percent_to_keep > 0
-            #print silence_flag
+            # print silence_flag
             silence_indices = numpy.nonzero(silence_flag == 1)
             ## nonzero returns a tuple of arrays, one for each dimension of input array
             silence_indices = silence_indices[0]
-            every_nth = 100  / percent_to_keep
+            every_nth = 100 / percent_to_keep
             silence_indices_to_keep = silence_indices[::every_nth]  ## every_nth used +as step value in slice
-                        ## -1 due to weird error with STRAIGHT features at line 144:
-                        ## IndexError: index 445 is out of bounds for axis 0 with size 445
+            ## -1 due to weird error with STRAIGHT features at line 144:
+            ## IndexError: index 445 is out of bounds for axis 0 with size 445
             if len(silence_indices_to_keep) == 0:
-                silence_indices_to_keep = numpy.array([1]) ## avoid errors in case there is no silence
-            print('   Restore %s%% (every %sth frame: %s frames) of silent frames'%(percent_to_keep, every_nth, len(silence_indices_to_keep)))
+                silence_indices_to_keep = numpy.array([1])  ## avoid errors in case there is no silence
+            print('   Restore %s%% (every %sth frame: %s frames) of silent frames' % (
+                percent_to_keep, every_nth, len(silence_indices_to_keep)))
 
             ## Append to end of utt -- same function used for labels and audio
             ## means that violation of temporal order doesn't matter -- will be consistent.
             ## Later, frame shuffling will disperse silent frames evenly across minibatches:
-            non_silence_indices = ( numpy.hstack( [non_silence_indices[0], silence_indices_to_keep] ) )
-                                                    ##  ^---- from tuple and back (see nonzero note above)
+            non_silence_indices = (numpy.hstack([non_silence_indices[0], silence_indices_to_keep]))
+            ##  ^---- from tuple and back (see nonzero note above)
 
         trimmed_data = data[non_silence_indices, :]  ## advanced integer indexing
         io_funcs.array_to_binary_file(trimmed_data, outfile)
 
 
-if  __name__ == '__main__':
-
+if __name__ == '__main__':
     cmp_file_list_name = ''
     lab_file_list_name = ''
     align_file_list_name = ''

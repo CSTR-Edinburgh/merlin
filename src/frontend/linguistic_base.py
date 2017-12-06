@@ -40,6 +40,8 @@
 
 import logging
 import sys
+from multiprocessing.pool import ThreadPool as Pool
+
 
 ## a generic class of linguistic feature extraction
 ##
@@ -49,7 +51,6 @@ class LinguisticBase(object):
 
         ## the number of utterances to be normalised
         self.utterance_num = 0
-
 
     ## the ori_file_list contains the file paths of the raw linguistic data
     ## the output_file_list contains the file paths of the normalised linguistic data
@@ -63,11 +64,16 @@ class LinguisticBase(object):
             logger.error('the number of input and output linguistic files should be the same!\n')
             sys.exit(1)
 
-        for i in range(self.utterance_num):
+        def _perform_normalisation(i):
             if not dur_file_list:
                 self.extract_linguistic_features(ori_file_list[i], output_file_list[i], label_type)
             else:
                 self.extract_linguistic_features(ori_file_list[i], output_file_list[i], label_type, dur_file_list[i])
+
+        pool = Pool()
+        pool.map(_perform_normalisation, range(self.utterance_num))
+        pool.close()
+        pool.join()
 
     ## the exact function to do the work
     ## need to be implemented in the specific class
