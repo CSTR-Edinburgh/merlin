@@ -52,7 +52,7 @@ patch -p1 -d . < ../HTS-2.3_for_HTK-3.4.1.patch
 echo "compiling HTK..."
 (
     ./configure --prefix=$PWD/build;
-    make all;
+    sudo make all;
     make install
 )
 
