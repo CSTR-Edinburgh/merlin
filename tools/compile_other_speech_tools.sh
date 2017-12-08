@@ -13,8 +13,11 @@ install_speech_tools=true
 install_festival=true
 install_festvox=true
 
+install_online=false
+
 # 1. Get and compile speech tools
 if [ "$install_speech_tools" = true ]; then
+    if [ "$install_online" = true ]; then
     echo "downloading speech tools..."
     speech_tools_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/speech_tools-2.4-release.tar.gz
     if hash curl 2>/dev/null; then
@@ -24,6 +27,7 @@ if [ "$install_speech_tools" = true ]; then
     else
         echo "please download speech tools from $speech_tools_url"
         exit 1
+    fi
     fi
     tar xzf speech_tools-2.4-release.tar.gz
 
@@ -44,6 +48,7 @@ export PATH=$ESTDIR/bin:$PATH
 
 # 2. Get and compile festival, download dicts and some voices
 if [ "$install_festival" = true ]; then
+    if [ "$install_online" = true ]; then
     echo "downloading festival..."
     festival_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/festival-2.4-release.tar.gz
     if hash curl 2>/dev/null; then
@@ -53,6 +58,7 @@ if [ "$install_festival" = true ]; then
     else
         echo "please download Festival from $festival_url"
         exit 1
+    fi
     fi
     tar xzf festival-2.4-release.tar.gz
 
@@ -64,6 +70,7 @@ if [ "$install_festival" = true ]; then
         make install
     )
 
+    if [ "$install_online" = true ]; then
     echo "downloading some useful lexicons..."
     dict1_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/festlex_CMU.tar.gz
     dict2_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/festlex_OALD.tar.gz
@@ -80,10 +87,12 @@ if [ "$install_festival" = true ]; then
         echo "please download dictionaries from $festival_url"
         exit 1
     fi
+    fi
     tar xzf festlex_CMU.tar.gz
     tar xzf festlex_OALD.tar.gz
     tar xzf festlex_POSLEX.tar.gz
 
+    if [ "$install_online" = true ]; then
     echo "downloading some voices for English..."
     festival_voice_url=http://festvox.org/packed/festival/2.4/voices
     voice1_url=http://www.cstr.ed.ac.uk/downloads/festival/2.4/voices/festvox_kallpc16k.tar.gz
@@ -101,6 +110,7 @@ if [ "$install_festival" = true ]; then
         echo "please download Festival voices from $festival_voice_url"
         exit 1
     fi
+    fi
     tar xzf festvox_kallpc16k.tar.gz
     tar xzf festvox_rablpc16k.tar.gz
     tar xzf festvox_cmu_us_slt_cg.tar.gz
@@ -113,6 +123,7 @@ export PATH=$FESTDIR/bin:$PATH
 
 # 3. Get and compile festvox
 if [ "$install_festvox" = true ]; then
+    if [ "$install_online" = true ]; then
     echo "downloading festvox..."
     festvox_url=http://festvox.org/festvox-2.7/festvox-2.7.0-release.tar.gz
     if hash curl 2>/dev/null; then
@@ -122,6 +133,7 @@ if [ "$install_festvox" = true ]; then
     else
         echo "please download festvox from $festvox_url"
         exit 1
+    fi
     fi
     tar xzf festvox-2.7.0-release.tar.gz
 
