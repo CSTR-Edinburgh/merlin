@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# added by haoqc for offline install
+install_online=false
+
+if [ "$install_offline" = true ]; then
 if test "$#" -ne 2; then
     echo "################################"
     echo "Usage: $0 <HTK_USERNAME> <HTK_PASSWORD>"
@@ -7,11 +11,13 @@ if test "$#" -ne 2; then
     echo "################################"
     exit 1
 fi
+fi
 
 current_working_dir=$(pwd)
 tools_dir=${current_working_dir}/$(dirname $0)
 cd $tools_dir
 
+if [ "$install_offline" = true ]; then
 HTK_USERNAME=$1
 HTK_PASSWORD=$2
 
@@ -20,7 +26,7 @@ HTK_URL=http://htk.eng.cam.ac.uk/ftp/software/HTK-3.4.1.tar.gz
 HDECODE_URL=http://htk.eng.cam.ac.uk/ftp/software/hdecode/HDecode-3.4.1.tar.gz
 
 ## Download HTS patch:
-HTS_PATCH_URL=http://hts.sp.nitech.ac.jp/archives/2.3alpha/HTS-2.3alpha_for_HTK-3.4.1.tar.bz2
+HTS_PATCH_URL=http://hts.sp.nitech.ac.jp/archives/2.3/HTS-2.3_for_HTK-3.4.1.tar.bz2
 
 if hash wget 2>/dev/null; then
     wget $HTK_URL --http-user=$HTK_USERNAME --http-password=$HTK_PASSWORD
@@ -32,20 +38,21 @@ else
     echo "please download HTS PATCH from $HTS_PATCH_URL"
     exit 1
 fi
+fi
 
 ## Unpack everything:
 tar xzf HTK-3.4.1.tar.gz
 tar xzf HDecode-3.4.1.tar.gz
-tar xf HTS-2.3alpha_for_HTK-3.4.1.tar.bz2
+tar xf HTS-2.3_for_HTK-3.4.1.tar.bz2
 
 # apply HTS patch
 cd htk
-patch -p1 -d . < ../HTS-2.3alpha_for_HTK-3.4.1.patch
+patch -p1 -d . < ../HTS-2.3_for_HTK-3.4.1.patch
 
 echo "compiling HTK..."
 (
     ./configure --prefix=$PWD/build;
-    make all;
+    sudo make all;
     make install
 )
 
