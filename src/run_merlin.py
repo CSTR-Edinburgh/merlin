@@ -281,7 +281,7 @@ def train_DNN(train_xy_file_list, valid_xy_file_list, \
                     sys.exit('old and new weight matrices have different shapes')
                 k = k + 1        
     train_fn, valid_fn = dnn_model.build_finetune_functions(
-                    (train_set_x, train_set_y), (valid_set_x, valid_set_y), use_lhuc)  #, batch_size=batch_size
+                    (train_set_x, train_set_y), (valid_set_x, valid_set_y), use_lhuc, layer_index=cfg.freeze_layers)  #, batch_size=batch_size
     logger.info('fine-tuning the %s model' %(model_type))
 
     start_time = time.time()

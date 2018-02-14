@@ -358,6 +358,7 @@ class configuration(object):
             ('start_from_trained_model',  '_'                     , 'Architecture', 'start_from_trained_model'),
             ('use_rprop',           0                             , 'Architecture', 'use_rprop'),
             ('use_lhuc',           False                             , 'Architecture', 'use_lhuc'),
+            ('freeze_layers',      0                              , 'Architecture', 'freeze_layers'),
 
             ('mgc_dim' ,60     ,'Outputs','mgc'),
             ('dmgc_dim',60 * 3 ,'Outputs','dmgc'),
