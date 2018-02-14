@@ -504,7 +504,7 @@ def perform_acoustic_composition(delta_win, acc_win, in_file_list_dict, nn_cmp_f
               nn_cmp_file_list[i::num_splits],
               cfg.in_dimension_dict,
               cfg.out_dimension_dict
-             ) for i in xrange(num_splits) ]
+             ) for i in range(num_splits) ]
 
         pool.map(perform_acoustic_composition_on_split, splits_full)
         pool.close()
