@@ -411,12 +411,12 @@ if __name__ == '__main__':
 
    # hack to keep old run_aligner scripts (with sed repalce) compatible
     # they replace "HTKDIR =" and "work_dir ="
-    if (len(sys.argv)) >= 1:
+    if (len(sys.argv)) > 1:
         work_real_dir = sys.argv[1]
     else:
         work_dir = os.getcwd()
         work_real_dir = work_dir
-    if len(sys.argv) >= 2:
+    if len(sys.argv) > 2:
         htk_dir = sys.argv[2]
     else:
         HTKDIR = None
