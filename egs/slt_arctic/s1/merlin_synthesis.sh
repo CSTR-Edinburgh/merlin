@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source cmd.sh
+
 if test "$#" -ne 0; then
     echo "Usage: ./merlin_synthesis.sh"
     exit 1
@@ -39,8 +41,8 @@ fi
 
 ### Step 2: synthesize speech   ###
 echo "Step 2: synthesizing speech..."
-./scripts/submit.sh ${MerlinDir}/src/run_merlin.py conf/test_dur_synth_${Voice}.conf
-./scripts/submit.sh ${MerlinDir}/src/run_merlin.py conf/test_synth_${Voice}.conf
+./scripts/${cuda_short_cmd} "experiments/${Voice}/test_synthesis/_synth_dur.log" "./scripts/submit.sh" "${MerlinDir}/src/run_merlin.py" "conf/test_dur_synth_${Voice}.conf"
+./scripts/${cuda_short_cmd} "experiments/${Voice}/test_synthesis/_synth_speech.log" "./scripts/submit.sh" "${MerlinDir}/src/run_merlin.py" "conf/test_synth_${Voice}.conf"
 
 echo "deleting intermediate synthesis files..."
 ./scripts/remove_intermediate_files.sh $global_config_file
