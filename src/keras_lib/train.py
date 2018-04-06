@@ -260,14 +260,12 @@ class TrainKerasModels(kerasModels):
         #### compute predictions ####
         io_funcs = BinaryIOCollection()
 
-        test_id_list = list(test_x.keys())
-        test_id_list.sort()
-
-        test_file_number = len(test_id_list)
+        test_file_number = len(gen_test_file_list)
         print("generating features on held-out test data...")
         for utt_index in range(test_file_number):
             gen_test_file_name = gen_test_file_list[utt_index]
-            temp_test_x        = test_x[test_id_list[utt_index]]
+            test_id = os.path.splitext(os.path.basename(gen_test_file_name))[0]
+            temp_test_x        = test_x[test_id]
             num_of_rows        = temp_test_x.shape[0]
 
             if stateful:
