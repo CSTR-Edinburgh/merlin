@@ -32,7 +32,7 @@ copy=true
 if [ "$prepare_feats" = true ]; then
     echo "Step 3:" 
     echo "Prepare acoustic features using "${Vocoder}" vocoder..."
-    python ${MerlinDir}/misc/scripts/vocoder/${Vocoder,,}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq 
+    python ${MerlinDir}/misc/scripts/vocoder/${Vocoder}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq
 fi
 
 if [ "$copy" = true ]; then
