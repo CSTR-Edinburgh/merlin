@@ -339,40 +339,62 @@ def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
         filename_token = file_id_list[nxf]
         logger.info('Creating waveform for %4d of %4d: %s' % (nxf+1, nfiles, filename_token))
 
-        # Post-Filter:
-        if cfg.do_post_filtering and not cfg.use_magphase_pf:
-
-            mcep_file      = os.path.join(gen_dir, filename_token + '.mcep')
-            mcep_file_pf   = os.path.join(gen_dir, filename_token + '_pf.mcep')
-            mag_file       = os.path.join(gen_dir, filename_token + '.mag')
-
-
-            # Mag to Mcep:
-            m_mag_mel_log  = lu.read_binfile(mag_file, dim=cfg.mag_dim)
-            m_mcep         = la.rceps(m_mag_mel_log, in_type='log', out_type='compact')
-            lu.write_binfile(m_mcep, mcep_file)
-
-            # Apply post-filter:
-            post_filter(mcep_file, mcep_file_pf, cfg.mag_dim, cfg.pf_coef, cfg.fw_alpha, cfg.co_coef, cfg.fl, gen_dir, cfg)
-
-            # Mcep to Mag:
-            m_mcep_pf        = lu.read_binfile(mcep_file_pf, dim=cfg.mag_dim)
-            m_mag_mel_log_pf = la.mcep_to_sp_cosmat(m_mcep_pf, cfg.mag_dim, alpha=0.0, out_type='log')
-
-            # Protection agains possible nans:
-            m_mag_mel_log_pf[np.isnan(m_mag_mel_log_pf)] = la.MAGIC
-
-            # Saving to file:
-            lu.write_binfile(m_mag_mel_log_pf, mag_file)
-
-            # Removing temp files:
-            os.remove(mcep_file)
-            os.remove(mcep_file_pf)
-
-        # Synthesis:
-        mp.synthesis_from_acoustic_modelling(gen_dir, filename_token, gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, b_postfilter=(cfg.do_post_filtering and cfg.use_magphase_pf))
+        for pf_type in cfg.magphase_pf_type:
+            gen_wav_dir = os.path.join(gen_dir, '_wav_pf_' + pf_type)
+            lu.mkdir(gen_wav_dir)
+            mp.synthesis_from_acoustic_modelling_dev(gen_dir, filename_token, gen_wav_dir, cfg.mag_dim, cfg.real_dim,
+                                                            cfg.sr, pf_type=pf_type, b_const_rate=cfg.magphase_const_rate)
 
     return
+
+
+# def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
+
+#     # Import MagPhase and libraries:
+#     sys.path.append(cfg.magphase_bindir)
+#     import libutils as lu
+#     import libaudio as la
+#     import magphase as mp
+
+#     nfiles = len(file_id_list)
+#     for nxf in xrange(nfiles):
+#         filename_token = file_id_list[nxf]
+#         logger.info('Creating waveform for %4d of %4d: %s' % (nxf+1, nfiles, filename_token))
+
+#         # Post-Filter:
+#         if cfg.do_post_filtering and not cfg.use_magphase_pf:
+
+#             mcep_file      = os.path.join(gen_dir, filename_token + '.mcep')
+#             mcep_file_pf   = os.path.join(gen_dir, filename_token + '_pf.mcep')
+#             mag_file       = os.path.join(gen_dir, filename_token + '.mag')
+
+
+#             # Mag to Mcep:
+#             m_mag_mel_log  = lu.read_binfile(mag_file, dim=cfg.mag_dim)
+#             m_mcep         = la.rceps(m_mag_mel_log, in_type='log', out_type='compact')
+#             lu.write_binfile(m_mcep, mcep_file)
+
+#             # Apply post-filter:
+#             post_filter(mcep_file, mcep_file_pf, cfg.mag_dim, cfg.pf_coef, cfg.fw_alpha, cfg.co_coef, cfg.fl, gen_dir, cfg)
+
+#             # Mcep to Mag:
+#             m_mcep_pf        = lu.read_binfile(mcep_file_pf, dim=cfg.mag_dim)
+#             m_mag_mel_log_pf = la.mcep_to_sp_cosmat(m_mcep_pf, cfg.mag_dim, alpha=0.0, out_type='log')
+
+#             # Protection agains possible nans:
+#             m_mag_mel_log_pf[np.isnan(m_mag_mel_log_pf)] = la.MAGIC
+
+#             # Saving to file:
+#             lu.write_binfile(m_mag_mel_log_pf, mag_file)
+
+#             # Removing temp files:
+#             os.remove(mcep_file)
+#             os.remove(mcep_file_pf)
+
+#         # Synthesis:
+#         mp.synthesis_from_acoustic_modelling(gen_dir, filename_token, gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, b_postfilter=(cfg.do_post_filtering and cfg.use_magphase_pf))
+
+#     return
 
 # def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
 
