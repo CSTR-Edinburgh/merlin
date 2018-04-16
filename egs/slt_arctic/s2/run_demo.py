@@ -15,6 +15,7 @@ import magphase as mp
 import configparser # Install it with pip (it's not the same as 'ConfigParser' (old version))
 from subprocess import call
 
+
 def feat_extraction(in_wav_dir, file_name_token, out_feats_dir, d_opts):
 
     # Display:
@@ -23,9 +24,9 @@ def feat_extraction(in_wav_dir, file_name_token, out_feats_dir, d_opts):
     # File setup:
     wav_file = join(in_wav_dir, file_name_token + '.wav')
 
-    mp.analysis_compressed_type1_with_phase_comp_mcep(wav_file, out_dir=out_feats_dir, nbins_phase=d_opts['nbins_phase'],
-                                                                                        b_const_rate=d_opts['b_const_rate'])
-
+    mp.analysis_for_acoustic_modelling(wav_file, out_dir=out_feats_dir,
+                                        nbins_phase=d_opts['nbins_phase'],
+                                        b_const_rate=d_opts['b_const_rate'])
     return
 
 
@@ -90,20 +91,20 @@ if __name__ == '__main__':
     exper_type = 'demo'  #  'demo' (50 training utts) or 'full' (1k training utts)
 
     # Steps:---------------------------------------------------------------------------------
-    b_download_data  = 0 # Downloads wavs and label data.
-    b_setup_data     = 0 # Copies downloaded data into the experiment directory. Plus, makes a backup copy of this script.
-    b_config_merlin  = 0 # Saves new configuration files for Merlin.
-    b_feat_extr      = 0 # Performs acoustic feature extraction using the MagPhase vocoder
-    b_conv_labs_rate = 0 # Converts the state aligned labels to variable rate if running in variable frame rate mode (d_mp_opts['b_const_rate'] = False)
-    b_dur_train      = 0 # Merlin: Training of duration model.
+    b_download_data  = 1 # Downloads wavs and label data.
+    b_setup_data     = 1 # Copies downloaded data into the experiment directory. Plus, makes a backup copy of this script.
+    b_config_merlin  = 1 # Saves new configuration files for Merlin.
+    b_feat_extr      = 1 # Performs acoustic feature extraction using the MagPhase vocoder
+    b_conv_labs_rate = 1 # Converts the state aligned labels to variable rate if running in variable frame rate mode (d_mp_opts['b_const_rate'] = False)
+    b_dur_train      = 1 # Merlin: Training of duration model.
     b_acous_train    = 1 # Merlin: Training of acoustic model.
-    b_dur_syn        = 0 # Merlin: Generation of state durations using the duration model.
-    b_acous_syn      = 0 # Merlin: Waveform generation for the utterances provided in ./test_synthesis/prompt-lab
+    b_dur_syn        = 1 # Merlin: Generation of state durations using the duration model.
+    b_acous_syn      = 1 # Merlin: Waveform generation for the utterances provided in ./test_synthesis/prompt-lab
 
     # MagPhase Vocoder:-----------------------------------------------------------------------
     d_mp_opts = {}                    # Dictionary containing internal options for the MagPhase vocoder (mp).
     d_mp_opts['nbins_phase' ] = 10    # Number of coefficients (bins) for phase features R and I.
-    d_mp_opts['b_const_rate'] = True  # To work in constant frame rate mode.
+    d_mp_opts['b_const_rate'] = False  # To work in constant frame rate mode.
     d_mp_opts['l_pf_type'   ] = [ 'no', 'magphase', 'merlin'] #  List containing the postfilters to apply during waveform generation.
     # You need to choose at least one: 'magphase' (magphase-tailored postfilter), 'merlin' (Merlin's style postfilter), 'no' (no postfilter)
 

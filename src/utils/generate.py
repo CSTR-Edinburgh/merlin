@@ -310,7 +310,7 @@ def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
         for pf_type in cfg.magphase_pf_type:
             gen_wav_dir = os.path.join(gen_dir + '_wav_pf_' + pf_type)
             lu.mkdir(gen_wav_dir)
-            mp.synthesis_from_acoustic_modelling_dev(gen_dir, filename_token, gen_wav_dir, cfg.mag_dim, cfg.real_dim,
+            mp.synthesis_from_acoustic_modelling(gen_dir, filename_token, gen_wav_dir, cfg.mag_dim, cfg.real_dim,
                                                             cfg.sr, pf_type=pf_type, b_const_rate=cfg.magphase_const_rate)
 
     return
