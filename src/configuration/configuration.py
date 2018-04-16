@@ -250,7 +250,7 @@ class configuration(object):
             ('additional_features', {}                                                    ,    'Labels', 'additional_features'),
 
             ## For MagPhase Vocoder:
-            ('label_align_orig_const_rate_dir', os.path.join(self.work_dir, 'data/label_state_align'), 'Labels', 'label_align_orig_const_rate'),
+            #('label_align_orig_const_rate_dir', os.path.join(self.work_dir, 'data/label_state_align'), 'Labels', 'label_align_orig_const_rate'),
 
             ('xpath_file_name',      os.path.join(self.work_dir, 'data/xml_labels/xpaths.txt'), 'Labels', 'xpath_file_name'),
 
@@ -740,7 +740,7 @@ class configuration(object):
                 out_dimension = self.dlf0_dim
                 in_directory  = self.in_lf0_dir
                 if self.vocoder_type == 'MAGPHASE':
-                    in_directory = self.in_acous_feats_dir
+                    in_directory = self.acous_feats_dir
 
 #                current_stream_hidden_size = self.stream_lf0_hidden_size
 #                current_stream_weight      = self.stream_weight_lf0
@@ -854,17 +854,17 @@ class configuration(object):
             elif feature_name == 'mag':
                 in_dimension  = self.mag_dim
                 out_dimension = self.dmag_dim
-                in_directory  = self.in_acous_feats_dir
+                in_directory  = self.acous_feats_dir
 
             elif feature_name == 'real':
                 in_dimension  = self.real_dim
                 out_dimension = self.dreal_dim
-                in_directory  = self.in_acous_feats_dir
+                in_directory  = self.acous_feats_dir
 
             elif feature_name == 'imag':
                 in_dimension  = self.imag_dim
                 out_dimension = self.dimag_dim
-                in_directory  = self.in_acous_feats_dir
+                in_directory  = self.acous_feats_dir
             ## For MagPhase Vocoder (end)
 
             ## for joint dur (start)

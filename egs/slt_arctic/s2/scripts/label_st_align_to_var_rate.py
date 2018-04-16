@@ -23,73 +23,44 @@ NOTES:
     It rarelly occurs.
 """
 
-import sys
-from os import path
-from ConfigParser import SafeConfigParser
+import sys, os
 
-def parse_config_file(config_file):
+this_dir = os.path.dirname(__file__)
+sys.path.append(os.path.realpath(this_dir + '/../../../../tools/magphase/src'))
+import libutils as lu
+import magphase as mp
+import libaudio as la
 
-    # Reading config file:
-    config = SafeConfigParser()
-    config.read(config_file)
+def convert(file_id_list, in_lab_dir, in_feats_dir, fs, out_lab_dir, b_prevent_zeros=False):
 
-    # Importing MagPhase:
-    merlin = config.get('DEFAULT', 'Merlin')
-    sys.path.append(path.join(merlin, 'tools', 'magphase', 'src'))
-    global lu, la, mp
-    import libutils as lu
-    import libaudio as la
-    import magphase as mp
-
-    # Getting info:
-    in_feats_dir = config.get('Paths' , 'in_acous_feats_dir')
-    file_id_list = config.get('Paths' , 'file_id_list')
-    in_lab_dir   = config.get('Labels', 'label_align_orig_const_rate')
-    out_lab_dir  = config.get('Labels', 'label_align')
-    fs = int(config.get('Waveform' , 'samplerate'))
-
-    return file_id_list, in_lab_dir, in_feats_dir, fs, out_lab_dir
-
-
-if __name__ == '__main__':
-
-    # Parsing input arg:
-    config_file = sys.argv[1]
-
-    # Constants:
-    b_prevent_zeros = False # True if you want to ensure that all the phonemes have one frame at least.
-                            # (not recommended, only usful when there are too many utterances crashed)
-
-    # Parsing config file:
-    file_id_list, in_lab_dir, in_feats_dir, fs, out_lab_dir = parse_config_file(config_file)
+    '''
+    b_prevent_zeros: True if you want to ensure that all the phonemes have one frame at least.
+    (not recommended, only useful when there are too many utterances crashed)
+    '''
 
     # Conversion:
     lu.mkdir(out_lab_dir)
     v_filenames = lu.read_text_file2(file_id_list, dtype='string', comments='#')
-    n_files = len(v_filenames)
-    
-    crashlist_file = lu.ins_pid('crash_file_list.scp')
 
+    crashlist_file = lu.ins_pid('crash_file_list.scp')
     for filename in v_filenames:
 
         # Display:
         print('\nConverting lab file: ' + filename + '................................')
-        
+
         # Current i/o files:
-        in_lab_file   = path.join(in_lab_dir  , filename + '.lab')
-        out_lab_file  = path.join(out_lab_dir , filename + '.lab')
+        in_lab_file   = os.path.join(in_lab_dir  , filename + '.lab')
+        out_lab_file  = os.path.join(out_lab_dir , filename + '.lab')
 
-        # Debug:
-        #print('out_lab_file:-----------------------------------')
-        #print(out_lab_file)
-
-        in_shift_file = path.join(in_feats_dir, filename + '.shift')
+        in_shift_file = os.path.join(in_feats_dir, filename + '.shift')
 
 
         # Debug:
+        '''
         v_shift  = lu.read_binfile(in_shift_file, dim=1)
         v_n_frms = mp.get_num_of_frms_per_state(v_shift, in_lab_file, fs, b_prevent_zeros=b_prevent_zeros)
         la.convert_label_state_align_to_var_frame_rate(in_lab_file, v_n_frms, out_lab_file)
+        #'''
 
         try:
             v_shift  = lu.read_binfile(in_shift_file, dim=1)
@@ -105,3 +76,15 @@ if __name__ == '__main__':
                 crashlistlog.write(filename + '\n')
 
     print('Done!')
+
+
+if __name__ == '__main__':
+
+    # Parsing input arg:
+    file_id_list = sys.argv[1]
+    in_lab_dir   = sys.argv[2]
+    in_feats_dir = sys.argv[3]
+    fs           = int(sys.argv[4])
+    out_lab_dir  = sys.argv[5]
+
+    convert(file_id_list, in_lab_dir, in_feats_dir, fs, out_lab_dir, b_prevent_zeros=False)
