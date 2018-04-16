@@ -62,8 +62,9 @@ def feat_extraction_magphase(in_wav_dir, file_id_list, cfg, logger, b_multiproc=
         wav_file = os.path.join(in_wav_dir, file_name_token + '.wav')
 
         # Feat extraction:
-        mp.analysis_compressed_type1_with_phase_comp_mcep(wav_file, out_dir=acous_feats_dir, nbins_mel=cfg.mag_dim,
+        mp.analysis_for_acoustic_modelling(wav_file, out_dir=acous_feats_dir, nbins_mel=cfg.mag_dim,
                                                             nbins_phase=cfg.real_dim, b_const_rate=cfg.magphase_const_rate)
+
         return
 
 
