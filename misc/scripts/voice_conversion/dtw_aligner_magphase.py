@@ -33,8 +33,8 @@ if not os.path.exists(src_aligned_feat_dir):
 
 ### Define variables
 mag_dim  = 60 # TODO: Change this (avoid hardcoded)
-real_dim = 45
-imag_dim = 45
+real_dim = 10
+imag_dim = 10
 lf0_dim  = 1
 
 #src_mag_dir = src_feat_dir

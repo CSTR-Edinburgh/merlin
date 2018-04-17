@@ -547,6 +547,7 @@ def main_function(cfg):
 
     ###total file number including training, development, and testing
     total_file_number = len(file_id_list)
+
     assert cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number == total_file_number, 'check train, valid, test file number'
 
     data_dir = cfg.data_dir

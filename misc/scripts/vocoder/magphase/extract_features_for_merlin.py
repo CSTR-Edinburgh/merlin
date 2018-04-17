@@ -57,7 +57,7 @@ def feat_extraction(wav_file, out_feats_dir):
     file_name_token = os.path.basename(os.path.splitext(wav_file)[0])
 
     # Display:
-    print("Analysing file: " + file_name_token + '.wav' + '................................')
+    print("\nAnalysing file: " + file_name_token + '.wav' + '................................')
 
     mp.analysis_for_acoustic_modelling(wav_file, out_dir=out_feats_dir)
     return

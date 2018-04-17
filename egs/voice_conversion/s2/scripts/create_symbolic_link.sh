@@ -11,7 +11,7 @@ if test "$#" -ne 0; then
     exit 1
 fi
 
-cmp_dim=454 # TODO: Make it variable (avoid hardcoded)
+cmp_dim=244 # TODO: Make it variable (avoid hardcoded)
 
 # get cmp dimension based on sampling rate
 # if [ "$Vocoder" == "STRAIGHT" ]
@@ -39,7 +39,7 @@ cmp_dim=454 # TODO: Make it variable (avoid hardcoded)
 ### Step 6: create symbolic link for source input ###
 echo "Step 6:"
 echo "creating symbolic link..."
-cmd="ln -s ${WorkDir}/experiments/${Source}/acoustic_model/inter_module/nn_norm_mag_lf0_vuv_real_imag_${cmp_dim}/ experiments/${Voice}/acoustic_model/inter_module/nn_no_silence_lab_norm_${cmp_dim}"
+cmd="ln -s ${WorkDir}/experiments/${Source}/acoustic_model/inter_module/nn_norm_mag_lf0_vuv_real_imag_${cmp_dim}/ ${WorkDir}/experiments/${Voice}/acoustic_model/inter_module/nn_no_silence_lab_norm_${cmp_dim}"
 echo $cmd
 $cmd
 echo "done...!"
