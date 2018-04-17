@@ -53,7 +53,6 @@ def mod_acoustic_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
     if d_mp_opts['b_const_rate']:
         parser['Labels']['label_align'] = '%(TOPLEVEL)s/acoustic_model/data/label_state_align'
 
-
     parser = mod_number_of_utts(parser, exper_type)
 
     return parser
@@ -91,15 +90,15 @@ if __name__ == '__main__':
     exper_type = 'demo'  #  'demo' (50 training utts) or 'full' (1k training utts)
 
     # Steps:---------------------------------------------------------------------------------
-    b_download_data  = 1 # Downloads wavs and label data.
-    b_setup_data     = 1 # Copies downloaded data into the experiment directory. Plus, makes a backup copy of this script.
-    b_config_merlin  = 1 # Saves new configuration files for Merlin.
-    b_feat_extr      = 1 # Performs acoustic feature extraction using the MagPhase vocoder
-    b_conv_labs_rate = 1 # Converts the state aligned labels to variable rate if running in variable frame rate mode (d_mp_opts['b_const_rate'] = False)
-    b_dur_train      = 1 # Merlin: Training of duration model.
-    b_acous_train    = 1 # Merlin: Training of acoustic model.
-    b_dur_syn        = 1 # Merlin: Generation of state durations using the duration model.
-    b_acous_syn      = 1 # Merlin: Waveform generation for the utterances provided in ./test_synthesis/prompt-lab
+    b_download_data  = 0 # Downloads wavs and label data.
+    b_setup_data     = 0 # Copies downloaded data into the experiment directory. Plus, makes a backup copy of this script.
+    b_config_merlin  = 0 # Saves new configuration files for Merlin.
+    b_feat_extr      = 0 # Performs acoustic feature extraction using the MagPhase vocoder
+    b_conv_labs_rate = 0 # Converts the state aligned labels to variable rate if running in variable frame rate mode (d_mp_opts['b_const_rate'] = False)
+    b_dur_train      = 0 # Merlin: Training of duration model.
+    b_acous_train    = 0 # Merlin: Training of acoustic model.
+    b_dur_syn        = 0 # Merlin: Generation of state durations using the duration model.
+    b_acous_syn      = 0 # Merlin: Waveform generation for the utterances provided in ./test_synthesis/prompt-lab
 
     # MagPhase Vocoder:-----------------------------------------------------------------------
     d_mp_opts = {}                    # Dictionary containing internal options for the MagPhase vocoder (mp).
@@ -163,7 +162,7 @@ if __name__ == '__main__':
     # Read file list:
     file_id_list = pars_acous_train['Paths']['file_id_list']
     l_file_tokns = lu.read_text_file2(file_id_list, dtype='string', comments='#').tolist()
-    acoustic_feats_path = join(exper_path, 'acoustic_model', 'data', 'acoustic_feats')
+    acoustic_feats_path = pars_acous_train['Paths']['in_acous_feats_dir']
 
     # Acoustic Feature Extraction:-------------------------------------------------------------
     if b_feat_extr:
