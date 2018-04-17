@@ -24,7 +24,7 @@ def feat_extraction(in_wav_dir, file_name_token, out_feats_dir, d_opts):
     # File setup:
     wav_file = join(in_wav_dir, file_name_token + '.wav')
 
-    mp.analysis_for_acoustic_modelling(wav_file, out_dir=out_feats_dir,
+    mp.analysis_for_acoustic_modelling(wav_file, out_feats_dir,
                                         nbins_phase=d_opts['nbins_phase'],
                                         b_const_rate=d_opts['b_const_rate'])
     return

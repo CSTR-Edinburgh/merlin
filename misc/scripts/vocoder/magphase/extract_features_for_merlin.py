@@ -24,7 +24,6 @@ If wanted, you can modify the input options (directories, input files, etc.) See
 """
 
 import sys, os
-import numpy as np
 
 if len(sys.argv)!=5:
     print("Usage: ")
@@ -47,7 +46,6 @@ fs_expected = int(sys.argv[4])
 magphase = os.path.join(merlin_dir, 'tools', 'magphase', 'src')
 sys.path.append(os.path.realpath(magphase))
 import libutils as lu
-import libaudio as la
 import magphase as mp
 
 
@@ -59,9 +57,8 @@ def feat_extraction(wav_file, out_feats_dir):
     # Display:
     print("\nAnalysing file: " + file_name_token + '.wav' + '................................')
 
-    mp.analysis_for_acoustic_modelling(wav_file, out_dir=out_feats_dir)
+    mp.analysis_for_acoustic_modelling(wav_file, out_feats_dir)
     return
-
 
 
 def get_wav_filelist(wav_dir):
