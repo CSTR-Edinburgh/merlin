@@ -4,12 +4,10 @@
 # usage: submit.sh [scriptname.py script_arguments ... ]
 
 #src_dir=$(dirname $1)
-
 src_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Source install-related environment variables
 source ${src_dir}/setup_env.sh
-
 use_gpu_lock=true
 
 if [ "$use_gpu_lock" = true ]; then

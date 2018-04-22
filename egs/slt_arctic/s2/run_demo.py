@@ -25,7 +25,7 @@ def feat_extraction(in_wav_dir, file_name_token, out_feats_dir, d_opts):
     wav_file = join(in_wav_dir, file_name_token + '.wav')
 
     mp.analysis_for_acoustic_modelling(wav_file, out_feats_dir,
-                                        nbins_phase=d_opts['nbins_phase'],
+                                        phase_dim=d_opts['phase_dim'],
                                         b_const_rate=d_opts['b_const_rate'])
     return
 
@@ -45,10 +45,13 @@ def mod_acoustic_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
     parser['DEFAULT']['Merlin']   = merlin_path
     parser['DEFAULT']['TOPLEVEL'] = exper_path
 
-    parser['Outputs']['real' ] = '%d' %  d_mp_opts['nbins_phase']
-    parser['Outputs']['imag' ] = '%d' %  d_mp_opts['nbins_phase']
-    parser['Outputs']['dreal'] = '%d' % (d_mp_opts['nbins_phase']*3)
-    parser['Outputs']['dimag'] = '%d' % (d_mp_opts['nbins_phase']*3)
+    parser['Outputs']['mag' ] = '%d' %  d_mp_opts['mag_dim']
+    parser['Outputs']['dmag'] = '%d' % (d_mp_opts['mag_dim']*3)
+
+    parser['Outputs']['real' ] = '%d' %  d_mp_opts['phase_dim']
+    parser['Outputs']['imag' ] = '%d' %  d_mp_opts['phase_dim']
+    parser['Outputs']['dreal'] = '%d' % (d_mp_opts['phase_dim']*3)
+    parser['Outputs']['dimag'] = '%d' % (d_mp_opts['phase_dim']*3)
 
     if d_mp_opts['b_const_rate']:
         parser['Labels']['label_align'] = '%(TOPLEVEL)s/acoustic_model/data/label_state_align'
@@ -87,7 +90,7 @@ if __name__ == '__main__':
     # INPUT:===================================================================================================
 
     # Experiment type:-----------------------------------------------------------------------
-    exper_type = 'full'  #  'demo' (50 training utts) or 'full' (1k training utts)
+    exper_type = 'demo'  #  'demo' (50 training utts) or 'full' (1k training utts)
 
     # Steps:---------------------------------------------------------------------------------
     b_download_data  = 1 # Downloads wavs and label data.
@@ -101,9 +104,9 @@ if __name__ == '__main__':
     b_acous_syn      = 1 # Merlin: Waveform generation for the utterances provided in ./test_synthesis/prompt-lab
 
     # MagPhase Vocoder:-----------------------------------------------------------------------
-    d_mp_opts = {}                    # Dictionary containing internal options for the MagPhase vocoder (mp).
-    d_mp_opts['nbins_mag'   ] = 60    # Number of coefficients (bins) for magnitude feature M.
-    d_mp_opts['nbins_phase' ] = 15    # Number of coefficients (bins) for phase features R and I.
+    d_mp_opts = {}                     # Dictionary containing internal options for the MagPhase vocoder (mp).
+    d_mp_opts['mag_dim'   ] = 100       # Number of coefficients (bins) for magnitude feature M.
+    d_mp_opts['phase_dim' ] = 10       # Number of coefficients (bins) for phase features R and I.
     d_mp_opts['b_const_rate'] = False  # To work in constant frame rate mode.
     d_mp_opts['l_pf_type'   ] = [ 'no', 'magphase', 'merlin'] #  List containing the postfilters to apply during waveform generation.
     # You need to choose at least one: 'magphase' (magphase-tailored postfilter), 'merlin' (Merlin's style postfilter), 'no' (no postfilter)
@@ -113,7 +116,7 @@ if __name__ == '__main__':
 
     # PROCESS:===================================================================================================
     # Pre setup:-------------------------------------------------------------------------------
-    exper_name  = 'slt_arctic_magphase_%s_nphase_%d_const_rate_%d' % (exper_type, d_mp_opts['nbins_phase'], d_mp_opts['b_const_rate'])
+    exper_name  = 'slt_arctic_magphase_%s_mag_dim_%s_phase_dim_%d_const_rate_%d' % (exper_type, d_mp_opts['mag_dim'], d_mp_opts['phase_dim'], d_mp_opts['b_const_rate'])
     exper_path  = join(this_dir, 'experiments' , exper_name)
     merlin_path = realpath(this_dir + '/../../..')
     submit_path     = join(this_dir, 'scripts', 'submit.sh')
