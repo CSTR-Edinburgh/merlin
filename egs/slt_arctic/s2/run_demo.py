@@ -8,7 +8,7 @@ from shutil import copytree, copy2
 import scripts.label_st_align_to_var_rate as ltvr
 from os.path import join, dirname, realpath, isdir
 import sys
-this_dir = dirname(__file__)
+this_dir = dirname(realpath(__file__))
 sys.path.append(realpath(this_dir + '/../../../tools/magphase/src'))
 import libutils as lu
 import magphase as mp
@@ -72,9 +72,9 @@ def mod_number_of_utts(parser, exper_type):
 
     if exper_type=='full':
         parser['Paths']['file_id_list'] = '%(data)s/file_id_list_full.scp'
-        parser['Data']['train_file_number'] = 1000
-        parser['Data']['valid_file_number'] = 66
-        parser['Data']['test_file_number' ] = 65
+        parser['Data']['train_file_number'] = '%d' % 1000
+        parser['Data']['valid_file_number'] = '%d' % 66
+        parser['Data']['test_file_number' ] = '%d' % 65
 
     elif exper_type=='demo':
         pass
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     # INPUT:===================================================================================================
 
     # Experiment type:-----------------------------------------------------------------------
-    exper_type = 'demo'  #  'demo' (50 training utts) or 'full' (1k training utts)
+    exper_type = 'full'  #  'demo' (50 training utts) or 'full' (1k training utts)
 
     # Steps:---------------------------------------------------------------------------------
     b_download_data  = 1 # Downloads wavs and label data.
@@ -102,7 +102,8 @@ if __name__ == '__main__':
 
     # MagPhase Vocoder:-----------------------------------------------------------------------
     d_mp_opts = {}                    # Dictionary containing internal options for the MagPhase vocoder (mp).
-    d_mp_opts['nbins_phase' ] = 10    # Number of coefficients (bins) for phase features R and I.
+    d_mp_opts['nbins_mag'   ] = 60    # Number of coefficients (bins) for magnitude feature M.
+    d_mp_opts['nbins_phase' ] = 15    # Number of coefficients (bins) for phase features R and I.
     d_mp_opts['b_const_rate'] = False  # To work in constant frame rate mode.
     d_mp_opts['l_pf_type'   ] = [ 'no', 'magphase', 'merlin'] #  List containing the postfilters to apply during waveform generation.
     # You need to choose at least one: 'magphase' (magphase-tailored postfilter), 'merlin' (Merlin's style postfilter), 'no' (no postfilter)
@@ -119,7 +120,6 @@ if __name__ == '__main__':
     run_merlin_path = join(merlin_path, 'src', 'run_merlin.py')
     dur_model_conf_path   = join(exper_path, 'duration_model', 'conf')
     acous_model_conf_path = join(exper_path, 'acoustic_model'   , 'conf')
-
 
     # Build config parsers:-------------------------------------------------------------------
 

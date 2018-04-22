@@ -3,7 +3,9 @@
 ## Generic script for submitting any Theano job to GPU
 # usage: submit.sh [scriptname.py script_arguments ... ]
 
-src_dir=$(dirname $1)
+#src_dir=$(dirname $1)
+
+src_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Source install-related environment variables
 source ${src_dir}/setup_env.sh
