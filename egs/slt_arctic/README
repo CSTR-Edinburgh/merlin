@@ -8,6 +8,6 @@ Each subdirectory of this directory contains the
 scripts for a sequence of experiments.
 
   s1: To run slt_arctic_demo with WORLD vocoder.
-  s2: To run slt_arctic_demo with MagPhase vocoder.
+  s2: To run slt_arctic_demo with MagPhase vocoder (includes acoustic feature extraction).
 
 

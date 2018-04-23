@@ -94,9 +94,8 @@ REAPER_BIN_DIR=bin/REAPER
 if [ "$install_magphase" = true ]; then
     echo "downloading MagPhase vocoder..."
     rm -rf magphase
-    # Debug:
-    #git clone https://github.com/CSTR-Edinburgh/magphase.git
-    git clone https://github.com/felipeespic/magphase.git
+    git clone https://github.com/CSTR-Edinburgh/magphase.git
+    #git clone https://github.com/felipeespic/magphase.git
 
     echo "configuring MagPhase..."
     (
