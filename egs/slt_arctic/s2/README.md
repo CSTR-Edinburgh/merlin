@@ -19,8 +19,9 @@ Both are downloaded automatically during running the demo script.
 
 ## Run Demo Voice
 
-Just run:
+Assuming Merlin is installed, just run:
 ```
+cd merlin/egs/slt_arctic/s2/
 python run_demo.py
 ```
 Basically, this script will:
