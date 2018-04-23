@@ -24,7 +24,7 @@ Assuming Merlin is installed, just run:
 cd merlin/egs/slt_arctic/s2/
 python run_demo.py
 ```
-Basically, this script will:
+Basically, ```run_demo.py``` script will:
 
 1. Download the input data for you (.lab, .wav).
 2. Create the experiment directory in ```./experiments```.
