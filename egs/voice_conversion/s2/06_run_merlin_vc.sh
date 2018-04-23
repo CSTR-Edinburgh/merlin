@@ -37,5 +37,5 @@ echo "transforming source voice to target voice..."
 echo "deleting intermediate synthesis files..."
 ./scripts/remove_intermediate_files.sh $global_config_file
 
-echo "transformed audio files are in: experiments/${Voice}/test_synthesis/${Target}"
+echo "transformed audio files are in: experiments/${Voice}/test_synthesis/${Target}_wav_pf_(postfilter_option)"
 

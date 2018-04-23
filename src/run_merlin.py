@@ -75,6 +75,7 @@ from models.deep_rnn import DeepRecurrentNetwork
 
 from utils.compute_distortion import DistortionComputation, IndividualDistortionComp
 from utils.generate import generate_wav
+from utils.acous_feat_extraction import acous_feat_extraction
 from utils.learn_rates import ExpDecreaseLearningRate
 
 from io_funcs.binary_io import  BinaryIOCollection
@@ -546,6 +547,7 @@ def main_function(cfg):
 
     ###total file number including training, development, and testing
     total_file_number = len(file_id_list)
+
     assert cfg.train_file_number+cfg.valid_file_number+cfg.test_file_number == total_file_number, 'check train, valid, test file number'
 
     data_dir = cfg.data_dir
@@ -603,6 +605,16 @@ def main_function(cfg):
     label_norm_file = file_paths.label_norm_file
 
     test_id_list = file_paths.test_id_list
+
+    # Debug:----------------------------------
+    if cfg.ACFTEXTR:
+        logger.info('acoustic feature extraction')
+        acous_feat_extraction(cfg.nat_wav_dir, file_id_list, cfg)
+        #generate_wav(gen_dir, file_id_list, cfg)     # generated speech
+
+
+
+    #-----------------------------------------
 
     if cfg.NORMLAB:
         # simple HTS labels

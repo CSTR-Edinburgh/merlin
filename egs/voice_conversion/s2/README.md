@@ -123,3 +123,9 @@ To transform voice from speakerA to speakerB:
 ./06_run_merlin_vc.sh <path_to_src_wav_dir> <path_to_test_source_conf_file> <path_to_test_synth_conf_file>
 ```
 
+## TODO
+
+* Constant frame rate support.
+* Selectable phase and magnitude dimensions.
+* Selectable postfilter.
+

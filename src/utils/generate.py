@@ -231,38 +231,6 @@ def wavgen_straight_type_vocoder(gen_dir, file_id_list, cfg, logger):
 
         ### post-filtering
         if cfg.do_post_filtering:
-            # line = "echo 1 1 "
-            # for i in range(2, cfg.mgc_dim):
-            #     line = line + str(pf_coef) + " "
-
-            # run_process('{line} | {x2x} +af > {weight}'
-            #             .format(line=line, x2x=SPTK['X2X'], weight=os.path.join(gen_dir, 'weight')))
-
-            # run_process('{freqt} -m {order} -a {fw} -M {co} -A 0 < {mgc} | {c2acr} -m {co} -M 0 -l {fl} > {base_r0}'
-            #             .format(freqt=SPTK['FREQT'], order=cfg.mgc_dim-1, fw=fw_coef, co=co_coef, mgc=files['mgc'], c2acr=SPTK['C2ACR'], fl=fl_coef, base_r0=files['mgc']+'_r0'))
-
-            # run_process('{vopr} -m -n {order} < {mgc} {weight} | {freqt} -m {order} -a {fw} -M {co} -A 0 | {c2acr} -m {co} -M 0 -l {fl} > {base_p_r0}'
-            #             .format(vopr=SPTK['VOPR'], order=cfg.mgc_dim-1, mgc=files['mgc'], weight=os.path.join(gen_dir, 'weight'),
-            #                     freqt=SPTK['FREQT'], fw=fw_coef, co=co_coef,
-            #                     c2acr=SPTK['C2ACR'], fl=fl_coef, base_p_r0=files['mgc']+'_p_r0'))
-
-            # run_process('{vopr} -m -n {order} < {mgc} {weight} | {mc2b} -m {order} -a {fw} | {bcp} -n {order} -s 0 -e 0 > {base_b0}'
-            #             .format(vopr=SPTK['VOPR'], order=cfg.mgc_dim-1, mgc=files['mgc'], weight=os.path.join(gen_dir, 'weight'),
-            #                     mc2b=SPTK['MC2B'], fw=fw_coef,
-            #                     bcp=SPTK['BCP'], base_b0=files['mgc']+'_b0'))
-
-            # run_process('{vopr} -d < {base_r0} {base_p_r0} | {sopr} -LN -d 2 | {vopr} -a {base_b0} > {base_p_b0}'
-            #             .format(vopr=SPTK['VOPR'], base_r0=files['mgc']+'_r0', base_p_r0=files['mgc']+'_p_r0',
-            #                     sopr=SPTK['SOPR'],
-            #                     base_b0=files['mgc']+'_b0', base_p_b0=files['mgc']+'_p_b0'))
-
-            # run_process('{vopr} -m -n {order} < {mgc} {weight} | {mc2b} -m {order} -a {fw} | {bcp} -n {order} -s 1 -e {order} | {merge} -n {order2} -s 0 -N 0 {base_p_b0} | {b2mc} -m {order} -a {fw} > {base_p_mgc}'
-            #             .format(vopr=SPTK['VOPR'], order=cfg.mgc_dim-1, mgc=files['mgc'], weight=os.path.join(gen_dir, 'weight'),
-            #                     mc2b=SPTK['MC2B'],  fw=fw_coef,
-            #                     bcp=SPTK['BCP'],
-            #                     merge=SPTK['MERGE'], order2=cfg.mgc_dim-2, base_p_b0=files['mgc']+'_p_b0',
-            #                     b2mc=SPTK['B2MC'], base_p_mgc=files['mgc']+'_p_mgc'))
-
 
             mgc_file_name = files['mgc']+'_p_mgc'
             post_filter(files['mgc'], mgc_file_name, cfg.mgc_dim, pf_coef, fw_coef, co_coef, fl_coef, gen_dir, cfg)
@@ -339,65 +307,13 @@ def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
         filename_token = file_id_list[nxf]
         logger.info('Creating waveform for %4d of %4d: %s' % (nxf+1, nfiles, filename_token))
 
-        # Post-Filter:
-        if cfg.do_post_filtering and not cfg.use_magphase_pf:
-
-            mcep_file      = os.path.join(gen_dir, filename_token + '.mcep')
-            mcep_file_pf   = os.path.join(gen_dir, filename_token + '_pf.mcep')
-            mag_file       = os.path.join(gen_dir, filename_token + '.mag')
-
-
-            # Mag to Mcep:
-            m_mag_mel_log  = lu.read_binfile(mag_file, dim=cfg.mag_dim)
-            m_mcep         = la.rceps(m_mag_mel_log, in_type='log', out_type='compact')
-            lu.write_binfile(m_mcep, mcep_file)
-
-            # Apply post-filter:
-            post_filter(mcep_file, mcep_file_pf, cfg.mag_dim, cfg.pf_coef, cfg.fw_alpha, cfg.co_coef, cfg.fl, gen_dir, cfg)
-
-            # Mcep to Mag:
-            m_mcep_pf        = lu.read_binfile(mcep_file_pf, dim=cfg.mag_dim)
-            m_mag_mel_log_pf = la.mcep_to_sp_cosmat(m_mcep_pf, cfg.mag_dim, alpha=0.0, out_type='log')
-
-            # Protection agains possible nans:
-            m_mag_mel_log_pf[np.isnan(m_mag_mel_log_pf)] = la.MAGIC
-
-            # Saving to file:
-            lu.write_binfile(m_mag_mel_log_pf, mag_file)
-
-            # Removing temp files:
-            os.remove(mcep_file)
-            os.remove(mcep_file_pf)
-
-        # Synthesis:
-        mp.synthesis_from_acoustic_modelling(gen_dir, filename_token, gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, b_postfilter=(cfg.do_post_filtering and cfg.use_magphase_pf))
+        for pf_type in cfg.magphase_pf_type:
+            gen_wav_dir = os.path.join(gen_dir + '_wav_pf_' + pf_type)
+            lu.mkdir(gen_wav_dir)
+            mp.synthesis_from_acoustic_modelling(gen_dir, filename_token, gen_wav_dir, cfg.mag_dim, cfg.real_dim,
+                                                            cfg.sr, pf_type=pf_type, b_const_rate=cfg.magphase_const_rate)
 
     return
-
-# def wavgen_magphase(gen_dir, file_id_list, cfg, logger):
-
-#     # Import MagPhase and libraries:
-#     sys.path.append(cfg.magphase_bindir)
-#     import libutils as lu
-#     import libaudio as la
-#     import magphase as mp
-
-#     # Constants:
-#     #b_parallel= True
-
-#     # Synthesis of one utterance function:
-#     #def synth_one_utt(in_feats_dir, filename_token, out_syn_dir, nbins_mel, nbins_phase, fs, b_postfilter):
-#     #    mp.synthesis_from_acoustic_modelling(in_feats_dir, filename_token, out_syn_dir, nbins_mel, nbins_phase, fs, b_postfilter)
-
-#     #if b_parallel:
-#     #    lu.run_multithreaded(synth_one_utt, gen_dir, file_id_list, gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, cfg.do_post_filtering)
-#     #else:
-
-#     nfiles = len(file_id_list)
-#     for nxf in xrange(nfiles):
-#         logger.info('Creating waveform for %4d of %4d: %s' % (nxf+1, nfiles, file_id_list[nxf]))
-#         mp.synthesis_from_acoustic_modelling(gen_dir, file_id_list[nxf], gen_dir, cfg.mag_dim, cfg.real_dim, cfg.sr, cfg.do_post_filtering)
-#     return
 
 def generate_wav(gen_dir, file_id_list, cfg):
 

@@ -24,7 +24,6 @@ If wanted, you can modify the input options (directories, input files, etc.) See
 """
 
 import sys, os
-import numpy as np
 
 if len(sys.argv)!=5:
     print("Usage: ")
@@ -47,7 +46,6 @@ fs_expected = int(sys.argv[4])
 magphase = os.path.join(merlin_dir, 'tools', 'magphase', 'src')
 sys.path.append(os.path.realpath(magphase))
 import libutils as lu
-import libaudio as la
 import magphase as mp
 
 
@@ -57,36 +55,11 @@ def feat_extraction(wav_file, out_feats_dir):
     file_name_token = os.path.basename(os.path.splitext(wav_file)[0])
 
     # Display:
-    print("Analysing file: " + file_name_token + '.wav' + '................................')
+    print("\nAnalysing file: " + file_name_token + '.wav' + '................................')
 
-    # Files setup:
-    est_file = os.path.join(out_feats_dir, file_name_token + '.est')
-
-    # Epochs detection:
-    la.reaper(wav_file, est_file)
-
-    # Feature extraction:    
-    m_mag_mel_log, m_real_mel, m_imag_mel, v_lf0, v_shift, fs, fft_len = mp.analysis_compressed(wav_file)
-
-    if fs!=fs_expected:
-        print("The wavefile's sample rate (%dHz) does not match the expected sample rate (%dHz)." % (fs, fs_expected))
-        sys.exit(1)
-
-    # Zeros for unvoiced segments in phase features:
-    v_voi = (np.exp(v_lf0) > 5.0).astype(int) # 5.0: tolerance (just in case)
-    m_real_mel_zeros = m_real_mel * v_voi[:,None]
-    m_imag_mel_zeros = m_imag_mel * v_voi[:,None]
-
-    # Saving features:
-    lu.write_binfile(m_mag_mel_log,    out_feats_dir + '/' + file_name_token + '.mag')
-    lu.write_binfile(m_real_mel_zeros, out_feats_dir + '/' + file_name_token + '.real')
-    lu.write_binfile(m_imag_mel_zeros, out_feats_dir + '/' + file_name_token + '.imag')
-    lu.write_binfile(v_lf0,            out_feats_dir + '/' + file_name_token + '.lf0')
-
-    # Saving auxiliary feature shift (hop length). It is useful for posterior modifications of labels in Merlin.
-    lu.write_binfile(v_shift, out_feats_dir + '/' + file_name_token + '.shift')
-
+    mp.analysis_for_acoustic_modelling(wav_file, out_feats_dir)
     return
+
 
 def get_wav_filelist(wav_dir):
     wav_files = []

@@ -216,7 +216,8 @@ class configuration(object):
             ('in_pdd_dir'   , os.path.join(self.work_dir, 'data/pdd')  , 'Paths', 'in_pdd_dir'),
 
             ## For MagPhase Vocoder:
-            ('in_acous_feats_dir'   , os.path.join(self.work_dir, 'data/acoustic_feats')  , 'Paths', 'in_acous_feats_dir'),
+            ('in_acous_feats_dir' , os.path.join(self.work_dir, 'data/in_acoustic_feats'), 'Paths', 'in_acous_feats_dir'),
+            ('nat_wav_dir'        , os.path.join(self.work_dir, 'data/nat_wavs')         , 'Paths', 'nat_wav_dir'), # Containg natural speech waveforms (for acous feat extraction).
 
             # Input-Output
             ('inp_dim', 425, 'Input-Output', 'inp_dim'),
@@ -249,7 +250,7 @@ class configuration(object):
             ('additional_features', {}                                                    ,    'Labels', 'additional_features'),
 
             ## For MagPhase Vocoder:
-            ('label_align_orig_const_rate_dir', os.path.join(self.work_dir, 'data/label_state_align'), 'Labels', 'label_align_orig_const_rate'),
+            #('label_align_orig_const_rate_dir', os.path.join(self.work_dir, 'data/label_state_align'), 'Labels', 'label_align_orig_const_rate'),
 
             ('xpath_file_name',      os.path.join(self.work_dir, 'data/xml_labels/xpaths.txt'), 'Labels', 'xpath_file_name'),
 
@@ -442,13 +443,17 @@ class configuration(object):
             ('test_synth_dir'   ,'test_synthesis/wav'  ,'Waveform'  , 'test_synth_dir'),
 
             ## For MagPhase Vocoder:
-            ('use_magphase_pf'  ,True                 ,'Waveform'  , 'use_magphase_pf'), # Use MagPhase own Post-Filter (experimemental)
+            #('use_magphase_pf'  ,True                 ,'Waveform'  , 'use_magphase_pf'), # Use MagPhase own Post-Filter (experimemental)
+            ('magphase_pf_type'   , ['magphase', 'no', 'merlin']  , 'Waveform', 'magphase_pf_type'),
+            ('magphase_const_rate', False                         , 'Waveform', 'magphase_const_rate'),
+
 
             ('DurationModel'        , False, 'Processes', 'DurationModel'),
             ('AcousticModel'        , False, 'Processes', 'AcousticModel'),
             ('VoiceConversion'      , False, 'Processes', 'VoiceConversion'),
             ('GenTestList'          , False, 'Processes', 'GenTestList'),
 
+            ('ACFTEXTR'        , False, 'Processes', 'ACFTEXTR'), # Acoustic feature extraction
             ('NORMLAB'         , False, 'Processes', 'NORMLAB'),
             ('MAKEDUR'         , False, 'Processes', 'MAKEDUR'),
             ('MAKECMP'         , False, 'Processes', 'MAKECMP'),

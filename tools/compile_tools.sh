@@ -95,11 +95,22 @@ if [ "$install_magphase" = true ]; then
     echo "downloading MagPhase vocoder..."
     rm -rf magphase
     git clone https://github.com/CSTR-Edinburgh/magphase.git
+    #git clone https://github.com/felipeespic/magphase.git
+
     echo "configuring MagPhase..."
     (
-        echo "[TOOLS]" > magphase/config.ini
-        echo "reaper=${PWD}/${REAPER_BIN_DIR}/reaper" >> magphase/config.ini
-        echo "sptk_mcep=${PWD}/${SPTK_BIN_DIR}/mcep" >> magphase/config.ini
+        mkdir -p magphase/tools/bin
+        cp -n SPTK-3.9/build/bin/b2mc   magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/bcp    magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/c2acr  magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/freqt  magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/mc2b   magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/mcep   magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/merge  magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/sopr   magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/vopr   magphase/tools/bin/
+        cp -n SPTK-3.9/build/bin/x2x    magphase/tools/bin/
+        cp -n REAPER/build/reaper       magphase/tools/bin/
     )
 fi
 

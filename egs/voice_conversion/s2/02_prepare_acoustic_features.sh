@@ -37,5 +37,7 @@ if [ "$prepare_feats" = true ]; then
     echo "Prepare acoustic features using "${Vocoder}" vocoder..."
     Vocoder=$(echo ${Vocoder} | tr '[A-Z]' '[a-z]')
     python ${MerlinDir}/misc/scripts/vocoder/${Vocoder}/extract_features_for_merlin.py ${MerlinDir} ${wav_dir} ${feat_dir} $SamplingFreq
+
+    sleep 2
 fi
 
