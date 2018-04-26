@@ -54,6 +54,11 @@ def mod_acoustic_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
     parser['Outputs']['dreal'] = '%d' % (d_mp_opts['phase_dim']*3)
     parser['Outputs']['dimag'] = '%d' % (d_mp_opts['phase_dim']*3)
 
+    if exper_type=='full':
+        parser['Architecture']['hidden_layer_size'] = "[1024, 1024, 1024, 1024, 1024, 1024]"
+        parser['Architecture']['hidden_layer_type'] = "['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH']"
+        parser['Architecture']['model_file_name']   = "feed_forward_6_tanh"
+
     if d_mp_opts['b_const_rate']:
         parser['Labels']['label_align'] = '%(TOPLEVEL)s/acoustic_model/data/label_state_align'
 
@@ -64,6 +69,11 @@ def mod_acoustic_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
 def mod_duration_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
     parser['DEFAULT']['Merlin']   = merlin_path
     parser['DEFAULT']['TOPLEVEL'] = exper_path
+
+    if exper_type=='full':
+        parser['Architecture']['hidden_layer_size'] = "[1024, 1024, 1024, 1024, 1024, 1024]"
+        parser['Architecture']['hidden_layer_type'] = "['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH']"
+        parser['Architecture']['model_file_name']   = "feed_forward_6_tanh"
 
     if d_mp_opts['b_const_rate']:
         parser['Labels']['label_align'] = '%(TOPLEVEL)s/acoustic_model/data/label_state_align'
