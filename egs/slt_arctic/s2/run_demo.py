@@ -54,6 +54,11 @@ def mod_acoustic_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
     parser['Outputs']['dreal'] = '%d' % (d_mp_opts['phase_dim']*3)
     parser['Outputs']['dimag'] = '%d' % (d_mp_opts['phase_dim']*3)
 
+    if exper_type=='full':
+        parser['Architecture']['hidden_layer_size'] = "[1024, 1024, 1024, 1024, 1024, 1024]"
+        parser['Architecture']['hidden_layer_type'] = "['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH']"
+        parser['Architecture']['model_file_name']   = "feed_forward_6_tanh"
+
     if d_mp_opts['b_const_rate']:
         parser['Labels']['label_align'] = '%(TOPLEVEL)s/acoustic_model/data/label_state_align'
 
@@ -64,6 +69,11 @@ def mod_acoustic_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
 def mod_duration_config(parser, merlin_path, exper_path, exper_type, d_mp_opts):
     parser['DEFAULT']['Merlin']   = merlin_path
     parser['DEFAULT']['TOPLEVEL'] = exper_path
+
+    if exper_type=='full':
+        parser['Architecture']['hidden_layer_size'] = "[1024, 1024, 1024, 1024, 1024, 1024]"
+        parser['Architecture']['hidden_layer_type'] = "['TANH', 'TANH', 'TANH', 'TANH', 'TANH', 'TANH']"
+        parser['Architecture']['model_file_name']   = "feed_forward_6_tanh"
 
     if d_mp_opts['b_const_rate']:
         parser['Labels']['label_align'] = '%(TOPLEVEL)s/acoustic_model/data/label_state_align'
@@ -91,14 +101,14 @@ if __name__ == '__main__':
     # INPUT:===================================================================================================
 
     # Experiment type:-----------------------------------------------------------------------
-    exper_type = 'full'  #  'demo' (50 training utts) or 'full' (1k training utts)
+    exper_type = 'demo'  #  'demo' (50 training utts) or 'full' (1k training utts)
 
     # Steps:---------------------------------------------------------------------------------
-    b_download_data  = 0 # Downloads wavs and label data.
-    b_setup_data     = 0 # Copies downloaded data into the experiment directory. Plus, makes a backup copy of this script.
-    b_config_merlin  = 0 # Saves new configuration files for Merlin.
-    b_feat_extr      = 0 # Performs acoustic feature extraction using the MagPhase vocoder
-    b_conv_labs_rate = 0 # Converts the state aligned labels to variable rate if running in variable frame rate mode (d_mp_opts['b_const_rate'] = False)
+    b_download_data  = 1 # Downloads wavs and label data.
+    b_setup_data     = 1 # Copies downloaded data into the experiment directory. Plus, makes a backup copy of this script.
+    b_config_merlin  = 1 # Saves new configuration files for Merlin.
+    b_feat_extr      = 1 # Performs acoustic feature extraction using the MagPhase vocoder
+    b_conv_labs_rate = 1 # Converts the state aligned labels to variable rate if running in variable frame rate mode (d_mp_opts['b_const_rate'] = False)
     b_dur_train      = 1 # Merlin: Training of duration model.
     b_acous_train    = 1 # Merlin: Training of acoustic model.
     b_dur_syn        = 1 # Merlin: Generation of state durations using the duration model.
