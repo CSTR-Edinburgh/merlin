@@ -844,7 +844,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         LL=re.compile(re.escape('LL-'))
 
         for line in fid.readlines():
-            line = line.replace('\n', '')
+            line = line.replace('\n', '').replace('\t', ' ')
 
             if len(line) > 5:
                 temp_list = line.split('{')
