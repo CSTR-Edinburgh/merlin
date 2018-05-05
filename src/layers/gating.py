@@ -841,7 +841,7 @@ class BidirectionSLstm(SimplifiedLstm):
 
         self.params = fwd.params + bwd.params
 
-        self.output = T.concatenate([fwd.output, bwd.output[::-1]], axis=1)
+        self.output = T.concatenate([fwd.output, bwd.output[::-1]], axis=-1)
 
 class BidirectionLstm(VanillaLstm):
 
@@ -852,7 +852,7 @@ class BidirectionLstm(VanillaLstm):
 
         self.params = fwd.params + bwd.params
 
-        self.output = T.concatenate([fwd.output, bwd.output[::-1]], axis=1)
+        self.output = T.concatenate([fwd.output, bwd.output[::-1]], axis=-1)
 
 
 class RecurrentOutput(object):
