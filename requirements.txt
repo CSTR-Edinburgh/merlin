@@ -1,3 +1,4 @@
+cmake
 numpy
 scipy
 scikit-learn
