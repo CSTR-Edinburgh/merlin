@@ -143,7 +143,7 @@ static void F0Estimation(double *x, int x_length, WorldParameters *world_paramet
 static void SpectralEnvelopeEstimation(double *x, int x_length,
     WorldParameters *world_parameters) {
   CheapTrickOption option = {0};
-  InitializeCheapTrickOption(&option);
+  InitializeCheapTrickOption(world_parameters->fs,&option);
 
   // This value may be better one for HMM speech synthesis.
   // Default value is -0.09.
