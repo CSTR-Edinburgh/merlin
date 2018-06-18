@@ -43,6 +43,7 @@ import numpy, time, pickle, gzip, sys, os, copy
 import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
+from theano.ifelse import ifelse 
 
 import logging
 
@@ -131,14 +132,15 @@ class SigmoidLayer(object):
 
         self.x = x
 
+        srng = RandomStreams(seed=123456)
+        
+        def _drop(srng,x, p):
+                mask = srng.binomial(n=1, p=1.0-p, size=x.shape)
+                return x * T.cast(mask, theano.config.floatX)
+                
         if p > 0.0:
-            if training==1:
-                srng = RandomStreams(seed=123456)
-                self.x = T.switch(srng.binomial(size=x.shape, p=p), x, 0)
-            else:
-                self.x =  (1-p) * x
-
-
+            self.x = ifelse(T.eq(training,numpy.cast['int32'](1)), _drop(srng,x,p) , numpy.cast[theano.config.floatX](1.0-p) * x )
+            
         # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
         if W is None:
             W_value = numpy.asarray(rng.normal(0.0, 1.0/numpy.sqrt(n_in),
@@ -190,13 +192,15 @@ class GeneralLayer(object):
 
         self.x = x
 
+        srng = RandomStreams(seed=123456)
+
+        def _drop(srng,x, p):
+                mask = srng.binomial(n=1, p=1.0-p, size=x.shape)
+                return x * T.cast(mask, theano.config.floatX)
+
         if p > 0.0:
-            if training==1:
-                srng = RandomStreams(seed=123456)
-                self.x = T.switch(srng.binomial(size=x.shape, p=p), x, 0)
-            else:
-                self.x =  (1-p) * x
-        
+            self.x = ifelse(T.eq(training,numpy.cast['int32'](1)), _drop(srng,x,p) , numpy.cast[theano.config.floatX](1.0-p) * x )
+                    
         # initialize with 0 the weights W as a matrix of shape (n_in, n_out)
         if W is None:
             W_value = numpy.asarray(rng.normal(0.0, 1.0/numpy.sqrt(n_in),
