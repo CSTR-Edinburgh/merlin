@@ -185,6 +185,14 @@ class kerasModels(object):
                         return_sequences=True,
                         stateful=True,
                         go_backwards=True))
+                
+            elif self.hidden_layer_type[i] == 'blstm':
+                self.model.add(Bidirectional(LSTM(
+                        units=self.hidden_layer_size[i],
+                        return_sequences=True,
+                        stateful=True),
+                    batch_input_shape=(batch_size, timesteps, input_size),
+                    merge_mode='concat'))
             else:
                 self.model.add(Dense(
                         units=self.hidden_layer_size[i],
