@@ -842,6 +842,7 @@ class HTSLabelNormalisation(LabelNormalisation):
         binary_dict = {}
         continuous_dict = {}
         LL=re.compile(re.escape('LL-'))
+        LAST_QUESTION = re.compile(re.escape('(\d+)') + '$') # regex for last question
 
         for line in fid.readlines():
             line = line.replace('\n', '').replace('\t', ' ')
@@ -860,6 +861,8 @@ class HTSLabelNormalisation(LabelNormalisation):
                 if temp_list[0] == 'CQS':
                     assert len(question_list) == 1
                     processed_question = self.wildcards2regex(question_list[0], convert_number_pattern=True)
+                    if LAST_QUESTION.search(question_list[0]):
+                        processed_question = processed_question + '$' # last question must only match at end of HTS label string
                     continuous_dict[str(continuous_qs_index)] = re.compile(processed_question) #save pre-compiled regular expression
                     continuous_qs_index = continuous_qs_index + 1
                 elif temp_list[0] == 'QS':
