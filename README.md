@@ -39,7 +39,6 @@ bash tools/compile_tools.sh
 ```
 - Install python dependencies
 ```sh
-pip install numpy 
 pip install -r requirements.txt
 ```
 
