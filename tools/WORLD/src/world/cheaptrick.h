@@ -16,6 +16,7 @@ typedef struct {
   // This is defined as the struct for future update.
   double q1;
   double f0_floor;
+  int fft_size;
 } CheapTrickOption;
 
 //-----------------------------------------------------------------------------
@@ -42,7 +43,7 @@ void CheapTrick(const double *x, int x_length, int fs, const double *time_axis,
 // Output:
 //   option   : Struct for the optional parameter.
 //-----------------------------------------------------------------------------
-void InitializeCheapTrickOption(CheapTrickOption *option);
+void InitializeCheapTrickOption(int fs, CheapTrickOption *option);
 
 //-----------------------------------------------------------------------------
 // GetFFTSizeForCheapTrick() calculates the FFT size based on the sampling

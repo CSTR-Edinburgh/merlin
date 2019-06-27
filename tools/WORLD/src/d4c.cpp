@@ -261,6 +261,8 @@ void D4C(const double *x, int x_length, int fs, const double *time_axis,
     double **aperiodicity) {
   int fft_size_d4c = static_cast<int>(pow(2.0, 1.0 +
       static_cast<int>(log(4.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
+  void randn_reseed(void);
+  randn_reseed();
 
   ForwardRealFFT forward_real_fft = {0};
   InitializeForwardRealFFT(fft_size_d4c, &forward_real_fft);
@@ -314,6 +316,8 @@ void D4C(const double *x, int x_length, int fs, const double *time_axis,
 void D4C_coarse(const double *x, int x_length, int fs, const double *time_axis,
     const double *f0, int f0_length, int fft_size, const D4COption *option,
     double **aperiodicity) {
+  void randn_reseed(void);
+  randn_reseed();
   int fft_size_d4c = static_cast<int>(pow(2.0, 1.0 +
       static_cast<int>(log(4.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
 

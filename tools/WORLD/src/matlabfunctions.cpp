@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2016 Masanori Morise. All Rights Reserved.
+// Copyright 2012 Masanori Morise
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
+// Last update: 2017/02/01
 //
 // Matlab functions implemented for WORLD
 // Since these functions are implemented as the same function of Matlab,
@@ -14,6 +15,7 @@
 #include "world/matlabfunctions.h"
 
 #include <math.h>
+#include <stdint.h>	   
 
 #include "world/constantnumbers.h"
 
@@ -238,25 +240,38 @@ void interp1Q(double x, double shift, const double *y, int x_length,
   delete[] delta_y;
 }
 
-double randn(void) {
-  static unsigned int x = 123456789;
-  static unsigned int y = 362436069;
-  static unsigned int z = 521288629;
-  static unsigned int w = 88675123;
-  unsigned int t;
-  t = x ^ (x << 11);
-  x = y;
-  y = z;
-  z = w;
+// You must not use these variables.
+// Note:
+// I have no idea to implement the randn() and randn_reseed() without the
+// global variables. If you have a good idea, please give me the information.
+static uint32_t g_randn_x = 123456789;
+static uint32_t g_randn_y = 362436069;
+static uint32_t g_randn_z = 521288629;
+static uint32_t g_randn_w = 88675123;
 
-  unsigned int tmp = 0;
-  for (int i = 0; i < 12; ++i) {
-    t = x ^ (x << 11);
-    x = y;
-    y = z;
-    z = w;
-    w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-    tmp += w >> 4;
+void randn_reseed(void) {
+    g_randn_x = 123456789;
+    g_randn_y = 362436069;
+    g_randn_z = 521288629;
+    g_randn_w = 88675123;
+}
+
+double randn(void) {
+  uint32_t t;
+  t = g_randn_x ^ (g_randn_x << 11);
+  g_randn_x = g_randn_y;
+  g_randn_y = g_randn_z;
+  g_randn_z = g_randn_w;
+  g_randn_w = (g_randn_w ^ (g_randn_w >> 19)) ^ (t ^ (t >> 8));
+
+  uint32_t tmp = g_randn_w >> 4;
+  for (int i = 0; i < 11; ++i) {
+    t = g_randn_x ^ (g_randn_x << 11);
+    g_randn_x = g_randn_y;
+    g_randn_y = g_randn_z;
+    g_randn_z = g_randn_w;
+    g_randn_w = (g_randn_w ^ (g_randn_w >> 19)) ^ (t ^ (t >> 8));
+    tmp += g_randn_w >> 4;
   }
   return tmp / 268435456.0 - 6.0;
 }

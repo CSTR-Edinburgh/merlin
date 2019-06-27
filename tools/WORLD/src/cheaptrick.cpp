@@ -184,6 +184,9 @@ void CheapTrick(const double *x, int x_length, int fs, const double *time_axis,
     double **spectrogram) {
   int fft_size = GetFFTSizeForCheapTrick(fs, option);
   double *spectral_envelope = new double[fft_size];
+  
+  void randn_reseed(void);
+  randn_reseed();
 
   ForwardRealFFT forward_real_fft = {0};
   InitializeForwardRealFFT(fft_size, &forward_real_fft);
@@ -205,7 +208,7 @@ void CheapTrick(const double *x, int x_length, int fs, const double *time_axis,
   delete[] spectral_envelope;
 }
 
-void InitializeCheapTrickOption(CheapTrickOption *option) {
+void InitializeCheapTrickOption(int fs,CheapTrickOption *option) {
   // q1 is the parameter used for the spectral recovery.
   // Since The parameter is optimized, you don't need to change the parameter.
   option->q1 = -0.09;
@@ -213,4 +216,5 @@ void InitializeCheapTrickOption(CheapTrickOption *option) {
   // We strongly recommend not to change this value unless you have enough
   // knowledge of the signal processing in CheapTrick.
   option->f0_floor = world::kFloorF0;
+  option->fft_size = GetFFTSizeForCheapTrick(fs, option);
 }
