@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+source cmd.sh
+
 if test "$#" -ne 0; then
     echo "Usage: ./run_full_voice.sh"
     exit 1
