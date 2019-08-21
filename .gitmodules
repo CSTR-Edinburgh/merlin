@@ -1,0 +1,9 @@
+[submodule "tools/speech_tools"]
+	path = tools/speech_tools
+	url = https://github.com/festvox/speech_tools.git
+[submodule "tools/festival"]
+	path = tools/festival
+	url = https://github.com/festvox/festival.git
+[submodule "tools/festvox"]
+	path = tools/festvox
+	url = https://github.com/festvox/festvox.git
