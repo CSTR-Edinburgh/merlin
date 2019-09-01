@@ -9,7 +9,7 @@ class   BinaryIOCollection(object):
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
         fid_lab.close()
         assert features.size % float(dimension) == 0.0,'specified dimension not compatible with data'
-        features = features[:(dimension * (features.size / dimension))]
+        features = features[:(dimension * (features.size // dimension))]
         features = features.reshape((-1, dimension))
 
         return  features
@@ -26,7 +26,7 @@ class   BinaryIOCollection(object):
         features = numpy.fromfile(fid_lab, dtype=numpy.float32)
         fid_lab.close()
         assert features.size % float(dimension) == 0.0,'specified dimension not compatible with data'
-        frame_number = features.size / dimension
+        frame_number = features.size // dimension
         features = features[:(dimension * frame_number)]
         features = features.reshape((-1, dimension))
 
@@ -37,7 +37,7 @@ class   BinaryIOCollection(object):
         features = numpy.fromfile(fid_lab, dtype="int32")
         fid_lab.close()
         assert features.size % float(dimension) == 0.0,'specified dimension not compatible with data'
-        frame_number = features.size / dimension
+        frame_number = features.size // dimension
         features = features[:(dimension * frame_number)]
         features = features.reshape((-1, dimension))
         

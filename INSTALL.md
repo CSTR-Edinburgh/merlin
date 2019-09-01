@@ -54,7 +54,7 @@ sudo apt-get install python-numpy python-scipy python-dev python-pip python-nose
 
 #### For Fedora: 
 ```sh
-sudo yum install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev git libc6-dev-i386 glibc-devel.i686 csh python-lxml libxslt-devel
+sudo yum install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev git libc6-dev-i386 glibc-devel.i686 csh python-lxml libxslt-devel unzip
 ```
 
 #### Common libraries for both Ubuntu and Fedora:

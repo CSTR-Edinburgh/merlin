@@ -147,7 +147,7 @@ class   AcousticBase(object):
                         break
                 if j < frame_number-1:
                     if last_value > 0.0:
-                        step = (data[j] - data[i-1]) / float(j - i)
+                        step = (data[j] - data[i-1]) / float(j - i + 1)
                         for k in range(i, j):
                             ip_data[k] = data[i-1] + step * (k - i + 1)
                     else:
