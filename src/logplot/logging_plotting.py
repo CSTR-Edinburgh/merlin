@@ -256,7 +256,7 @@ class LoggerPlotter(logging.getLoggerClass()):
             # TO DO - need to be sure of safe file names
             if not os.path.isdir(self.plot_path):
                 os.makedirs(self.plot_path)
-            filename = self.plot_path + "/" + string.replace(plot_name, " ", "_") + ".pdf"
+            filename = self.plot_path + "/" + plot_name.replace(" ", "_") + ".pdf"
             logger.info('Generating a plot in file %s' % filename)
             self.plots[plot_name].generate_plot(filename,**kwargs)
             # else:
