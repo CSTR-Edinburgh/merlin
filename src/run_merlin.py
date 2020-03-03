@@ -1291,7 +1291,7 @@ if __name__ == '__main__':
 
     logger.info('Execution information:')
     logger.info('  HOSTNAME: '+socket.getfqdn())
-    logger.info('  USER: '+os.getenv('USER'))
+    logger.info('  USER: '+str(os.getenv('USER')))
     logger.info('  PID: '+str(os.getpid()))
     PBS_JOBID = os.getenv('PBS_JOBID')
     if PBS_JOBID:
